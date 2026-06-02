@@ -1,0 +1,44 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+.output
+.vinxi
+.tanstack/**
+.nitro
+*.local
+
+# Wrangler / Cloudflare
+.wrangler/
+.dev.vars
+
+# Local env files (Vite). Use .env.example to share the schema.
+.env
+.env.local
+.env.*.local
+
+# Source-of-truth photo originals. Optimized variants in public/gallery-thumbs/
+# and public/gallery-full/ are the ones that ship — originals stay on local disk.
+src/assets/gallery-*.jpg
+src/assets/gallery-*.JPG
+src/assets/hero.jpg
+src/assets/hero.JPG
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
