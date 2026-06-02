@@ -147,6 +147,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "preload",
         as: "image",
         href: "/hero-1200.avif",
+        imagesrcset:
+          "/hero-800.avif 800w, /hero-1200.avif 1200w, /hero-1600.avif 1600w",
+        imagesizes: "(min-width: 1024px) 40vw, (min-width: 640px) 50vw, 100vw",
         type: "image/avif",
         fetchPriority: "high",
       } as Record<string, string>,
@@ -279,7 +282,7 @@ function SiteHeader() {
       {/* Mobile menu panel */}
       <div
         id="mobile-nav"
-        aria-hidden={!open}
+        inert={!open}
         className={
           "fixed inset-x-0 top-[57px] z-40 origin-top overflow-hidden bg-background transition-[max-height,opacity] duration-300 sm:hidden " +
           (open

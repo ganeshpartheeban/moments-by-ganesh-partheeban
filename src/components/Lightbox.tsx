@@ -100,7 +100,7 @@ export default function Lightbox({
           <span aria-hidden>←</span>
         </button>
 
-        <picture key={index}>
+        <picture key={index} style={{ display: "contents" }}>
           <source type="image/avif" srcSet={`${fullBase(index)}.avif`} />
           <source type="image/webp" srcSet={`${fullBase(index)}.webp`} />
           <img

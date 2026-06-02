@@ -115,6 +115,8 @@ function Hero() {
                   src="/hero-1200.jpg"
                   srcSet="/hero-800.jpg 800w, /hero-1200.jpg 1200w, /hero-1600.jpg 1600w"
                   sizes={HERO_SIZES}
+                  width={1200}
+                  height={1500}
                   alt="Candid photograph by Ganesh Partheeban"
                   fetchPriority="high"
                   decoding="async"
@@ -251,6 +253,8 @@ function SelectedWork() {
                         src={`${thumbBase(i)}-1000.jpg`}
                         srcSet={`${thumbBase(i)}-600.jpg 600w, ${thumbBase(i)}-1000.jpg 1000w, ${thumbBase(i)}-1400.jpg 1400w`}
                         sizes={THUMB_SIZES}
+                        width={p.width}
+                        height={p.height}
                         alt={p.alt}
                         loading={i < 4 ? "eager" : "lazy"}
                         decoding="async"
