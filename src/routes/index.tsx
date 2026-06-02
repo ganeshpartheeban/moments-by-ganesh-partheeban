@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { GALLERY, GALLERY_COUNT, formatExif, type Photo } from "@/lib/gallery";
 import { Aperture, Camera, Film, Lens, Sparkle, ArrowUpRight } from "@/components/icons";
+import { SITE_URL, absoluteUrl, buildBreadcrumbLD, ldScriptBody } from "@/lib/seo";
 
 const Lightbox = lazy(() => import("@/components/Lightbox"));
 
@@ -12,17 +13,34 @@ const HERO_SIZES = "(min-width: 1024px) 40vw, (min-width: 640px) 50vw, 100vw";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Moments by Ganesh Partheeban · Candid Photographer" },
+      {
+        title:
+          "Candid Wedding & Event Photographer in Chennai, India · Moments by Ganesh Partheeban",
+      },
       {
         name: "description",
         content:
-          "Candid photography across India. Weddings, events, concerts, shows and behind-the-scenes. Natural moments, real emotions, fast delivery.",
+          "Candid wedding, reception, engagement, concert and event photography across India by Ganesh Partheeban. Based in Chennai, documenting moments as they happen — natural, honest, fast delivery.",
       },
-      { property: "og:title", content: "Moments by Ganesh Partheeban · Candid Photographer" },
+      {
+        property: "og:title",
+        content: "Candid Wedding & Event Photographer · Moments by Ganesh Partheeban",
+      },
+      { property: "og:url", content: SITE_URL },
       {
         property: "og:description",
-        content: "Moments, honestly documented. Selected work by Ganesh Partheeban.",
+        content:
+          "Candid photography across India — weddings, events, concerts, shows and behind-the-scenes. Moments, honestly documented.",
       },
+    ],
+    links: [{ rel: "canonical", href: SITE_URL }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: ldScriptBody(
+          buildBreadcrumbLD([{ name: "Work", url: "/" }]),
+        ),
+      } as Record<string, string>,
     ],
   }),
   component: Index,

@@ -11,6 +11,15 @@ import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 import { Aperture, Instagram, Mail, MapPin, Film } from "@/components/icons";
+import {
+  SITE_URL,
+  SITE_NAME,
+  KEYWORDS,
+  absoluteUrl,
+  buildOrganizationLD,
+  buildPersonLD,
+  ldScriptBody,
+} from "@/lib/seo";
 
 const NAV_ITEMS = [
   { to: "/", label: "Work" },
@@ -87,27 +96,49 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { name: "theme-color", content: "#ffffff" },
       { name: "format-detection", content: "telephone=no" },
-      { title: "Moments by Ganesh Partheeban · Candid Photographer" },
+      { title: `${SITE_NAME} · Candid Photographer in Chennai & across India` },
       {
         name: "description",
         content:
-          "Candid photography across India by Ganesh Partheeban. Weddings, events, concerts, shows and behind-the-scenes. Natural moments, real emotions, fast delivery.",
+          "Candid wedding and event photography by Ganesh Partheeban — based in Chennai, available across India. Documentary coverage of weddings, receptions, engagements, concerts, shows and behind-the-scenes.",
       },
+      { name: "keywords", content: KEYWORDS.join(", ") },
       { name: "author", content: "Ganesh Partheeban" },
-      { property: "og:title", content: "Moments by Ganesh Partheeban · Candid Photographer" },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
+      { property: "og:site_name", content: SITE_NAME },
+      { property: "og:locale", content: "en_IN" },
+      { property: "og:url", content: SITE_URL },
+      { property: "og:title", content: `${SITE_NAME} · Candid Photographer` },
       {
         property: "og:description",
         content:
           "Candid photography across India. Weddings, events, concerts, shows and behind-the-scenes. Natural moments, real emotions, fast delivery.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "/og-hero.jpg" },
+      { property: "og:image", content: absoluteUrl("/og-hero.jpg") },
+      { property: "og:image:secure_url", content: absoluteUrl("/og-hero.jpg") },
+      { property: "og:image:type", content: "image/jpeg" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { property: "og:image:alt", content: "Candid photograph by Ganesh Partheeban" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Moments by Ganesh Partheeban · Candid Photographer" },
-      { name: "twitter:image", content: "/og-hero.jpg" },
+      { name: "twitter:title", content: `${SITE_NAME} · Candid Photographer` },
+      {
+        name: "twitter:description",
+        content:
+          "Candid wedding and event photography across India by Ganesh Partheeban.",
+      },
+      { name: "twitter:image", content: absoluteUrl("/og-hero.jpg") },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: ldScriptBody(buildOrganizationLD()),
+      } as Record<string, string>,
+      {
+        type: "application/ld+json",
+        children: ldScriptBody(buildPersonLD()),
+      } as Record<string, string>,
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },

@@ -1,22 +1,54 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Aperture, Camera, Film, Lens, MapPin, ArrowUpRight } from "@/components/icons";
+import {
+  absoluteUrl,
+  buildBreadcrumbLD,
+  buildServiceListLD,
+  ldScriptBody,
+} from "@/lib/seo";
+
+const SERVICE_LIST_FOR_SEO = [
+  { name: "Candid Wedding Photography", description: "Full-day candid coverage of weddings and wedding-related events across India." },
+  { name: "Reception Photography", description: "Natural reception, after-party and stage coverage with family group portraits." },
+  { name: "Engagement & Pre-Wedding Photography", description: "Storytelling for roka, sagai, engagement and pre-wedding gatherings." },
+  { name: "Family & Cultural Events", description: "Candid coverage for traditional functions, cultural ceremonies and milestone family events." },
+  { name: "Events, Concerts & Behind-the-Scenes", description: "Documentary coverage for concerts, live performances, corporate events and BTS." },
+  { name: "Candid Videography (Coming Soon)", description: "Short documentary films and social-ready reels as an add-on to photography." },
+];
 
 export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
-      { title: "Services · Moments by Ganesh Partheeban" },
+      { title: "Photography Services · Weddings, Events, Concerts · Ganesh Partheeban" },
       {
         name: "description",
         content:
-          "Candid coverage for weddings, receptions, engagements, family events, concerts, shows, and behind-the-scenes across India.",
+          "Candid photography services across India — weddings, receptions, engagement and pre-wedding, family and cultural events, concerts, shows and behind-the-scenes. Event-based pricing. Bookings from Chennai, Bengaluru and across India.",
       },
       { property: "og:title", content: "Services · Moments by Ganesh Partheeban" },
+      { property: "og:url", content: absoluteUrl("/services") },
       {
         property: "og:description",
         content:
           "Candid coverage for weddings, receptions, engagements, family events, concerts, shows, and behind-the-scenes across India.",
       },
+    ],
+    links: [{ rel: "canonical", href: absoluteUrl("/services") }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: ldScriptBody(buildServiceListLD(SERVICE_LIST_FOR_SEO)),
+      } as Record<string, string>,
+      {
+        type: "application/ld+json",
+        children: ldScriptBody(
+          buildBreadcrumbLD([
+            { name: "Work", url: "/" },
+            { name: "Services", url: "/services" },
+          ]),
+        ),
+      } as Record<string, string>,
     ],
   }),
   component: ServicesPage,

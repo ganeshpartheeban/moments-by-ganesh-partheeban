@@ -10,21 +10,48 @@ import {
   Sparkle,
   ArrowUpRight,
 } from "@/components/icons";
+import {
+  absoluteUrl,
+  buildBreadcrumbLD,
+  buildFAQLD,
+  ldScriptBody,
+} from "@/lib/seo";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact · Moments by Ganesh Partheeban" },
+      {
+        title:
+          "Contact · Book Candid Wedding & Event Photography · Ganesh Partheeban",
+      },
       {
         name: "description",
         content:
-          "Enquire about candid photography across weddings, events, concerts, shows and behind-the-scenes. Bookings confirmed by date availability.",
+          "Book Ganesh Partheeban for candid wedding, reception, engagement, concert or event photography. Based in Chennai, available across India. Send an enquiry — replies within a day or two.",
       },
       { property: "og:title", content: "Contact · Moments by Ganesh Partheeban" },
+      { property: "og:url", content: absoluteUrl("/contact") },
       {
         property: "og:description",
-        content: "Enquire about candid photography across India.",
+        content:
+          "Enquire about candid photography across India. Bookings confirmed by date availability.",
       },
+    ],
+    links: [{ rel: "canonical", href: absoluteUrl("/contact") }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: ldScriptBody(buildFAQLD(faqs)),
+      } as Record<string, string>,
+      {
+        type: "application/ld+json",
+        children: ldScriptBody(
+          buildBreadcrumbLD([
+            { name: "Work", url: "/" },
+            { name: "Contact", url: "/contact" },
+          ]),
+        ),
+      } as Record<string, string>,
     ],
   }),
   component: ContactPage,

@@ -1,21 +1,36 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import portrait from "@/assets/portrait.jpg";
 import { Aperture, Camera, Lens, Sparkle, ArrowUpRight } from "@/components/icons";
+import { absoluteUrl, buildBreadcrumbLD, ldScriptBody } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About · Moments by Ganesh Partheeban" },
+      { title: "About Ganesh Partheeban · Candid Photographer in Chennai" },
       {
         name: "description",
         content:
-          "An independent candid photographer based in India. Weddings, events, concerts, shows and behind-the-scenes. Quiet observation, honest interaction, real moments.",
+          "Meet Ganesh Partheeban, an independent candid wedding and event photographer based in Chennai, Tamil Nadu. Documentary coverage across India — weddings, family functions, concerts, shows, behind-the-scenes.",
       },
       { property: "og:title", content: "About · Moments by Ganesh Partheeban" },
+      { property: "og:url", content: absoluteUrl("/about") },
       {
         property: "og:description",
-        content: "An independent candid photographer based in India.",
+        content:
+          "Independent candid photographer based in Chennai. Quiet observation, honest interaction, real moments.",
       },
+    ],
+    links: [{ rel: "canonical", href: absoluteUrl("/about") }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: ldScriptBody(
+          buildBreadcrumbLD([
+            { name: "Work", url: "/" },
+            { name: "About", url: "/about" },
+          ]),
+        ),
+      } as Record<string, string>,
     ],
   }),
   component: AboutPage,
