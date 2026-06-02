@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Aperture, Camera, Film, MapPin, ArrowUpRight } from "@/components/icons";
 import {
   absoluteUrl,
@@ -298,9 +298,55 @@ function ServicesPage() {
 
 type NotifyStatus = "idle" | "sending" | "sent" | "error";
 
+// Best-effort IP geolocation. Tries three providers; gives up silently if all fail.
+async function lookupLocation(): Promise<string> {
+  const providers: Array<() => Promise<string>> = [
+    async () => {
+      const r = await fetch("https://ipapi.co/json/");
+      const j = await r.json();
+      const parts = [j.city, j.region, j.country_name].filter(Boolean);
+      return parts.length ? `${parts.join(", ")}${j.ip ? ` (${j.ip})` : ""}` : "";
+    },
+    async () => {
+      const r = await fetch("https://ipwho.is/");
+      const j = await r.json();
+      if (j && j.success !== false) {
+        const parts = [j.city, j.region, j.country].filter(Boolean);
+        return parts.length ? `${parts.join(", ")}${j.ip ? ` (${j.ip})` : ""}` : "";
+      }
+      return "";
+    },
+    async () => {
+      const r = await fetch("https://api.country.is/");
+      const j = await r.json();
+      return j && j.country ? `${j.country}${j.ip ? ` (${j.ip})` : ""}` : "";
+    },
+  ];
+  for (const p of providers) {
+    try {
+      const result = await Promise.race([
+        p(),
+        new Promise<string>((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000)),
+      ]);
+      if (result) return result;
+    } catch {
+      // try next
+    }
+  }
+  return "";
+}
+
 function NotifyForm() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<NotifyStatus>("idle");
+  const locationPromiseRef = useRef<Promise<string> | null>(null);
+
+  // Kick off IP lookup on first interaction so the form has a value ready by submit.
+  const ensureLocationLookup = () => {
+    if (!locationPromiseRef.current) {
+      locationPromiseRef.current = lookupLocation().catch(() => "");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -309,14 +355,29 @@ function NotifyForm() {
       setStatus("error");
       return;
     }
+
+    setStatus("sending");
+    // Wait up to 1.5 s for the IP lookup if still in flight.
+    let location = "";
+    if (locationPromiseRef.current) {
+      try {
+        location = await Promise.race([
+          locationPromiseRef.current,
+          new Promise<string>((resolve) => setTimeout(() => resolve(""), 1500)),
+        ]);
+      } catch {
+        // Submit without location
+      }
+    }
+
     const data = new FormData();
     data.set("name", "Videography Notify");
     data.set("email", email.trim());
     data.set("eventType", "Videography (Notify)");
     data.set("notes", "Wants to be notified when candid videography launches.");
     data.set("token", FORM_TOKEN);
+    data.set("location", location);
 
-    setStatus("sending");
     try {
       await fetch(FORM_ENDPOINT, { method: "POST", body: data, mode: "no-cors" });
       setStatus("sent");
@@ -335,10 +396,16 @@ function NotifyForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2">
+    <form
+      onSubmit={handleSubmit}
+      onFocusCapture={ensureLocationLookup}
+      className="flex flex-wrap items-center gap-2"
+    >
       <input
         type="email"
         required
+        autoComplete="email"
+        inputMode="email"
         value={email}
         onChange={(e) => {
           setEmail(e.target.value);
@@ -346,7 +413,7 @@ function NotifyForm() {
         }}
         placeholder="your@email.com"
         aria-label="Email for videography launch notification"
-        className="min-w-0 flex-1 border-b border-foreground/30 bg-transparent pb-1 font-mono-label text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-accent focus:outline-none"
+        className="min-w-0 flex-1 border-b border-foreground/30 bg-transparent pb-1 text-sm normal-case text-foreground placeholder:text-muted-foreground/60 focus:border-accent focus:outline-none"
       />
       <button
         type="submit"
