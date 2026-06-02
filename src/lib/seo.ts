@@ -8,7 +8,7 @@
 
 export const SITE_URL =
   (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, "") ??
-  "https://moments-by-ganesh-partheeban.pages.dev";
+  "https://ganeshpartheeban.in";
 
 export const SITE_NAME = "Moments by Ganesh Partheeban";
 

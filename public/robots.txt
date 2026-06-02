@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://moments-by-ganesh-partheeban.pages.dev/sitemap.xml
+Sitemap: https://ganeshpartheeban.in/sitemap.xml
