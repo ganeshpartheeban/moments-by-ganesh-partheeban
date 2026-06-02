@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Aperture, Camera, Film, Lens, MapPin, ArrowUpRight } from "@/components/icons";
+import { Aperture, Camera, Film, MapPin, ArrowUpRight } from "@/components/icons";
 import {
   absoluteUrl,
   buildBreadcrumbLD,
   buildServiceListLD,
   ldScriptBody,
 } from "@/lib/seo";
+import { FORM_ENDPOINT, FORM_TOKEN } from "@/lib/form-config";
 
 const SERVICE_LIST_FOR_SEO = [
   { name: "Candid Wedding Photography", description: "Full-day candid coverage of weddings and wedding-related events across India." },
@@ -294,9 +295,6 @@ function ServicesPage() {
     </div>
   );
 }
-
-const FORM_ENDPOINT = import.meta.env.VITE_FORM_ENDPOINT as string;
-const FORM_TOKEN = import.meta.env.VITE_FORM_TOKEN as string;
 
 type NotifyStatus = "idle" | "sending" | "sent" | "error";
 

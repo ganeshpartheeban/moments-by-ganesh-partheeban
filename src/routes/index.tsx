@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { GALLERY, GALLERY_COUNT, formatExif, type Photo } from "@/lib/gallery";
 import { Aperture, Camera, Film, Lens, Sparkle, ArrowUpRight } from "@/components/icons";
-import { SITE_URL, absoluteUrl, buildBreadcrumbLD, ldScriptBody } from "@/lib/seo";
+import { SITE_URL, buildBreadcrumbLD, ldScriptBody } from "@/lib/seo";
 
 const Lightbox = lazy(() => import("@/components/Lightbox"));
 
@@ -165,16 +165,29 @@ function Marquee() {
 }
 
 function useColumnCount(): number {
-  const [cols, setCols] = useState(3);
+  // Initial value computed lazily from the first window width read.
+  // Subsequent updates come from matchMedia change events — no synchronous
+  // window.innerWidth reads in the resize hot path, no forced reflow.
+  const [cols, setCols] = useState(() => {
+    if (typeof window === "undefined") return 3;
+    const w = window.innerWidth;
+    return w >= 1280 ? 4 : w >= 1024 ? 3 : w >= 640 ? 2 : 1;
+  });
+
   useEffect(() => {
-    const compute = () => {
-      const w = window.innerWidth;
-      setCols(w >= 1280 ? 4 : w >= 1024 ? 3 : w >= 640 ? 2 : 1);
-    };
-    compute();
-    window.addEventListener("resize", compute);
-    return () => window.removeEventListener("resize", compute);
+    const queries: MediaQueryList[] = [
+      window.matchMedia("(min-width: 1280px)"),
+      window.matchMedia("(min-width: 1024px)"),
+      window.matchMedia("(min-width: 640px)"),
+    ];
+    const compute = () =>
+      setCols(
+        queries[0].matches ? 4 : queries[1].matches ? 3 : queries[2].matches ? 2 : 1,
+      );
+    queries.forEach((q) => q.addEventListener("change", compute));
+    return () => queries.forEach((q) => q.removeEventListener("change", compute));
   }, []);
+
   return cols;
 }
 
@@ -198,7 +211,7 @@ function SelectedWork() {
   const cols = useColumnCount();
   const columns = useMemo(() => distribute(GALLERY, cols), [cols]);
   return (
-    <section id="work" className="w-full px-3 py-14 sm:px-6 sm:py-20 md:px-8 md:py-32">
+    <section id="work" className="w-full scroll-mt-20 px-3 py-14 sm:px-6 sm:py-20 md:px-8 md:py-32">
       <div className="mx-auto mb-12 flex max-w-[1800px] flex-wrap items-end justify-between gap-6 md:mb-16">
         <div>
           <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
@@ -241,17 +254,17 @@ function SelectedWork() {
                     <picture>
                       <source
                         type="image/avif"
-                        srcSet={`${thumbBase(i)}-600.avif 600w, ${thumbBase(i)}-1000.avif 1000w, ${thumbBase(i)}-1400.avif 1400w`}
+                        srcSet={`${thumbBase(i)}-600.avif 600w, ${thumbBase(i)}-800.avif 800w, ${thumbBase(i)}-1000.avif 1000w, ${thumbBase(i)}-1400.avif 1400w`}
                         sizes={THUMB_SIZES}
                       />
                       <source
                         type="image/webp"
-                        srcSet={`${thumbBase(i)}-600.webp 600w, ${thumbBase(i)}-1000.webp 1000w, ${thumbBase(i)}-1400.webp 1400w`}
+                        srcSet={`${thumbBase(i)}-600.webp 600w, ${thumbBase(i)}-800.webp 800w, ${thumbBase(i)}-1000.webp 1000w, ${thumbBase(i)}-1400.webp 1400w`}
                         sizes={THUMB_SIZES}
                       />
                       <img
                         src={`${thumbBase(i)}-1000.jpg`}
-                        srcSet={`${thumbBase(i)}-600.jpg 600w, ${thumbBase(i)}-1000.jpg 1000w, ${thumbBase(i)}-1400.jpg 1400w`}
+                        srcSet={`${thumbBase(i)}-600.jpg 600w, ${thumbBase(i)}-800.jpg 800w, ${thumbBase(i)}-1000.jpg 1000w, ${thumbBase(i)}-1400.jpg 1400w`}
                         sizes={THUMB_SIZES}
                         width={p.width}
                         height={p.height}

@@ -357,17 +357,7 @@ export const GALLERY: Photo[] = [
     shutter: shutter(0.0331),
   }),
   photo({ src: "/gallery-full/g35.jpg", alt: "Frame 35", width: 4000, height: 6000 }),
-  photo({
-    src: "/gallery-full/g36.jpg",
-    alt: "Frame 36",
-    width: 6000,
-    height: 4000,
-    camera: "NIKON D3400",
-    focalLength: 230,
-    aperture: 5.6,
-    iso: 4000,
-    shutter: shutter(0.004),
-  }),
+  photo({ src: "/gallery-full/g36.jpg", alt: "Frame 36", width: 2291, height: 4071 }),
   photo({ src: "/gallery-full/g37.jpg", alt: "Frame 37", width: 3235, height: 5745 }),
   photo({ src: "/gallery-full/g38.jpg", alt: "Frame 38", width: 4000, height: 6000 }),
   photo({

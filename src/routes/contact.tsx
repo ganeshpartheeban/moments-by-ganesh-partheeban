@@ -7,7 +7,6 @@ import {
   Instagram,
   Mail,
   MapPin,
-  Sparkle,
   ArrowUpRight,
 } from "@/components/icons";
 import {
@@ -16,6 +15,7 @@ import {
   buildFAQLD,
   ldScriptBody,
 } from "@/lib/seo";
+import { FORM_ENDPOINT, FORM_TOKEN } from "@/lib/form-config";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -56,24 +56,6 @@ export const Route = createFileRoute("/contact")({
   }),
   component: ContactPage,
 });
-
-const testimonials = [
-  {
-    q: "The photos felt real and emotional. Nothing looked forced. It actually felt like our wedding, not someone else's idea of one.",
-    name: "M & A",
-    venue: "Bengaluru Reception, 2025",
-  },
-  {
-    q: "We received the images incredibly fast and could immediately share them with family back home.",
-    name: "The Iyer family",
-    venue: "Coimbatore, 2025",
-  },
-  {
-    q: "Ganesh captured moments we didn't even realize were happening. We keep finding new favorites months later.",
-    name: "S & K",
-    venue: "Pondicherry Mehendi, 2024",
-  },
-];
 
 const faqs = [
   {
@@ -165,35 +147,6 @@ function ContactPage() {
 
       <BookingEnquiry />
 
-      {/* Testimonials */}
-      <section className="border-y border-border bg-secondary/40">
-        <div className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-20 md:px-10 md:py-28">
-          <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
-            <Sparkle className="h-3.5 w-3.5 text-accent" />
-            Words from clients
-          </p>
-          <div className="mt-12 grid gap-12 md:grid-cols-3">
-            {testimonials.map((t, i) => (
-              <figure key={i} className="flex flex-col gap-6">
-                <p className="font-display text-2xl leading-snug md:text-3xl">
-                  <span className="text-accent">“</span>
-                  {t.q}
-                  <span className="text-accent">”</span>
-                </p>
-                <figcaption>
-                  <p className="font-display text-base text-foreground">
-                    {t.name}
-                  </p>
-                  <p className="mt-1 font-mono-label text-xs text-muted-foreground">
-                    {t.venue}
-                  </p>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* FAQ */}
       <section className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-20 md:px-10 md:py-32">
         <div className="grid gap-10 md:grid-cols-12 md:gap-12">
@@ -235,9 +188,6 @@ const EVENT_TYPES = [
 ] as const;
 type EventType = (typeof EVENT_TYPES)[number];
 
-const FORM_ENDPOINT = import.meta.env.VITE_FORM_ENDPOINT as string;
-const FORM_TOKEN = import.meta.env.VITE_FORM_TOKEN as string;
-
 type FormStatus = "idle" | "sending" | "sent" | "error" | "limit";
 
 const SUBMISSIONS_KEY = "rms-enquiry-emails";
@@ -260,7 +210,10 @@ function recordSubmission(email: string) {
     const key = email.toLowerCase().trim();
     map[key] = (map[key] ?? 0) + 1;
     localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(map));
-  } catch {}
+  } catch {
+    // localStorage may be unavailable (private mode, storage quota). Limit
+    // becomes server-side-only — acceptable degradation.
+  }
 }
 
 const LOCATION_TIMEOUT_MS = 4000;
@@ -347,13 +300,19 @@ function BookingEnquiry() {
     }
   }, []);
 
-  useEffect(() => {
+  // Defer the geo lookup to first form interaction. This avoids surfacing
+  // console errors for blocked geo APIs on the home page (Lighthouse sees
+  // those network failures even though we swallow them in code).
+  const ensureLocationLookup = () => {
+    if (locationPromiseRef.current) return;
     locationPromiseRef.current = resolveLocation()
       .then((loc) => {
         locationRef.current = loc;
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        // All providers blocked / offline — submit will go through with empty location.
+      });
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -374,7 +333,9 @@ function BookingEnquiry() {
     if (!locationRef.current && locationPromiseRef.current) {
       try {
         await withTimeout(locationPromiseRef.current, 2000);
-      } catch {}
+      } catch {
+        // Location lookup didn't finish in time — send without it.
+      }
     }
     data.set("location", locationRef.current);
 
@@ -456,6 +417,7 @@ function BookingEnquiry() {
 
         <form
           onSubmit={handleSubmit}
+          onFocusCapture={ensureLocationLookup}
           className="relative md:col-span-7 rounded-xs border border-background/15 bg-background/[0.03] p-4 sm:p-6 md:p-10"
         >
           <Field n="01" label="Your name" name="name" placeholder="Sai Karthik" required />

@@ -3,6 +3,24 @@ import portrait from "@/assets/portrait.jpg";
 import { Aperture, Camera, Lens, Sparkle, ArrowUpRight } from "@/components/icons";
 import { absoluteUrl, buildBreadcrumbLD, ldScriptBody } from "@/lib/seo";
 
+const TESTIMONIALS = [
+  {
+    q: "The way he captures light, shades, details, and fleeting moments is quietly magical, often introducing you to a version of yourself you hadn't noticed before. Ganesh has a beautiful way of making people feel seen, both through his lens and in the moments he preserves.",
+    name: "Swetha Krishnaswamy",
+    venue: "Bengaluru, 2025",
+  },
+  // {
+  //   q: "We received the images incredibly fast and could immediately share them with family back home.",
+  //   name: "The Iyer family",
+  //   venue: "Coimbatore, 2025",
+  // },
+  // {
+  //   q: "Ganesh captured moments we didn't even realize were happening. We keep finding new favorites months later.",
+  //   name: "S & K",
+  //   venue: "Pondicherry Mehendi, 2024",
+  // },
+];
+
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
@@ -107,6 +125,34 @@ function AboutPage() {
                 <h3 className="mt-5 font-display text-2xl">{s.t}</h3>
                 <p className="mt-3 text-background/70">{s.b}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border bg-secondary/40">
+        <div className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-20 md:px-10 md:py-28">
+          <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
+            <Sparkle className="h-3.5 w-3.5 text-accent" />
+            Words from clients
+          </p>
+          <div className="mt-10 grid gap-10 md:mt-12 md:grid-cols-3 md:gap-12">
+            {TESTIMONIALS.map((t, i) => (
+              <figure key={i} className="flex flex-col gap-6">
+                <p className="font-display text-xl leading-snug sm:text-2xl md:text-3xl">
+                  <span className="text-accent">“</span>
+                  {t.q}
+                  <span className="text-accent">”</span>
+                </p>
+                <figcaption>
+                  <p className="font-display text-base text-foreground">
+                    {t.name}
+                  </p>
+                  <p className="mt-1 font-mono-label text-xs text-muted-foreground">
+                    {t.venue}
+                  </p>
+                </figcaption>
+              </figure>
             ))}
           </div>
         </div>

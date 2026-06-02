@@ -21,12 +21,13 @@ import {
   ldScriptBody,
 } from "@/lib/seo";
 
-const NAV_ITEMS = [
-  { to: "/", label: "Work" },
+type NavItem = { to: string; label: string; hash?: string };
+
+const NAV_ITEMS: readonly NavItem[] = [
+  { to: "/", label: "Work", hash: "work" },
   { to: "/about", label: "About" },
   { to: "/services", label: "Services" },
-  { to: "/contact", label: "Contact" },
-] as const;
+];
 
 function NotFoundComponent() {
   return (
@@ -155,10 +156,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       } as Record<string, string>,
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      // Non-blocking font CSS load — fetched at low priority and applied after
+      // first paint. Body text falls back to system fonts for ~200ms while the
+      // serif CSS streams in. font-display: swap on the @font-face rules keeps
+      // the swap smooth.
+      {
+        rel: "preload",
+        as: "style",
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@300;400;500;600&display=swap",
+      },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@300;400;500;600&display=swap",
-      },
+        media: "print",
+        onLoad: "this.media='all';this.onload=null;",
+      } as Record<string, string>,
+      // Fallback when JS is disabled
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@300;400;500;600&display=swap",
+        media: "(scripting: none)",
+      } as Record<string, string>,
       {
         rel: "stylesheet",
         href: appCss,
@@ -218,12 +236,30 @@ function SiteHeader() {
     };
   }, [open]);
 
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    item: NavItem,
+  ) => {
+    setOpen(false);
+    // If we're already on the destination page, hijack and smooth-scroll.
+    if (typeof window === "undefined") return;
+    const samePath = window.location.pathname === item.to;
+    if (!samePath) return;
+    e.preventDefault();
+    if (item.hash) {
+      const target = document.getElementById(item.hash);
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-[1800px] items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5 md:px-10">
         <Link
           to="/"
-          onClick={() => setOpen(false)}
+          onClick={(e) => handleNavClick(e, { to: "/", label: "Home" })}
           className="group flex shrink-0 items-baseline gap-2"
         >
           <span className="font-display text-base tracking-tight text-foreground sm:text-xl md:text-2xl">
@@ -235,16 +271,31 @@ function SiteHeader() {
         <nav className="hidden sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-1 sm:text-sm md:gap-2">
           {NAV_ITEMS.map((item) => (
             <Link
-              key={item.to}
+              key={item.label}
               to={item.to}
+              hash={item.hash}
               activeOptions={{ exact: item.to === "/" }}
               activeProps={{ className: "text-foreground" }}
               inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
+              onClick={(e) => handleNavClick(e, item)}
               className="px-2 py-2 font-mono-label transition-colors sm:px-3"
             >
               {item.label}
             </Link>
           ))}
+          <Link
+            to="/contact"
+            hash="booking-enquiry"
+            onClick={() =>
+              handleNavClick(
+                { preventDefault: () => {} } as React.MouseEvent<HTMLAnchorElement>,
+                { to: "/contact", label: "Enquire", hash: "booking-enquiry" },
+              )
+            }
+            className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-mono-label text-xs text-background transition-opacity hover:opacity-90 sm:text-sm"
+          >
+            Enquire <span aria-hidden>↗</span>
+          </Link>
         </nav>
 
         {/* Mobile hamburger */}
@@ -293,20 +344,31 @@ function SiteHeader() {
         <nav className="flex flex-col px-4 py-4">
           {NAV_ITEMS.map((item) => (
             <Link
-              key={item.to}
+              key={item.label}
               to={item.to}
+              hash={item.hash}
               activeOptions={{ exact: item.to === "/" }}
               activeProps={{ className: "text-foreground" }}
               inactiveProps={{
                 className: "text-muted-foreground hover:text-foreground",
               }}
-              onClick={() => setOpen(false)}
-              className="flex items-center justify-between border-b border-border/40 px-2 py-4 font-display text-2xl transition-colors last:border-b-0"
+              onClick={(e) => handleNavClick(e, item)}
+              className="flex items-center justify-between border-b border-border/40 px-2 py-4 font-display text-2xl transition-colors"
             >
               <span>{item.label}</span>
               <span className="font-mono-label text-xs text-accent">↗</span>
             </Link>
           ))}
+          <Link
+            to="/contact"
+            hash="booking-enquiry"
+            onClick={(e) =>
+              handleNavClick(e, { to: "/contact", label: "Enquire", hash: "booking-enquiry" })
+            }
+            className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-4 font-display text-lg text-background"
+          >
+            Enquire <span aria-hidden>↗</span>
+          </Link>
         </nav>
       </div>
     </header>
