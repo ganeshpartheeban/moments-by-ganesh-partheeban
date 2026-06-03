@@ -7,9 +7,14 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
+
+// Lazy — only fetched in browser after first paint, never in SSR bundle.
+const EngagementModal = lazy(() => import("@/components/EngagementModal"));
+const CookieNotice = lazy(() => import("@/components/CookieNotice"));
+const FloatingWhatsApp = lazy(() => import("@/components/FloatingWhatsApp"));
 import { Aperture, Instagram, Mail, MapPin, Film } from "@/components/icons";
 import {
   SITE_URL,
@@ -20,30 +25,62 @@ import {
   buildPersonLD,
   ldScriptBody,
 } from "@/lib/seo";
+import { I18nProvider, useI18n } from "@/lib/i18n";
+import { CASE_STUDIES } from "@/lib/case-studies";
 
-type NavItem = { to: string; label: string; hash?: string };
+type NavItem = { to: string; label: string; tKey: TKey; hash?: string };
+type TKey =
+  | "nav.work"
+  | "nav.about"
+  | "nav.services"
+  | "nav.press"
+  | "nav.enquire";
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { to: "/", label: "Work", hash: "work" },
-  { to: "/about", label: "About" },
-  { to: "/services", label: "Services" },
+  { to: "/", label: "Work", tKey: "nav.work", hash: "work" },
+  { to: "/about", label: "About", tKey: "nav.about" },
+  { to: "/services", label: "Services", tKey: "nav.services" },
+  { to: "/press", label: "Press", tKey: "nav.press" },
 ];
 
 function NotFoundComponent() {
+  return <NotFoundInner />;
+}
+
+function NotFoundInner() {
+  const { t } = useI18n();
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+    <div className="flex min-h-[70vh] items-center justify-center px-6 py-20">
+      <div className="max-w-xl">
+        <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
+          <Aperture className="h-3.5 w-3.5 text-accent" />
+          {t("404.label")}
         </p>
-        <div className="mt-6">
+        <h1 className="mt-6 font-display text-5xl leading-[1] tracking-tight text-balance md:text-7xl">
+          {t("404.headline.l1")}
+          <br />
+          {t("404.headline.l2.before")}{" "}
+          <em className="not-italic text-accent">{t("404.headline.l2.accent")}</em>
+          .
+        </h1>
+        <p className="mt-8 max-w-md text-muted-foreground md:text-lg">
+          {t("404.body")}
+        </p>
+        <div className="mt-10 flex flex-wrap items-center gap-6">
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="group inline-flex items-center gap-3 border-b border-foreground pb-1 font-display text-lg transition-colors hover:border-accent hover:text-accent"
           >
-            Go home
+            {t("404.cta.primary")}
+            <span className="transition-transform group-hover:translate-x-1">
+              →
+            </span>
+          </Link>
+          <Link
+            to="/contact"
+            className="font-mono-label text-muted-foreground hover:text-foreground"
+          >
+            {t("404.cta.secondary")}
           </Link>
         </div>
       </div>
@@ -140,6 +177,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         type: "application/ld+json",
         children: ldScriptBody(buildPersonLD()),
       } as Record<string, string>,
+      // Cloudflare Web Analytics — privacy-friendly, no cookies.
+      // Token comes from CF Dashboard → Web Analytics → site beacon.
+      ...(import.meta.env.VITE_CF_BEACON_TOKEN
+        ? [
+            {
+              src: "https://static.cloudflareinsights.com/beacon.min.js",
+              defer: "",
+              "data-cf-beacon": JSON.stringify({
+                token: import.meta.env.VITE_CF_BEACON_TOKEN,
+              }),
+            } as Record<string, string>,
+          ]
+        : []),
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
@@ -208,6 +258,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <I18nProvider>
+        <RootShellContents />
+      </I18nProvider>
+    </QueryClientProvider>
+  );
+}
+
+function RootShellContents() {
+  return (
+    <>
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
         <main className="flex-1">
@@ -215,12 +275,18 @@ function RootComponent() {
         </main>
         <SiteFooter />
       </div>
-    </QueryClientProvider>
+      <Suspense fallback={null}>
+        <FloatingWhatsApp />
+        <EngagementModal />
+        <CookieNotice />
+      </Suspense>
+    </>
   );
 }
 
 function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!open) return;
@@ -259,42 +325,95 @@ function SiteHeader() {
       <div className="mx-auto flex max-w-[1800px] items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5 md:px-10">
         <Link
           to="/"
-          onClick={(e) => handleNavClick(e, { to: "/", label: "Home" })}
+          onClick={(e) =>
+            handleNavClick(e, { to: "/", label: "Home", tKey: "nav.work" })
+          }
           className="group flex shrink-0 items-baseline gap-2"
         >
           <span className="font-display text-base tracking-tight text-foreground sm:text-xl md:text-2xl">
-            <em className="not-italic text-accent">Moments</em> by Ganesh Partheeban
+            <em className="not-italic text-accent">{t("header.brand.prefix")}</em>{" "}
+            {t("header.brand.suffix")}
           </span>
         </Link>
 
         {/* Desktop nav */}
         <nav className="hidden sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-1 sm:text-sm md:gap-2">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.label}
-              to={item.to}
-              hash={item.hash}
-              activeOptions={{ exact: item.to === "/" }}
-              activeProps={{ className: "text-foreground" }}
-              inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
-              onClick={(e) => handleNavClick(e, item)}
-              className="px-2 py-2 font-mono-label transition-colors sm:px-3"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const isWork = item.to === "/";
+            const link = (
+              <Link
+                key={item.label}
+                to={item.to}
+                hash={item.hash}
+                activeOptions={{ exact: item.to === "/" }}
+                activeProps={{
+                  className: "text-accent border-b border-accent",
+                }}
+                inactiveProps={{
+                  className: "text-muted-foreground hover:text-foreground",
+                }}
+                onClick={(e) => handleNavClick(e, item)}
+                className="px-2 py-2 font-mono-label transition-colors sm:px-3"
+              >
+                {t(item.tKey)}
+              </Link>
+            );
+            if (isWork && CASE_STUDIES.length > 0) {
+              return (
+                <div key={item.label} className="group relative">
+                  {link}
+                  <div className="invisible absolute left-1/2 top-full z-40 mt-1 min-w-[220px] -translate-x-1/2 translate-y-1 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                    <div className="overflow-hidden rounded-sm border border-border bg-background shadow-lg">
+                      <p className="border-b border-border bg-secondary/40 px-4 py-2 font-mono-label text-[10px] text-muted-foreground">
+                        Stories
+                      </p>
+                      <ul>
+                        {CASE_STUDIES.map((s) => (
+                          <li key={s.slug}>
+                            <Link
+                              to="/work/$slug" params={{ slug: s.slug }}
+                              onClick={(e) => {
+                                setOpen(false);
+                                // Blur so the focus-within state releases
+                                // and the dropdown collapses immediately.
+                                (e.currentTarget as HTMLAnchorElement).blur();
+                              }}
+                              className="block px-4 py-3 transition-colors hover:bg-accent/[0.06]"
+                            >
+                              <p className="font-display text-base text-foreground">
+                                {s.title}
+                              </p>
+                              <p className="mt-0.5 font-mono-label text-[10px] text-muted-foreground">
+                                {s.location} · {s.date}
+                              </p>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            return link;
+          })}
           <Link
             to="/contact"
             hash="booking-enquiry"
             onClick={() =>
               handleNavClick(
                 { preventDefault: () => {} } as React.MouseEvent<HTMLAnchorElement>,
-                { to: "/contact", label: "Enquire", hash: "booking-enquiry" },
+                {
+                  to: "/contact",
+                  label: "Enquire",
+                  tKey: "nav.enquire",
+                  hash: "booking-enquiry",
+                },
               )
             }
             className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-mono-label text-xs text-background transition-opacity hover:opacity-90 sm:text-sm"
           >
-            Enquire <span aria-hidden>↗</span>
+            {t("nav.enquire")} <span aria-hidden>↗</span>
           </Link>
         </nav>
 
@@ -343,31 +462,57 @@ function SiteHeader() {
       >
         <nav className="flex flex-col px-4 py-4">
           {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.label}
-              to={item.to}
-              hash={item.hash}
-              activeOptions={{ exact: item.to === "/" }}
-              activeProps={{ className: "text-foreground" }}
-              inactiveProps={{
-                className: "text-muted-foreground hover:text-foreground",
-              }}
-              onClick={(e) => handleNavClick(e, item)}
-              className="flex items-center justify-between border-b border-border/40 px-2 py-4 font-display text-2xl transition-colors"
-            >
-              <span>{item.label}</span>
-              <span className="font-mono-label text-xs text-accent">↗</span>
-            </Link>
+            <div key={item.label}>
+              <Link
+                to={item.to}
+                hash={item.hash}
+                activeOptions={{ exact: item.to === "/" }}
+                activeProps={{ className: "text-accent" }}
+                inactiveProps={{
+                  className: "text-muted-foreground hover:text-foreground",
+                }}
+                onClick={(e) => handleNavClick(e, item)}
+                className="flex items-center justify-between border-b border-border/40 px-2 py-4 font-display text-2xl transition-colors"
+              >
+                <span>{t(item.tKey)}</span>
+                <span className="font-mono-label text-xs text-accent">↗</span>
+              </Link>
+              {item.to === "/" && CASE_STUDIES.length > 0 && (
+                <ul className="border-b border-border/40 bg-secondary/30 py-1">
+                  {CASE_STUDIES.map((s) => (
+                    <li key={s.slug}>
+                      <Link
+                        to="/work/$slug" params={{ slug: s.slug }}
+                        onClick={() => setOpen(false)}
+                        className="block px-6 py-3 text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <p className="font-display text-base text-foreground">
+                          {s.title}
+                        </p>
+                        <p className="mt-0.5 font-mono-label text-[10px]">
+                          {s.location} · {s.date}
+                        </p>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           ))}
           <Link
             to="/contact"
             hash="booking-enquiry"
             onClick={(e) =>
-              handleNavClick(e, { to: "/contact", label: "Enquire", hash: "booking-enquiry" })
+              handleNavClick(e, {
+                to: "/contact",
+                label: "Enquire",
+                tKey: "nav.enquire",
+                hash: "booking-enquiry",
+              })
             }
             className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-4 font-display text-lg text-background"
           >
-            Enquire <span aria-hidden>↗</span>
+            {t("nav.enquire")} <span aria-hidden>↗</span>
           </Link>
         </nav>
       </div>
@@ -376,6 +521,7 @@ function SiteHeader() {
 }
 
 function SiteFooter() {
+  const { t } = useI18n();
   return (
     <footer className="mt-32 border-t border-border bg-background">
       <div className="mx-auto max-w-[1800px] px-4 py-12 sm:px-6 md:px-10 md:py-24">
@@ -434,11 +580,15 @@ function SiteFooter() {
           <div className="md:col-span-3">
             <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
               <MapPin className="h-3.5 w-3.5 text-accent" />
-              Coverage
+              {t("footer.coverage")}
             </p>
-            <p className="mt-6 text-foreground">Available across India</p>
+            <p className="mt-6 text-foreground">{t("footer.coverage.area")}</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Travel and stay are billed separately from event coverage.
+              {t("footer.coverage.note")}
+            </p>
+            <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/[0.06] px-3 py-1 font-mono-label text-xs text-accent">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+              {t("footer.booking.badge")}
             </p>
           </div>
         </div>
@@ -452,7 +602,11 @@ function SiteFooter() {
             Fast delivery
           </p>
         </div>
+        <p className="mt-6 text-center font-mono-label text-[10px] text-muted-foreground/70">
+          {t("footer.made")}
+        </p>
       </div>
     </footer>
   );
 }
+

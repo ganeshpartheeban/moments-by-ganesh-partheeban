@@ -108,3 +108,14 @@ export function ArrowUpRight(props: IconProps) {
     </svg>
   );
 }
+
+export function WhatsApp(props: IconProps) {
+  // Simplified speech-bubble + phone shape. Recognizable as a chat/WA icon
+  // without using the trademarked green.
+  return (
+    <svg {...base} {...props} viewBox="0 0 24 24">
+      <path d="M3 21l1.7-5.2A8.5 8.5 0 1 1 8.2 19.3L3 21z" />
+      <path d="M8 11.5c0 2.5 2 4.5 4.5 4.5l1.5-1.5c-1-0.3-1.8-0.9-2.4-1.7-0.6-0.8-1-1.7-1-2.7L12 8.5C9.5 8.5 8 9.5 8 11.5z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

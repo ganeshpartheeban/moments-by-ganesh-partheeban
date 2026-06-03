@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { GALLERY, formatExif, type Photo } from "@/lib/gallery";
+import { PHOTO_META } from "@/lib/photo-meta";
 
 const thumbUrl = (i: number) => `/gallery-thumbs/g${i + 1}-1000.jpg`;
 const fullBase = (i: number) => `/gallery-full/g${i + 1}`;
@@ -64,6 +65,16 @@ export default function Lightbox({
   if (!open || index === null) return null;
   const p: Photo = GALLERY[index];
   const exif = formatExif(p);
+  const meta = PHOTO_META[index + 1];
+  const metaLine = meta
+    ? [
+        meta.featuring && `featuring ${meta.featuring}`,
+        [meta.venue, meta.location].filter(Boolean).join(", "),
+        meta.date,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
 
   return (
     <div
@@ -72,7 +83,13 @@ export default function Lightbox({
       aria-label={`Photograph ${index + 1} of ${GALLERY.length}`}
       className="fixed inset-0 z-50 flex flex-col bg-black/95 text-white backdrop-blur-sm"
       onClick={onClose}
-      style={{ willChange: "opacity" }}
+      style={{
+        willChange: "opacity",
+        paddingTop: "env(safe-area-inset-top, 0px)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        paddingLeft: "env(safe-area-inset-left, 0px)",
+        paddingRight: "env(safe-area-inset-right, 0px)",
+      }}
     >
       <div className="flex items-center justify-end px-4 py-4 md:px-8">
         <button
@@ -95,7 +112,7 @@ export default function Lightbox({
           type="button"
           onClick={() => go(-1)}
           aria-label="Previous photograph"
-          className="absolute left-1 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-lg text-white/90 transition-colors hover:border-white hover:text-white sm:left-3 sm:h-12 sm:w-12 md:left-6"
+          className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-lg text-white/90 transition-colors hover:border-white hover:text-white sm:left-3 sm:h-12 sm:w-12 md:left-6"
         >
           <span aria-hidden>←</span>
         </button>
@@ -123,18 +140,27 @@ export default function Lightbox({
           type="button"
           onClick={() => go(1)}
           aria-label="Next photograph"
-          className="absolute right-1 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-lg text-white/90 transition-colors hover:border-white hover:text-white sm:right-3 sm:h-12 sm:w-12 md:right-6"
+          className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-lg text-white/90 transition-colors hover:border-white hover:text-white sm:right-3 sm:h-12 sm:w-12 md:right-6"
         >
           <span aria-hidden>→</span>
         </button>
       </div>
 
       <div
-        className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-4 pb-6 font-mono-label text-xs text-white/70 md:px-8"
+        className="flex flex-col gap-1 px-4 pb-6 font-mono-label text-xs text-white/70 md:px-8"
         onClick={(e) => e.stopPropagation()}
       >
+        {meta && (
+          <p className="font-display text-sm text-white sm:text-base">
+            {meta.title}
+            {meta.detail && (
+              <span className="text-white/70"> — {meta.detail}</span>
+            )}
+          </p>
+        )}
+        {metaLine && <span className="text-white/70">{metaLine}</span>}
         {(exif || p.camera) && (
-          <span>
+          <span className="text-white/50">
             {exif}
             {exif && p.camera ? " · " : ""}
             {p.camera}

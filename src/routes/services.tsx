@@ -8,6 +8,7 @@ import {
   ldScriptBody,
 } from "@/lib/seo";
 import { FORM_ENDPOINT, FORM_TOKEN } from "@/lib/form-config";
+import { useI18n } from "@/lib/i18n";
 
 const SERVICE_LIST_FOR_SEO = [
   { name: "Candid Wedding Photography", description: "Full-day candid coverage of weddings and wedding-related events across India." },
@@ -141,17 +142,21 @@ const services: Service[] = [
 ];
 
 function ServicesPage() {
+  const { t } = useI18n();
   return (
     <div>
       <section className="mx-auto max-w-[1800px] px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-12 md:px-10 md:pt-24 md:pb-20">
         <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
           <Camera className="h-3.5 w-3.5 text-accent" />
-          Services
+          {t("services.label")}
         </p>
         <h1 className="mt-6 max-w-4xl font-display text-4xl leading-[1] tracking-tight text-balance sm:text-5xl md:text-7xl lg:text-8xl">
-          One photographer.
+          {t("services.headline.l1")}
           <br />
-          <em className="not-italic text-accent">Every</em> meaningful moment.
+          <em className="not-italic text-accent">
+            {t("services.headline.l2.accent")}
+          </em>{" "}
+          {t("services.headline.l2.before")}
         </h1>
       </section>
 
@@ -176,7 +181,7 @@ function ServicesPage() {
                   {s.comingSoon && (
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/60 bg-accent/10 px-3 py-1 font-mono-label text-xs text-accent">
                       <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                      Coming soon
+                      {t("services.comingSoon")}
                     </span>
                   )}
                 </h2>
@@ -202,7 +207,7 @@ function ServicesPage() {
                       href={`/contact?eventType=${encodeURIComponent(s.eventType)}#booking-enquiry`}
                       className="group inline-flex items-center gap-2 border-b border-foreground pb-1 font-mono-label text-foreground transition-colors hover:text-accent hover:border-accent"
                     >
-                      Enquire
+                      {t("services.enquire")}
                       <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                     </a>
                   )}
@@ -210,11 +215,16 @@ function ServicesPage() {
               </div>
             </article>
           ))}
-          <p className="mx-auto max-w-2xl py-8 text-center font-mono-label text-xs leading-relaxed text-muted-foreground">
-            Pricing is event-based, not hourly. For destination events, travel
-            and stay are quoted transparently alongside the coverage. Bookings
-            confirmed by date availability.
-          </p>
+          <div className="mx-auto max-w-2xl py-8 text-center">
+            <p className="font-display text-2xl text-foreground sm:text-3xl">
+              {t("services.pricing.from")}{" "}
+              <span className="text-accent">₹10,000</span>{" "}
+              {t("services.pricing.unit")}
+            </p>
+            <p className="mt-4 font-mono-label text-xs leading-relaxed text-muted-foreground">
+              {t("services.pricing.note")}
+            </p>
+          </div>
         </div>
       </section>
 
@@ -224,23 +234,22 @@ function ServicesPage() {
           <div className="md:col-span-5">
             <p className="inline-flex items-center gap-2 font-mono-label text-background/60">
               <Film className="h-3.5 w-3.5 text-accent" />
-              Delivery
+              {t("services.delivery.label")}
             </p>
             <h2 className="mt-6 font-display text-4xl leading-[1] tracking-tight text-balance sm:text-5xl md:text-6xl lg:text-7xl">
-              Fast and shareable.
+              {t("services.delivery.title")}
             </h2>
           </div>
           <div className="space-y-6 md:col-span-7 md:pl-12">
             <p className="text-lg leading-relaxed text-background/80">
-              In today's world, moments are meant to be shared instantly with loved
-              ones. My workflow is built so couples and families can relive and
-              share their memories as soon as possible after the event.
+              {t("services.delivery.body")}
             </p>
             <div className="rounded-none border border-background/20 p-6 md:p-8">
-              <p className="font-mono-label text-background/60">Please note</p>
+              <p className="font-mono-label text-background/60">
+                {t("services.delivery.note.label")}
+              </p>
               <p className="mt-3 text-background/90">
-                All deliverables are digital. I do not provide printed albums, hard
-                copies, or physical photo books.
+                {t("services.delivery.note.body")}
               </p>
             </div>
           </div>
@@ -252,17 +261,17 @@ function ServicesPage() {
         <div>
           <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
             <Aperture className="h-3.5 w-3.5 text-accent" />
-            Working style
+            {t("services.working.label")}
           </p>
           <h2 className="mt-6 font-display text-3xl leading-[1.05] tracking-tight text-balance sm:text-4xl md:text-5xl">
-            I work quietly inside the event.
+            {t("services.working.title")}
           </h2>
           <ul className="mt-8 space-y-4 text-muted-foreground">
             {[
-              "Observing interactions",
-              "Anticipating emotions",
-              "Capturing genuine reactions",
-              "Documenting meaningful moments naturally",
+              t("services.working.01"),
+              t("services.working.02"),
+              t("services.working.03"),
+              t("services.working.04"),
             ].map((i) => (
               <li key={i} className="flex gap-3">
                 <span className="text-accent">·</span>
@@ -274,21 +283,19 @@ function ServicesPage() {
         <div>
           <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
             <MapPin className="h-3.5 w-3.5 text-accent" />
-            Coverage area
+            {t("services.coverage.label")}
           </p>
           <h2 className="mt-6 font-display text-3xl leading-[1.05] tracking-tight text-balance sm:text-4xl md:text-5xl">
-            Available across India.
+            {t("services.coverage.title")}
           </h2>
           <p className="mt-8 text-muted-foreground">
-            I accept bookings from all over the country. Pricing is event-based
-            rather than hourly. Travel and stay are billed separately from the
-            base event coverage.
+            {t("services.coverage.body")}
           </p>
           <Link
             to="/contact"
             className="mt-10 inline-flex items-center gap-3 border-b border-foreground pb-1 font-display text-lg"
           >
-            Check date availability <span>→</span>
+            {t("services.coverage.cta")} <span>→</span>
           </Link>
         </div>
       </section>
@@ -337,6 +344,7 @@ async function lookupLocation(): Promise<string> {
 }
 
 function NotifyForm() {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<NotifyStatus>("idle");
   const locationPromiseRef = useRef<Promise<string> | null>(null);
@@ -420,7 +428,7 @@ function NotifyForm() {
         disabled={status === "sending"}
         className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 font-mono-label text-xs text-background transition-opacity hover:opacity-90 disabled:opacity-60"
       >
-        {status === "sending" ? "…" : "Notify me ↗"}
+        {status === "sending" ? "…" : `${t("services.notifyMe")} ↗`}
       </button>
       {status === "error" && (
         <span className="basis-full font-mono-label text-xs text-red-500">

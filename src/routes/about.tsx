@@ -1,7 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import portrait from "@/assets/portrait.jpg";
 import { Aperture, Camera, Lens, Sparkle, ArrowUpRight } from "@/components/icons";
-import { absoluteUrl, buildBreadcrumbLD, ldScriptBody } from "@/lib/seo";
+import {
+  absoluteUrl,
+  buildBreadcrumbLD,
+  buildReviewsLD,
+  ldScriptBody,
+} from "@/lib/seo";
+import { FORM_ENDPOINT, FORM_TOKEN } from "@/lib/form-config";
+import { useI18n } from "@/lib/i18n";
+
+type Testimonial = { q: string; name: string; venue: string };
 
 const TESTIMONIALS = [
   {
@@ -9,16 +19,16 @@ const TESTIMONIALS = [
     name: "Swetha Krishnaswamy",
     venue: "Bengaluru, 2025",
   },
-  // {
-  //   q: "We received the images incredibly fast and could immediately share them with family back home.",
-  //   name: "The Iyer family",
-  //   venue: "Coimbatore, 2025",
-  // },
-  // {
-  //   q: "Ganesh captured moments we didn't even realize were happening. We keep finding new favorites months later.",
-  //   name: "S & K",
-  //   venue: "Pondicherry Mehendi, 2024",
-  // },
+  {
+    q: "Ganesh managed to capture just more than the bride and groom. He captured what the other photographers missed, the emotions and moments of our friends and family. I've been sharing the pictures taken by Ganesh to everyone rather than the ones taken by the official photographers, which says a lot about how much we love his work.",
+    name: "The Damala Family",
+    venue: "Bengaluru, 2025",
+  },
+  {
+    q: "There is something more to Ganesh's clicks than one sees at first glance. Every picture tells a story, and his work has a unique ability to transport you back to that moment, making you relive the joy, laughter, and love all over again.",
+    name: "Vignesh Kavikumar",
+    venue: "Chennai, 2024",
+  },
 ];
 
 export const Route = createFileRoute("/about")({
@@ -49,44 +59,40 @@ export const Route = createFileRoute("/about")({
           ]),
         ),
       } as Record<string, string>,
+      {
+        type: "application/ld+json",
+        children: ldScriptBody(buildReviewsLD(TESTIMONIALS)),
+      } as Record<string, string>,
     ],
   }),
   component: AboutPage,
 });
 
 function AboutPage() {
+  const { t } = useI18n();
   return (
     <div>
       <section className="mx-auto max-w-[1800px] px-4 pt-8 pb-12 sm:px-6 sm:pt-12 sm:pb-16 md:px-10 md:pt-14 md:pb-24">
         <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
           <Aperture className="h-3.5 w-3.5 text-accent" />
-          About
+          {t("about.label")}
         </p>
         <div className="mt-8 grid items-start gap-10 md:grid-cols-12 md:gap-16">
           <div className="md:col-span-7">
             <h1 className="font-display text-4xl leading-[1] tracking-tight text-balance sm:text-5xl md:text-7xl lg:text-8xl">
-              I believe the
+              {t("about.headline.l1")}
               <br />
-              best photographs
+              {t("about.headline.l2")}
               <br />
-              happen <em className="not-italic text-accent">naturally</em>.
+              {t("about.headline.l3.before")}{" "}
+              <em className="not-italic text-accent">
+                {t("about.headline.l3.accent")}
+              </em>
+              .
             </h1>
             <div className="mt-12 space-y-6 text-lg leading-relaxed text-foreground md:max-w-xl">
-              <p>
-                Hi, I'm Ganesh Partheeban, a candid photographer based in India.
-                I cover a wide range of events: weddings and family functions,
-                concerts and live shows, corporate launches, and behind-the-scenes
-                work. I focus on capturing authentic human moments: laughter
-                between friends, quiet glances, performers in their element,
-                and the atmosphere that makes each event its own.
-              </p>
-              <p className="text-muted-foreground">
-                I work independently at events, blending into the crowd and
-                documenting moments naturally instead of interrupting them. Before
-                every event, I spend time understanding the important people
-                involved: family members, close friends, key rituals, and personal
-                dynamics, so I can anticipate the moments that matter.
-              </p>
+              <p>{t("about.body.p1")}</p>
+              <p className="text-muted-foreground">{t("about.body.p2")}</p>
             </div>
           </div>
           <div className="self-start md:col-span-5">
@@ -100,7 +106,7 @@ function AboutPage() {
               />
               <figcaption className="mt-3 inline-flex items-center gap-2 font-mono-label text-muted-foreground">
                 <Camera className="h-3.5 w-3.5 text-accent" />
-                Ganesh Partheeban · Tamil Nadu, India
+                {t("about.portrait.caption")}
               </figcaption>
             </figure>
           </div>
@@ -111,13 +117,13 @@ function AboutPage() {
         <div className="mx-auto max-w-[1800px] px-4 py-16 sm:px-6 sm:py-20 md:px-10 md:py-28">
           <p className="inline-flex items-center gap-2 font-mono-label text-background/60">
             <Aperture className="h-3.5 w-3.5 text-accent" />
-            How I work
+            {t("about.howIWork.label")}
           </p>
           <div className="mt-10 grid gap-10 sm:grid-cols-2 md:grid-cols-3 md:gap-12">
             {[
-              { n: "I.", t: "Observe honestly", b: "Stay quiet. Watch first. Wait for the moment instead of building it." },
-              { n: "II.", t: "Interact comfortably", b: "Earn ease so people forget the camera is there. The frame relaxes with them." },
-              { n: "III.", t: "Capture as it unfolds", b: "Document the event the way it actually happens. Minimal interference, no styling." },
+              { n: "I.", t: t("about.howIWork.01.t"), b: t("about.howIWork.01.b") },
+              { n: "II.", t: t("about.howIWork.02.t"), b: t("about.howIWork.02.b") },
+              { n: "III.", t: t("about.howIWork.03.t"), b: t("about.howIWork.03.b") },
             ].map((s) => (
               <div key={s.n} className="relative">
                 <span className="absolute -left-0 top-0 h-px w-8 bg-accent" />
@@ -130,30 +136,26 @@ function AboutPage() {
         </div>
       </section>
 
-      <section className="border-b border-border bg-secondary/40">
+      <section
+        id="testimonials"
+        className="scroll-mt-20 border-b border-border bg-secondary/40"
+      >
         <div className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-20 md:px-10 md:py-28">
-          <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
-            <Sparkle className="h-3.5 w-3.5 text-accent" />
-            Words from clients
-          </p>
-          <div className="mt-10 grid gap-10 md:mt-12 md:grid-cols-3 md:gap-12">
-            {TESTIMONIALS.map((t, i) => (
-              <figure key={i} className="flex flex-col gap-6">
-                <p className="font-display text-xl leading-snug sm:text-2xl md:text-3xl">
-                  <span className="text-accent">“</span>
-                  {t.q}
-                  <span className="text-accent">”</span>
-                </p>
-                <figcaption>
-                  <p className="font-display text-base text-foreground">
-                    {t.name}
-                  </p>
-                  <p className="mt-1 font-mono-label text-xs text-muted-foreground">
-                    {t.venue}
-                  </p>
-                </figcaption>
-              </figure>
-            ))}
+          <div className="grid gap-12 md:grid-cols-[3fr_2fr] md:gap-16">
+            <div>
+              <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
+                <Sparkle className="h-3.5 w-3.5 text-accent" />
+                {t("about.testimonials.label")}
+              </p>
+              <TestimonialCarousel items={TESTIMONIALS} />
+            </div>
+            <div className="border-t border-border pt-12 md:border-l md:border-t-0 md:pl-12 md:pt-0">
+              <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
+                <Sparkle className="h-3.5 w-3.5 text-accent" />
+                {t("about.testimonials.shareYours")}
+              </p>
+              <TestimonialForm />
+            </div>
           </div>
         </div>
       </section>
@@ -163,15 +165,15 @@ function AboutPage() {
           <div className="md:col-span-4">
             <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
               <Lens className="h-3.5 w-3.5 text-accent" />
-              Specialization
+              {t("about.specialization.label")}
             </p>
           </div>
           <ul className="space-y-px md:col-span-8">
             {[
-              "Natural expressions",
-              "Real emotions",
-              "Minimal interference",
-              "Timeless visual storytelling",
+              t("about.specialization.01"),
+              t("about.specialization.02"),
+              t("about.specialization.03"),
+              t("about.specialization.04"),
             ].map((item, i) => (
               <li
                 key={item}
@@ -191,11 +193,255 @@ function AboutPage() {
             to="/contact"
             className="group inline-flex items-center gap-2 border-b border-foreground pb-1 font-display text-lg transition-colors hover:border-accent hover:text-accent"
           >
-            Start a conversation
+            {t("about.cta")}
             <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
         </div>
       </section>
+    </div>
+  );
+}
+
+const CAROUSEL_INTERVAL_MS = 15_000;
+
+function TestimonialCarousel({ items }: { items: Testimonial[] }) {
+  const [index, setIndex] = useState(0);
+  const count = items.length;
+
+  // Auto-advance to the next testimonial every 15s. The timer is keyed on
+  // `index` so any manual nav (prev/next) resets the clock — visitors don't
+  // get yanked forward immediately after clicking back.
+  useEffect(() => {
+    if (count <= 1) return;
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setTimeout(() => {
+      setIndex((i) => (i + 1) % count);
+    }, CAROUSEL_INTERVAL_MS);
+    return () => window.clearTimeout(id);
+  }, [count, index]);
+
+  if (count === 0) return null;
+
+  const go = (delta: number) =>
+    setIndex((i) => (i + delta + count) % count);
+
+  return (
+    <div className="mt-10 md:mt-12">
+      <div className="relative overflow-hidden">
+        <div
+          className="flex transition-transform duration-500 ease-out"
+          style={{ transform: `translateX(calc(${-index * 80}% + 10%))` }}
+        >
+          {items.map((t, i) => {
+            const active = i === index;
+            return (
+              <figure
+                key={i}
+                aria-hidden={!active}
+                className="w-[80%] flex-shrink-0 px-2 sm:px-4"
+              >
+                <div
+                  className={
+                    "flex flex-col gap-6 border-l-2 bg-background p-6 transition-opacity duration-500 sm:p-8 " +
+                    (active
+                      ? "border-accent opacity-100"
+                      : "border-border opacity-40")
+                  }
+                >
+                  <p className="font-display text-lg leading-snug sm:text-xl md:text-2xl">
+                    <span className="text-accent">“</span>
+                    {t.q}
+                    <span className="text-accent">”</span>
+                  </p>
+                  <figcaption>
+                    <p className="font-display text-base text-foreground">{t.name}</p>
+                    <p className="mt-1 font-mono-label text-xs text-muted-foreground">
+                      {t.venue}
+                    </p>
+                  </figcaption>
+                </div>
+              </figure>
+            );
+          })}
+        </div>
+      </div>
+
+      {count > 1 && (
+        <div className="mt-6 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            aria-label="Previous testimonial"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:border-accent hover:text-accent"
+          >
+            <span aria-hidden>←</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => go(1)}
+            aria-label="Next testimonial"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:border-accent hover:text-accent"
+          >
+            <span aria-hidden>→</span>
+          </button>
+          <span className="font-mono-label text-xs text-muted-foreground">
+            {String(index + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type TestimonialFormStatus = "idle" | "sending" | "sent" | "error";
+
+function TestimonialForm() {
+  const { t } = useI18n();
+  const [status, setStatus] = useState<TestimonialFormStatus>("idle");
+  const [errorMsg, setErrorMsg] = useState<string>("");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (status === "sending" || status === "sent") return;
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const name = String(fd.get("name") ?? "").trim();
+    const venue = String(fd.get("venue") ?? "").trim();
+    const message = String(fd.get("message") ?? "").trim();
+
+    if (!name || !message) {
+      setErrorMsg("Please add your name and a few words.");
+      setStatus("error");
+      return;
+    }
+    if (message.length > 1000) {
+      setErrorMsg("Please keep it under 1000 characters.");
+      setStatus("error");
+      return;
+    }
+
+    // Unique placeholder email per testimonial keeps the per-email rate limit
+    // (intended for booking enquiries) from blocking legitimate testimonials.
+    const placeholderEmail = `testimonial-${Date.now()}@noreply.ganeshpartheeban.in`;
+    const data = new FormData();
+    data.set("name", name);
+    data.set("email", placeholderEmail);
+    data.set("eventType", "Testimonial");
+    data.set("city", venue);
+    data.set("notes", message);
+    data.set("token", FORM_TOKEN);
+
+    setStatus("sending");
+    try {
+      await fetch(FORM_ENDPOINT, {
+        method: "POST",
+        body: data,
+        mode: "no-cors",
+      });
+      setStatus("sent");
+      form.reset();
+    } catch {
+      setErrorMsg("Couldn't send right now. Please try again later.");
+      setStatus("error");
+    }
+  };
+
+  if (status === "sent") {
+    return (
+      <p className="mt-10 max-w-sm font-display text-xl leading-snug text-foreground md:mt-12 md:text-2xl">
+        <span className="text-accent">“</span>
+        {t("about.testimonialForm.thanks")}
+        <span className="text-accent">”</span>
+      </p>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="mt-10 space-y-5 md:mt-12"
+      noValidate
+    >
+      <TField
+        label={t("about.testimonialForm.name")}
+        name="name"
+        placeholder="Sai Karthik"
+        required
+        onInput={() => status === "error" && setStatus("idle")}
+      />
+      <TField
+        label={t("about.testimonialForm.venue")}
+        name="venue"
+        placeholder="Bengaluru, 2026"
+      />
+      <div className="border-b border-border pb-2">
+        <label
+          htmlFor="testimonial-message"
+          className="font-mono-label text-xs text-muted-foreground"
+        >
+          {t("about.testimonialForm.message")}
+        </label>
+        <textarea
+          id="testimonial-message"
+          name="message"
+          rows={4}
+          required
+          placeholder={t("about.testimonialForm.placeholder")}
+          onInput={() => status === "error" && setStatus("idle")}
+          className="mt-2 w-full resize-y bg-transparent text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={status === "sending"}
+        className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 font-mono-label text-xs text-background transition-opacity hover:opacity-90 disabled:opacity-60"
+      >
+        {status === "sending"
+          ? t("about.testimonialForm.sending")
+          : t("about.testimonialForm.submit")}
+        <ArrowUpRight className="h-3.5 w-3.5" />
+      </button>
+
+      {status === "error" && (
+        <p className="font-mono-label text-xs text-red-500">{errorMsg}</p>
+      )}
+    </form>
+  );
+}
+
+function TField({
+  label,
+  name,
+  placeholder,
+  required,
+  onInput,
+}: {
+  label: string;
+  name: string;
+  placeholder?: string;
+  required?: boolean;
+  onInput?: () => void;
+}) {
+  return (
+    <div className="border-b border-border pb-2">
+      <label
+        htmlFor={`tf-${name}`}
+        className="font-mono-label text-xs text-muted-foreground"
+      >
+        {label}
+      </label>
+      <input
+        id={`tf-${name}`}
+        name={name}
+        type="text"
+        required={required}
+        placeholder={placeholder}
+        autoComplete="off"
+        onInput={onInput}
+        className="mt-2 w-full bg-transparent text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+      />
     </div>
   );
 }

@@ -150,6 +150,77 @@ export function buildServiceListLD(
   };
 }
 
+export function buildImageGalleryLD(
+  images: Array<{
+    url: string;
+    width: number;
+    height: number;
+    alt?: string;
+    caption?: string;
+    contentLocation?: string;
+    dateCreated?: string;
+  }>,
+  opts?: { name?: string; description?: string; url?: string },
+): StructuredData {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ImageGallery",
+    name: opts?.name ?? `${SITE_NAME} — Selected Frames`,
+    ...(opts?.description ? { description: opts.description } : {}),
+    ...(opts?.url ? { url: absoluteUrl(opts.url) } : {}),
+    creator: { "@id": `${SITE_URL}#person` },
+    image: images.map((img) => ({
+      "@type": "ImageObject",
+      contentUrl: absoluteUrl(img.url),
+      thumbnailUrl: absoluteUrl(img.url),
+      width: img.width,
+      height: img.height,
+      name: img.alt ?? "Candid photograph",
+      ...(img.caption ? { caption: img.caption } : {}),
+      ...(img.contentLocation
+        ? { contentLocation: { "@type": "Place", name: img.contentLocation } }
+        : {}),
+      ...(img.dateCreated ? { dateCreated: img.dateCreated } : {}),
+      creditText: SITE_NAME,
+      creator: { "@id": `${SITE_URL}#person` },
+      copyrightNotice: `© ${new Date().getFullYear()} ${PHOTOGRAPHER.name}`,
+      acquireLicensePage: absoluteUrl("/contact"),
+      license: absoluteUrl("/contact"),
+    })),
+  };
+}
+
+export function buildReviewsLD(
+  reviews: Array<{ q: string; name: string; venue?: string }>,
+): StructuredData {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "@id": `${SITE_URL}#org-reviews`,
+    name: SITE_NAME,
+    url: SITE_URL,
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "5",
+      bestRating: "5",
+      worstRating: "5",
+      reviewCount: String(reviews.length),
+    },
+    review: reviews.map((r) => ({
+      "@type": "Review",
+      reviewBody: r.q,
+      author: { "@type": "Person", name: r.name },
+      ...(r.venue ? { locationCreated: r.venue } : {}),
+      reviewRating: {
+        "@type": "Rating",
+        ratingValue: "5",
+        bestRating: "5",
+      },
+      itemReviewed: { "@id": `${SITE_URL}#org` },
+    })),
+  };
+}
+
 export function buildFAQLD(faqs: Array<{ q: string; a: string }>): StructuredData {
   return {
     "@context": "https://schema.org",

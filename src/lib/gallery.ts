@@ -1,4 +1,7 @@
 
+import { CASE_STUDIES } from "./case-studies";
+import { PHOTO_META, formatPhotoMetaAlt } from "./photo-meta";
+
 export type Photo = {
   src: string;
   alt: string;
@@ -421,6 +424,39 @@ export const GALLERY: Photo[] = [
     shutter: shutter(0.00625),
   }),
 ];
+
+// Override the default "Frame NN" alts with event-aware text. Priority:
+//   1. PHOTO_META (rich per-frame metadata) — wins when present
+//   2. CASE_STUDIES sequence membership — story title/location/date
+//   3. Generic fallback
+// Boosts SEO + lightbox / screen-reader context.
+{
+  const storyByNum = new Map<
+    number,
+    { title: string; location: string; date: string }
+  >();
+  for (const s of CASE_STUDIES) {
+    for (const n of s.sequence) {
+      storyByNum.set(n, {
+        title: s.title,
+        location: s.location,
+        date: s.date,
+      });
+    }
+  }
+  GALLERY.forEach((p, i) => {
+    const num = i + 1;
+    const photoMeta = PHOTO_META[num];
+    if (photoMeta) {
+      p.alt = formatPhotoMetaAlt(photoMeta);
+      return;
+    }
+    const story = storyByNum.get(num);
+    p.alt = story
+      ? `${story.title} · ${story.location}, ${story.date}`
+      : "Candid photograph by Ganesh Partheeban";
+  });
+}
 
 export const GALLERY_COUNT = GALLERY.length;
 
