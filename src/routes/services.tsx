@@ -145,7 +145,7 @@ function ServicesPage() {
   const { t } = useI18n();
   return (
     <div>
-      <section className="mx-auto max-w-[1800px] px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-12 md:px-10 md:pt-24 md:pb-20">
+      <section className="mx-auto max-w-[1800px] px-4 pt-12 pb-10 sm:px-6 sm:pt-12 sm:pb-10 md:px-10 md:pt-18 md:pb-14">
         <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
           <Camera className="h-3.5 w-3.5 text-accent" />
           {t("services.label")}
@@ -230,7 +230,7 @@ function ServicesPage() {
 
       {/* Delivery */}
       <section className="bg-foreground text-background">
-        <div className="mx-auto grid max-w-[1800px] gap-10 px-4 py-14 sm:px-6 sm:py-20 md:grid-cols-12 md:gap-12 md:px-10 md:py-32">
+        <div className="mx-auto grid max-w-[1800px] gap-10 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-12 md:gap-12 md:px-10 md:py-20">
           <div className="md:col-span-5">
             <p className="inline-flex items-center gap-2 font-mono-label text-background/60">
               <Film className="h-3.5 w-3.5 text-accent" />
@@ -257,7 +257,7 @@ function ServicesPage() {
       </section>
 
       {/* Approach + Coverage */}
-      <section className="mx-auto grid max-w-[1800px] gap-10 px-4 py-14 sm:px-6 sm:py-20 md:grid-cols-2 md:gap-12 md:px-10 md:py-32">
+      <section className="mx-auto grid max-w-[1800px] gap-10 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-2 md:gap-12 md:px-10 md:py-20">
         <div>
           <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
             <Aperture className="h-3.5 w-3.5 text-accent" />

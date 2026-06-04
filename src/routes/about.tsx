@@ -114,7 +114,7 @@ function AboutPage() {
       </section>
 
       <section className="bg-foreground text-background">
-        <div className="mx-auto max-w-[1800px] px-4 py-16 sm:px-6 sm:py-20 md:px-10 md:py-28">
+        <div className="mx-auto max-w-[1800px] px-4 py-10 sm:px-6 sm:py-14 md:px-10 md:py-18">
           <p className="inline-flex items-center gap-2 font-mono-label text-background/60">
             <Aperture className="h-3.5 w-3.5 text-accent" />
             {t("about.howIWork.label")}
@@ -140,7 +140,7 @@ function AboutPage() {
         id="testimonials"
         className="scroll-mt-20 border-b border-border bg-secondary/40"
       >
-        <div className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-20 md:px-10 md:py-28">
+        <div className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-14 md:px-10 md:py-18">
           <div className="grid gap-12 md:grid-cols-[3fr_2fr] md:gap-16">
             <div>
               <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
@@ -160,7 +160,7 @@ function AboutPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-20 md:px-10 md:py-28">
+      <section className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-14 md:px-10 md:py-18">
         <div className="grid gap-12 md:grid-cols-12">
           <div className="md:col-span-4">
             <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">

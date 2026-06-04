@@ -93,7 +93,7 @@ function ContactPage() {
   const { t } = useI18n();
   return (
     <div>
-      <section className="mx-auto max-w-[1800px] px-4 pt-12 pb-14 sm:px-6 sm:pt-16 sm:pb-20 md:px-10 md:pt-24 md:pb-28">
+      <section className="mx-auto max-w-[1800px] px-4 pt-12 pb-14 sm:px-6 sm:pt-12 sm:pb-14 md:px-10 md:pt-18 md:pb-20">
         <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
           <Mail className="h-3.5 w-3.5 text-accent" />
           {t("contact.label")}
@@ -151,7 +151,7 @@ function ContactPage() {
       <BookingEnquiry />
 
       {/* FAQ */}
-      <section className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-20 md:px-10 md:py-32">
+      <section className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-14 md:px-10 md:py-20">
         <div className="grid gap-10 md:grid-cols-12 md:gap-12">
           <div className="md:col-span-4">
             <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
@@ -358,7 +358,7 @@ function BookingEnquiry() {
 
   return (
     <section id="booking-enquiry" className="scroll-mt-20 bg-foreground text-background">
-      <div className="mx-auto grid max-w-[1800px] gap-10 px-4 py-16 sm:px-6 sm:py-24 md:grid-cols-12 md:gap-16 md:px-10 md:py-32">
+      <div className="mx-auto grid max-w-[1800px] gap-10 px-4 py-10 sm:px-6 sm:py-16 md:grid-cols-12 md:gap-16 md:px-10 md:py-20">
         <div className="md:col-span-5">
           <p className="inline-flex items-center gap-2 font-mono-label text-background/60">
             <Camera className="h-3.5 w-3.5 text-accent" />

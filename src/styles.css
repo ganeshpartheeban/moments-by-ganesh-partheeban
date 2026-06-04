@@ -178,6 +178,11 @@
     color: var(--color-background);
   }
 
+  html,
+  body {
+    overflow-x: clip;
+  }
+
   .font-display {
     font-family: var(--font-display);
     font-optical-sizing: auto;

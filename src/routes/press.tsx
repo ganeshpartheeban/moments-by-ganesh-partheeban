@@ -89,7 +89,7 @@ function PressPage() {
           key={category}
           className="border-t border-border first:border-y odd:bg-secondary/40"
         >
-          <div className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-20 md:px-10 md:py-24">
+          <div className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-14 md:px-10 md:py-16">
             <div className="grid gap-10 md:grid-cols-12 md:gap-12">
               <div className="md:col-span-3">
                 <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
@@ -129,7 +129,7 @@ function PressPage() {
         </section>
       ))}
 
-      <section className="mx-auto max-w-[1800px] px-4 py-16 sm:px-6 sm:py-24 md:px-10 md:py-32">
+      <section className="mx-auto max-w-[1800px] px-4 py-10 sm:px-6 sm:py-16 md:px-10 md:py-20">
         <div className="grid items-end gap-10 md:grid-cols-12">
           <div className="md:col-span-8">
             <p className="font-mono-label text-muted-foreground">

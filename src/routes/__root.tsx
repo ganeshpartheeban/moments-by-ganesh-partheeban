@@ -16,6 +16,7 @@ import appCss from "../styles.css?url";
 const EngagementModal = lazy(() => import("@/components/EngagementModal"));
 const CookieNotice = lazy(() => import("@/components/CookieNotice"));
 const FloatingContact = lazy(() => import("@/components/FloatingContact"));
+const BottomTabBar = lazy(() => import("@/components/BottomTabBar"));
 import { Aperture, Instagram, Mail, MapPin, Film } from "@/components/icons";
 import {
   SITE_URL,
@@ -285,13 +286,21 @@ function RootShellContents() {
     <>
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
-        <main key={pathname} className="page-transition flex-1">
+        <main
+          key={pathname}
+          style={{
+            paddingBottom:
+              "calc(env(safe-area-inset-bottom, 0px) + var(--tab-bar-pad, 0px))",
+          }}
+          className="page-transition flex-1 [--tab-bar-pad:64px] sm:[--tab-bar-pad:0px]"
+        >
           <Outlet />
         </main>
         <SiteFooter />
       </div>
       <Suspense fallback={null}>
         <FloatingContact />
+        <BottomTabBar />
         <EngagementModal />
         <CookieNotice />
       </Suspense>
@@ -300,42 +309,12 @@ function RootShellContents() {
 }
 
 function SiteHeader() {
-  const [open, setOpen] = useState(false);
   const { t } = useI18n();
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    // Mobile back gesture / hardware back button — consume one history entry
-    // so it closes the menu first instead of navigating away.
-    const stateMarker = { __mobileMenu: true };
-    window.history.pushState(stateMarker, "");
-    const onPop = () => setOpen(false);
-    window.addEventListener("popstate", onPop);
-
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("popstate", onPop);
-      document.body.style.overflow = prev;
-      // If the menu is closing via UI (not back gesture), drop our pushed entry
-      // so the user's history doesn't grow with stale markers.
-      if (window.history.state && window.history.state.__mobileMenu) {
-        window.history.back();
-      }
-    };
-  }, [open]);
 
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
     item: NavItem,
   ) => {
-    setOpen(false);
     // If we're already on the destination page, hijack and smooth-scroll.
     if (typeof window === "undefined") return;
     const samePath = window.location.pathname === item.to;
@@ -402,7 +381,6 @@ function SiteHeader() {
                             <Link
                               to="/work/$slug" params={{ slug: s.slug }}
                               onClick={(e) => {
-                                setOpen(false);
                                 // Blur so the focus-within state releases
                                 // and the dropdown collapses immediately.
                                 (e.currentTarget as HTMLAnchorElement).blur();
@@ -446,133 +424,54 @@ function SiteHeader() {
           </Link>
         </nav>
 
-        {/* Mobile: compact Enquire + hamburger */}
-        <div className="flex items-center gap-2 sm:hidden">
-          <Link
-            to="/contact"
-            hash="booking-enquiry"
-            onClick={() => setOpen(false)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-2 font-mono-label text-[11px] text-background transition-opacity hover:opacity-90"
-          >
-            {t("nav.enquire")} <span aria-hidden>↗</span>
-          </Link>
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          aria-label={open ? "Close menu" : "Open menu"}
-          onClick={() => setOpen((o) => !o)}
-          className="relative z-50 -mr-1 flex h-10 w-10 items-center justify-center"
+        {/* Mobile-only Enquire CTA on the right. */}
+        <Link
+          to="/contact"
+          hash="booking-enquiry"
+          className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-2 font-mono-label text-[11px] text-background transition-opacity hover:opacity-90 active:scale-95 sm:hidden"
         >
-          <span className="relative block h-4 w-6">
-            <span
-              className={
-                "absolute left-0 top-0 h-px w-6 bg-foreground transition-all duration-300 " +
-                (open ? "translate-y-2 rotate-45" : "")
-              }
-            />
-            <span
-              className={
-                "absolute left-0 top-2 h-px w-6 bg-foreground transition-all duration-200 " +
-                (open ? "opacity-0" : "")
-              }
-            />
-            <span
-              className={
-                "absolute bottom-0 left-0 h-px w-6 bg-foreground transition-all duration-300 " +
-                (open ? "-translate-y-2 -rotate-45" : "")
-              }
-            />
-          </span>
-        </button>
-        </div>
-      </div>
-
-      {/* Mobile menu panel */}
-      <div
-        id="mobile-nav"
-        inert={!open}
-        style={{
-          height: "calc(100dvh - 57px)",
-          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)",
-        }}
-        className={
-          "fixed inset-x-0 top-[57px] z-40 overflow-y-auto overscroll-contain bg-background transition-opacity duration-200 sm:hidden " +
-          (open
-            ? "border-b border-border/60 opacity-100"
-            : "pointer-events-none opacity-0")
-        }
-      >
-        <nav className="flex flex-col px-4 py-4">
-          {NAV_ITEMS.map((item) => (
-            <div key={item.label}>
-              <Link
-                to={item.to}
-                hash={item.hash}
-                activeOptions={{ exact: item.to === "/" }}
-                activeProps={{ className: "text-accent" }}
-                inactiveProps={{
-                  className: "text-muted-foreground hover:text-foreground",
-                }}
-                onClick={(e) => handleNavClick(e, item)}
-                className="flex items-center justify-between border-b border-border/40 px-2 py-4 font-display text-2xl transition-colors"
-              >
-                <span>{t(item.tKey)}</span>
-                <span className="font-mono-label text-xs text-accent">↗</span>
-              </Link>
-              {item.to === "/" && CASE_STUDIES.length > 0 && (
-                <ul className="border-b border-border/40 bg-secondary/30 py-1">
-                  {CASE_STUDIES.map((s) => (
-                    <li key={s.slug}>
-                      <Link
-                        to="/work/$slug" params={{ slug: s.slug }}
-                        onClick={() => setOpen(false)}
-                        className="block px-6 py-3 text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        <p className="font-display text-base text-foreground">
-                          {s.title}
-                        </p>
-                        <p className="mt-0.5 font-mono-label text-[10px]">
-                          {s.location} · {s.date}
-                        </p>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
-          <Link
-            to="/contact"
-            hash="booking-enquiry"
-            onClick={(e) =>
-              handleNavClick(e, {
-                to: "/contact",
-                label: "Enquire",
-                tKey: "nav.enquire",
-                hash: "booking-enquiry",
-              })
-            }
-            className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-4 font-display text-lg text-background"
-          >
-            {t("nav.enquire")} <span aria-hidden>↗</span>
-          </Link>
-        </nav>
+          {t("nav.enquire")} <span aria-hidden>↗</span>
+        </Link>
       </div>
     </header>
   );
 }
 
+const FOOTER_INDEX_BY_PATH: Record<string, { num: string; label: string }> = {
+  "/": { num: "01", label: "The Work" },
+  "/about": { num: "02", label: "The Photographer" },
+  "/services": { num: "03", label: "Coverage & Offerings" },
+  "/contact": { num: "04", label: "Reach Out" },
+  "/press": { num: "05", label: "In Words" },
+};
+
+function footerIndexFor(pathname: string): { num: string; label: string } {
+  if (FOOTER_INDEX_BY_PATH[pathname]) return FOOTER_INDEX_BY_PATH[pathname];
+  const storyMatch = pathname.match(/^\/work\/([^/]+)\/?$/);
+  if (storyMatch) {
+    const idx = CASE_STUDIES.findIndex((s) => s.slug === storyMatch[1]);
+    if (idx >= 0) {
+      return {
+        num: String(idx + 1).padStart(2, "0"),
+        label: `Story · ${CASE_STUDIES[idx].title}`,
+      };
+    }
+  }
+  return { num: "00", label: "Notes from the field" };
+}
+
 function SiteFooter() {
   const { t } = useI18n();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const footerIndex = footerIndexFor(pathname);
   return (
-    <footer className="mt-32 border-t border-border bg-background">
-      <div className="mx-auto max-w-[1800px] px-4 py-12 sm:px-6 md:px-10 md:py-24">
+    <footer className="mt-10 border-t border-border bg-background sm:mt-16">
+      <div className="mx-auto max-w-[1800px] px-4 py-10 sm:px-6 sm:py-14 md:px-10 md:py-20">
         <div className="grid gap-12 sm:grid-cols-2 md:grid-cols-12 md:gap-16">
           <div className="sm:col-span-2 md:col-span-6">
             <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
               <Film className="h-3.5 w-3.5 text-accent" />
-              Index No. 01
+              Index No. {footerIndex.num} · {footerIndex.label}
             </p>
             <h2 className="mt-6 font-display text-3xl leading-[1.05] tracking-tight text-foreground text-balance sm:text-4xl md:text-5xl lg:text-6xl">
               Photographs that feel like the moment itself.

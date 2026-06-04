@@ -305,7 +305,7 @@ function CaseStudyPage() {
 
       {/* CTA */}
       <section className="bg-foreground text-background">
-        <div className="mx-auto max-w-[1800px] px-4 py-16 sm:px-6 sm:py-24 md:px-10 md:py-32">
+        <div className="mx-auto max-w-[1800px] px-4 py-10 sm:px-6 sm:py-16 md:px-10 md:py-20">
           <div className="grid items-end gap-10 md:grid-cols-12">
             <div className="md:col-span-8">
               <p className="font-mono-label text-background/60">
@@ -343,9 +343,6 @@ function CaseStudyPage() {
         </div>
       </section>
 
-      {/* Mobile-only sticky enquiry bar — appears after scrolling past the hero. */}
-      <StickyEnquiryBar kind={study.kind} hidden={openPhotoIndex !== null} />
-
       {openPhotoIndex !== null && (
         <Suspense fallback={null}>
           <Lightbox
@@ -360,48 +357,3 @@ function CaseStudyPage() {
   );
 }
 
-function StickyEnquiryBar({
-  kind,
-  hidden,
-}: {
-  kind: string;
-  hidden: boolean;
-}) {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const onScroll = () => {
-      // Reveal once user has scrolled past ~80vh — past the hero.
-      setShow(window.scrollY > window.innerHeight * 0.8);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const label = kind === "wedding" ? "Enquire for your day" : "Enquire about coverage";
-
-  return (
-    <div
-      aria-hidden={!show || hidden}
-      style={{
-        paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)",
-        paddingRight: "calc(env(safe-area-inset-right, 0px) + 5rem)",
-      }}
-      className={
-        "fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 pt-3 backdrop-blur-md transition-transform duration-300 ease-out sm:hidden " +
-        (show && !hidden ? "translate-y-0" : "pointer-events-none translate-y-full")
-      }
-    >
-      <Link
-        to="/contact"
-        hash="booking-enquiry"
-        className="flex w-full items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 font-display text-base text-background shadow-md shadow-accent/20 active:scale-[0.98]"
-      >
-        {label}
-        <ArrowUpRight className="h-4 w-4" />
-      </Link>
-    </div>
-  );
-}
