@@ -1,5 +1,5 @@
 /**
- * Editorial features — publications that have used Ganesh's photographs.
+ * Editorial features · publications that have used Ganesh's photographs.
  *
  * Order is curated for visual prominence: highest-recognition outlets first
  * so they land in the most-visible grid cells.
@@ -105,7 +105,7 @@ export const PRESS: PressFeature[] = [
   {
     name: "Indulge Express",
     url: "https://www.indulgexpress.com/food/trends/2025/Jan/13/pongal-the-dish-of-gratitude-prepared-during-sankranti",
-    topic: "Pongal — the dish of gratitude",
+    topic: "Pongal · the dish of gratitude",
     category: "Culture",
   },
   // Specialist
@@ -143,7 +143,7 @@ export const PRESS: PressFeature[] = [
   {
     name: "Julahaa",
     url: "https://www.julahaa.com/blog/index.php/2024/10/24/pongal-2025-history-importance-significance/",
-    topic: "Pongal 2025 — history & significance",
+    topic: "Pongal 2025 · history & significance",
     category: "Culture",
   },
   {

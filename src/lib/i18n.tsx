@@ -28,18 +28,18 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "header.brand.prefix": "Moments",
     "header.brand.suffix": "by Ganesh Partheeban",
 
-    // Home — hero
+    // Home · hero
     "home.hero.label": "Vol. I · Candid Documentary",
     "home.hero.line1": "Moments,",
     "home.hero.line2": "honestly",
     "home.hero.line3": "documented.",
     "home.hero.body":
-      "Natural moments. Genuine emotions. Fast delivery. A candid photographer covering weddings, events, concerts, shows and everything in between, documenting them as they truly happen, with no forced poses, no heavy edits, no artificial styling.",
+      "Candid photography across weddings, concerts, and live events. No posing, no heavy edits · just the day as it happened.",
     "home.hero.cta.book": "Book your event",
     "home.hero.cta.instagram": "Enquire on Instagram",
-    "home.hero.booking.window": "Bookings open · Jun 2026 — Jan 2027",
+    "home.hero.booking.window": "Bookings open",
 
-    // Home — selected work
+    // Home · selected work
     "home.work.label": "Selected frames",
     "home.work.title":
       "Quiet glances, loud laughter, and everything in between.",
@@ -48,12 +48,12 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "home.stories.title.before": "Weddings, rituals,",
     "home.stories.title.accent": "performances",
     "home.stories.body":
-      "Each card is a story documented across a day — tap any one to step inside the frames.",
+      "Each card is one event, documented across the day. Tap to step inside.",
     "home.singles.label": "Other frames",
     "home.singles.title":
-      "And a few standalone moments from elsewhere.",
+      "Standalone frames from elsewhere.",
 
-    // Home — philosophy
+    // Home · philosophy
     "home.philosophy.label": "Philosophy",
     "home.philosophy.title.before": "What makes the work",
     "home.philosophy.title.accent": "different",
@@ -64,31 +64,31 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
       "Photos land quickly, so you can share memories while they still feel fresh.",
     "philosophy.03.title": "Social-media ready",
     "philosophy.03.body":
-      "Every gallery ships with pre-cropped, color-corrected exports for Instagram, stories and WhatsApp. Share the moment they land.",
+      "Pre-cropped, colour-corrected exports for Instagram and WhatsApp ship with every gallery.",
     "philosophy.04.title": "Minimal editing",
     "philosophy.04.body":
-      "Natural skin tones, realistic lighting, true-to-life moments.",
+      "Natural skin tones, true-to-life light. No heavy retouching.",
     "philosophy.05.title": "Solo coverage",
     "philosophy.05.body": "I personally photograph your event. One voice, one style.",
     "philosophy.06.title": "Event-based pricing",
     "philosophy.06.body":
       "Priced by the event, never by the hour. No clock-watching.",
 
-    // Home — press strip
+    // Home · press strip
     "home.press.label": "Featured in",
     "home.press.title.before": "Photographs that",
     "home.press.title.accent": "travelled",
     "home.press.body":
-      "Selected editorial features that have used my photographs — from national press to international reports.",
+      "Selected editorial features that have used my photographs · from national press to international reports.",
     "home.press.seeAll": "See all {{count}} features",
 
-    // Home — final CTA
+    // Home · final CTA
     "home.cta.label": "Let's talk",
     "home.cta.title.line1": "Less posing.",
     "home.cta.title.line2.before": "More",
     "home.cta.title.line2.accent": "living",
     "home.cta.body":
-      "If you want photographs that feel like the moment itself, send a note. Bookings are confirmed by date availability.",
+      "Send a note. Bookings confirmed by date availability.",
     "home.cta.button": "Enquire now",
 
     // About
@@ -98,9 +98,9 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "about.headline.l3.before": "happen",
     "about.headline.l3.accent": "naturally",
     "about.body.p1":
-      "Hi, I'm Ganesh Partheeban, a candid photographer based in India. I cover a wide range of events: weddings and family functions, concerts and live shows, corporate launches, and behind-the-scenes work. I focus on capturing authentic human moments: laughter between friends, quiet glances, performers in their element, and the atmosphere that makes each event its own.",
+      "I'm Ganesh Partheeban, a candid photographer based in India. I cover weddings, family functions, concerts, launches, and behind-the-scenes work · documenting laughter between friends, quiet glances, and the atmosphere that makes each event its own.",
     "about.body.p2":
-      "I work independently at events, blending into the crowd and documenting moments naturally instead of interrupting them. Before every event, I spend time understanding the important people involved: family members, close friends, key rituals, and personal dynamics, so I can anticipate the moments that matter.",
+      "I work solo, blending into the crowd instead of interrupting it. Before every shoot I learn the family, the close friends, and the key rituals, so the camera anticipates rather than reacts.",
     "about.portrait.caption": "Ganesh Partheeban · Tamil Nadu, India",
     "about.howIWork.label": "How I work",
     "about.howIWork.01.t": "Observe honestly",
@@ -132,7 +132,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     // Services
     "services.label": "Services",
     "services.headline.l1": "One photographer.",
-    "services.headline.l2.before": "Every meaningful moment.",
+    "services.headline.l2.before": "meaningful moment.",
     "services.headline.l2.accent": "Every",
     "services.comingSoon": "Coming soon",
     "services.enquire": "Enquire",
@@ -140,11 +140,11 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "services.pricing.from": "From",
     "services.pricing.unit": "per event",
     "services.pricing.note":
-      "Pricing is event-based, not hourly. For destination events, travel and stay are quoted transparently alongside the coverage. Bookings confirmed by date availability.",
+      "Event-based pricing, never hourly. Travel and stay quoted separately. Bookings confirmed by date availability.",
     "services.delivery.label": "Delivery",
     "services.delivery.title": "Fast and shareable.",
     "services.delivery.body":
-      "In today's world, moments are meant to be shared instantly with loved ones. My workflow is built so couples and families can relive and share their memories as soon as possible after the event.",
+      "Galleries land quickly so you can share them while the day still feels fresh.",
     "services.delivery.note.label": "Please note",
     "services.delivery.note.body":
       "All deliverables are digital. I do not provide printed albums, hard copies, or physical photo books.",
@@ -157,25 +157,25 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "services.coverage.label": "Coverage area",
     "services.coverage.title": "Available across India.",
     "services.coverage.body":
-      "I accept bookings from all over the country. Pricing is event-based rather than hourly. Travel and stay are billed separately from the base event coverage.",
+      "Bookings accepted across India. Travel and stay billed separately from the coverage.",
     "services.coverage.cta": "Check date availability",
 
     // Contact
     "contact.label": "Contact",
-    "contact.headline.l1": "Let's talk about",
-    "contact.headline.l2.accent": "your event",
+    "contact.headline.l1": "Get in touch.",
+    "contact.headline.l2.accent": "Send a note.",
     "contact.body":
-      "If you're looking for candid photography that feels natural, emotional, and true to the moment. Send a note. Bookings are confirmed by date availability.",
+      "Candid coverage across India. Replies within a day or two · bookings confirmed by date availability.",
     "contact.card.fastestReply": "Fastest reply",
     "contact.card.fullBriefs": "For full briefs",
     "contact.testimonials.label": "Words from clients",
     "contact.faq.label": "FAQ",
     "contact.faq.title": "Frequently asked.",
     "contact.bookingEnquiry.label": "[ Booking enquiry ]",
-    "contact.bookingEnquiry.headline.before": "Let's talk about",
-    "contact.bookingEnquiry.headline.accent": "your event.",
+    "contact.bookingEnquiry.headline.before": "Book a",
+    "contact.bookingEnquiry.headline.accent": "date.",
     "contact.bookingEnquiry.body":
-      "If you're looking for candid photography that feels natural, emotional, and true to the moment. Reach out below or message me directly.",
+      "Fill in the form, or message me directly if that's quicker.",
     "contact.bookingEnquiry.basedIn": "Based in",
     "contact.bookingEnquiry.basedIn.value": "Chennai · Available across India",
     "contact.bookingEnquiry.footnote.l1": "Bookings confirmed by date availability.",
@@ -206,7 +206,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "press.headline.accent": "travelled",
     "press.headline.after": "the world.",
     "press.body":
-      "A running list of editorial features that have used my photographs. From national newsrooms to international research reports — these are the places my frames have ended up.",
+      "A running list of editorial features that have used my photographs. From national newsrooms to international research reports · these are the places my frames have ended up.",
     "press.featuresLabel": "features",
     "press.andCounting": "and counting.",
     "press.readArticle": "Read article",
@@ -228,14 +228,12 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
 
     // Modal
     "modal.label": "A note",
-    "modal.headline.before": "Want to hire me to capture your",
-    "modal.headline.accent": "best moments",
-    "modal.body":
-      "Get in touch and let's talk through your event. Or take a quick look at the work first if you'd like to see how it feels.",
+    "modal.headline.before": "Looking for a candid",
+    "modal.headline.accent": "photographer",
+    "modal.body": "Drop a note and I'll get back within a day or two.",
     "modal.cta.enquire": "Enquire",
-    "modal.cta.work": "See the work first",
-    "modal.footnote":
-      "Bookings confirmed by date availability · Replies within a day or two",
+    "modal.cta.work": "Browse work",
+    "modal.footnote": "Replies within a day or two",
 
     // Cookie
     "cookie.body":
@@ -286,7 +284,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
       "இயற்கையான தருணங்கள். உண்மையான உணர்வுகள். விரைவான டெலிவரி. திருமணங்கள், நிகழ்வுகள், இசை நிகழ்ச்சிகள், காட்சிகள் மற்றும் அதற்கு இடையேயான அனைத்தையும் இயற்கையாகப் படம்பிடிக்கும் ஒரு கேண்டிட் புகைப்படக்காரர். கட்டாய போஸ்கள் இல்லை, அதிக எடிட்டிங் இல்லை, செயற்கையான ஸ்டைலிங் இல்லை.",
     "home.hero.cta.book": "உங்கள் நிகழ்வை முன்பதிவு செய்யுங்கள்",
     "home.hero.cta.instagram": "Instagram-இல் தொடர்பு கொள்ளுங்கள்",
-    "home.hero.booking.window": "முன்பதிவு திறந்துள்ளது · ஜூன் 2026 — ஜன. 2027",
+    "home.hero.booking.window": "முன்பதிவு திறந்துள்ளது",
 
     "home.work.label": "தேர்ந்தெடுக்கப்பட்ட படங்கள்",
     "home.work.title":
@@ -296,7 +294,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "home.stories.title.before": "திருமணங்கள், சடங்குகள்,",
     "home.stories.title.accent": "நிகழ்ச்சிகள்",
     "home.stories.body":
-      "ஒவ்வொரு கார்டும் ஒரு நாள் முழுவதும் ஆவணப்படுத்தப்பட்ட கதை — உள்ளே நுழைய ஒன்றைத் தட்டுங்கள்.",
+      "ஒவ்வொரு கார்டும் ஒரு நாள் முழுவதும் ஆவணப்படுத்தப்பட்ட கதை · உள்ளே நுழைய ஒன்றைத் தட்டுங்கள்.",
     "home.singles.label": "மற்ற காட்சிகள்",
     "home.singles.title": "மற்றும் வேறிடங்களிலிருந்து சில தனிக் காட்சிகள்.",
 
@@ -326,7 +324,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "home.press.title.before": "உலகம் முழுவதும்",
     "home.press.title.accent": "பயணித்த",
     "home.press.body":
-      "எனது புகைப்படங்களை வெளியிட்ட தேர்ந்தெடுக்கப்பட்ட பதிப்புகள் — தேசிய பத்திரிகைகள் முதல் சர்வதேச அறிக்கைகள் வரை.",
+      "எனது புகைப்படங்களை வெளியிட்ட தேர்ந்தெடுக்கப்பட்ட பதிப்புகள் · தேசிய பத்திரிகைகள் முதல் சர்வதேச அறிக்கைகள் வரை.",
     "home.press.seeAll": "அனைத்து {{count}} சிறப்பிடங்களைப் பார்க்கவும்",
 
     "home.cta.label": "பேசலாம்",
@@ -343,9 +341,9 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "about.headline.l3.before": "என நம்புகிறேன்.",
     "about.headline.l3.accent": "இயற்கையாக நிகழ்கின்றன",
     "about.body.p1":
-      "வணக்கம், நான் கணேஷ் பார்த்தீபன், இந்தியாவை தளமாகக் கொண்ட ஒரு கேண்டிட் புகைப்படக்காரர். திருமணங்கள், குடும்ப விழாக்கள், இசை நிகழ்ச்சிகள், நேரடி நிகழ்ச்சிகள், கார்ப்பரேட் தொடக்க விழாக்கள், மற்றும் பின்னணி வேலைகள் என பல வகையான நிகழ்வுகளை நான் பதிவு செய்கிறேன். நண்பர்களுக்கிடையேயான சிரிப்பு, அமைதியான பார்வைகள், கலைஞர்கள் தங்கள் சொந்த உலகில், மற்றும் ஒவ்வொரு நிகழ்வையும் தனித்துவமாக்கும் சூழல் — இவ்வாறான உண்மையான மனித தருணங்களைப் பிடிக்க முயல்கிறேன்.",
+      "வணக்கம், நான் கணேஷ் பார்த்தீபன், இந்தியாவை தளமாகக் கொண்ட ஒரு கேண்டிட் புகைப்படக்காரர். திருமணங்கள், குடும்ப விழாக்கள், இசை நிகழ்ச்சிகள், நேரடி நிகழ்ச்சிகள், கார்ப்பரேட் தொடக்க விழாக்கள், மற்றும் பின்னணி வேலைகள் என பல வகையான நிகழ்வுகளை நான் பதிவு செய்கிறேன். நண்பர்களுக்கிடையேயான சிரிப்பு, அமைதியான பார்வைகள், கலைஞர்கள் தங்கள் சொந்த உலகில், மற்றும் ஒவ்வொரு நிகழ்வையும் தனித்துவமாக்கும் சூழல் · இவ்வாறான உண்மையான மனித தருணங்களைப் பிடிக்க முயல்கிறேன்.",
     "about.body.p2":
-      "நான் நிகழ்வுகளில் சுயமாக வேலை செய்கிறேன், கூட்டத்தோடு கூட்டமாகி, தருணங்களை இடையூறு செய்யாமல் இயற்கையாக ஆவணப்படுத்துகிறேன். ஒவ்வொரு நிகழ்வுக்கும் முன், தொடர்புடைய முக்கிய நபர்களை — குடும்ப உறுப்பினர்கள், நெருங்கிய நண்பர்கள், முக்கிய சடங்குகள், தனிப்பட்ட உறவுகள் — புரிந்துகொள்ள நேரம் ஒதுக்குகிறேன், அதனால் முக்கியமான தருணங்களை முன்கூட்டியே அறிய முடியும்.",
+      "நான் நிகழ்வுகளில் சுயமாக வேலை செய்கிறேன், கூட்டத்தோடு கூட்டமாகி, தருணங்களை இடையூறு செய்யாமல் இயற்கையாக ஆவணப்படுத்துகிறேன். ஒவ்வொரு நிகழ்வுக்கும் முன், தொடர்புடைய முக்கிய நபர்களை · குடும்ப உறுப்பினர்கள், நெருங்கிய நண்பர்கள், முக்கிய சடங்குகள், தனிப்பட்ட உறவுகள் · புரிந்துகொள்ள நேரம் ஒதுக்குகிறேன், அதனால் முக்கியமான தருணங்களை முன்கூட்டியே அறிய முடியும்.",
     "about.portrait.caption": "கணேஷ் பார்த்தீபன் · தமிழ்நாடு, இந்தியா",
     "about.howIWork.label": "என் வேலை முறை",
     "about.howIWork.01.t": "உண்மையாக கவனிக்கவும்",
@@ -418,7 +416,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "contact.bookingEnquiry.headline.before": "உங்கள் நிகழ்வைப்",
     "contact.bookingEnquiry.headline.accent": "பற்றி பேசலாம்.",
     "contact.bookingEnquiry.body":
-      "இயற்கையாகவும், உணர்ச்சிபூர்வமாகவும், தருணத்திற்கு உண்மையாகவும் உணரும் கேண்டிட் புகைப்படம் தேடுகிறீர்கள் எனில் — கீழே தொடர்பு கொள்ளவும் அல்லது நேரடியாக செய்தி அனுப்பவும்.",
+      "இயற்கையாகவும், உணர்ச்சிபூர்வமாகவும், தருணத்திற்கு உண்மையாகவும் உணரும் கேண்டிட் புகைப்படம் தேடுகிறீர்கள் எனில் · கீழே தொடர்பு கொள்ளவும் அல்லது நேரடியாக செய்தி அனுப்பவும்.",
     "contact.bookingEnquiry.basedIn": "இடம்",
     "contact.bookingEnquiry.basedIn.value":
       "சென்னை · இந்தியா முழுவதும் கிடைக்கும்",
@@ -452,7 +450,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "press.headline.accent": "பயணித்த",
     "press.headline.after": "புகைப்படங்கள்.",
     "press.body":
-      "எனது புகைப்படங்களை வெளியிட்ட பதிப்புகளின் தொடர்ச்சியான பட்டியல். தேசிய செய்தி அலுவலகங்கள் முதல் சர்வதேச ஆராய்ச்சி அறிக்கைகள் வரை — என் காட்சிகள் தோன்றிய இடங்கள் இவை.",
+      "எனது புகைப்படங்களை வெளியிட்ட பதிப்புகளின் தொடர்ச்சியான பட்டியல். தேசிய செய்தி அலுவலகங்கள் முதல் சர்வதேச ஆராய்ச்சி அறிக்கைகள் வரை · என் காட்சிகள் தோன்றிய இடங்கள் இவை.",
     "press.featuresLabel": "சிறப்பிடங்கள்",
     "press.andCounting": "எண்ணிக்கை அதிகரித்து வருகிறது.",
     "press.readArticle": "கட்டுரையைப் படிக்க",

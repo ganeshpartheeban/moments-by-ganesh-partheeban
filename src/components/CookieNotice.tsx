@@ -13,12 +13,12 @@ export default function CookieNotice() {
     try {
       dismissed = localStorage.getItem(STORAGE_KEY) === "1";
     } catch {
-      // localStorage unavailable — show once then forget.
+      // localStorage unavailable · show once then forget.
     }
     if (!dismissed) {
       // Tiny delay so the notice doesn't compete with first paint.
       const showId = setTimeout(() => setVisible(true), 1200);
-      // Auto-dismiss after 10s — counts as acknowledged so it doesn't reappear.
+      // Auto-dismiss after 10s · counts as acknowledged so it doesn't reappear.
       const hideId = setTimeout(() => {
         setVisible(false);
         try {

@@ -12,7 +12,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 
-// Lazy — only fetched in browser after first paint, never in SSR bundle.
+// Lazy · only fetched in browser after first paint, never in SSR bundle.
 const EngagementModal = lazy(() => import("@/components/EngagementModal"));
 const CookieNotice = lazy(() => import("@/components/CookieNotice"));
 const FloatingContact = lazy(() => import("@/components/FloatingContact"));
@@ -140,7 +140,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Candid wedding and event photography by Ganesh Partheeban — based in Chennai, available across India. Documentary coverage of weddings, receptions, engagements, concerts, shows and behind-the-scenes.",
+          "Candid wedding and event photography by Ganesh Partheeban · based in Chennai, available across India. Documentary coverage of weddings, receptions, engagements, concerts, shows and behind-the-scenes.",
       },
       { name: "keywords", content: KEYWORDS.join(", ") },
       { name: "author", content: "Ganesh Partheeban" },
@@ -179,7 +179,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         type: "application/ld+json",
         children: ldScriptBody(buildPersonLD()),
       } as Record<string, string>,
-      // Cloudflare Web Analytics — privacy-friendly, no cookies.
+      // Cloudflare Web Analytics · privacy-friendly, no cookies.
       // Token comes from CF Dashboard → Web Analytics → site beacon.
       ...(import.meta.env.VITE_CF_BEACON_TOKEN
         ? [
@@ -208,7 +208,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       } as Record<string, string>,
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      // Non-blocking font CSS load — fetched at low priority and applied after
+      // Non-blocking font CSS load · fetched at low priority and applied after
       // first paint. Body text falls back to system fonts for ~200ms while the
       // serif CSS streams in. font-display: swap on the @font-face rules keeps
       // the swap smooth.
@@ -271,7 +271,7 @@ function RootShellContents() {
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  // Scroll to top on every route change (hash links still work — they
+  // Scroll to top on every route change (hash links still work · they
   // scroll themselves before this effect runs).
   useEffect(() => {
     const unsub = router.subscribe("onResolved", ({ toLocation, fromLocation }) => {
@@ -420,7 +420,7 @@ function SiteHeader() {
             }
             className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-mono-label text-xs text-background transition-opacity hover:opacity-90 sm:text-sm"
           >
-            {t("nav.enquire")} <span aria-hidden>↗</span>
+            {t("nav.enquire")} <span aria-hidden>→</span>
           </Link>
         </nav>
 
@@ -430,7 +430,7 @@ function SiteHeader() {
           hash="booking-enquiry"
           className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-2 font-mono-label text-[11px] text-background transition-opacity hover:opacity-90 active:scale-95 sm:hidden"
         >
-          {t("nav.enquire")} <span aria-hidden>↗</span>
+          {t("nav.enquire")} <span aria-hidden>→</span>
         </Link>
       </div>
     </header>

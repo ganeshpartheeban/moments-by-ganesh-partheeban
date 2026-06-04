@@ -26,7 +26,7 @@ export const Route = createFileRoute("/services")({
       {
         name: "description",
         content:
-          "Candid photography services across India — weddings, receptions, engagement and pre-wedding, family and cultural events, concerts, shows and behind-the-scenes. Event-based pricing. Bookings from Chennai, Bengaluru and across India.",
+          "Candid photography services across India · weddings, receptions, engagement and pre-wedding, family and cultural events, concerts, shows and behind-the-scenes. Event-based pricing. Bookings from Chennai, Bengaluru and across India.",
       },
       { property: "og:title", content: "Services · Moments by Ganesh Partheeban" },
       { property: "og:url", content: absoluteUrl("/services") },
@@ -428,7 +428,7 @@ function NotifyForm() {
         disabled={status === "sending"}
         className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 font-mono-label text-xs text-background transition-opacity hover:opacity-90 disabled:opacity-60"
       >
-        {status === "sending" ? "…" : `${t("services.notifyMe")} ↗`}
+        {status === "sending" ? "…" : `${t("services.notifyMe")} →`}
       </button>
       {status === "error" && (
         <span className="basis-full font-mono-label text-xs text-red-500">

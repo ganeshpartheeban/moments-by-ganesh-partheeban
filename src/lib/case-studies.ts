@@ -1,5 +1,5 @@
 /**
- * Wedding & event stories — narrative photo sequences from a single shoot.
+ * Wedding & event stories · narrative photo sequences from a single shoot.
  *
  * `sequence` is an array of 1-based gallery photo numbers (matching the
  * gallery-N.JPG filenames). Renderers convert to 0-based array indices when
@@ -43,7 +43,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     date: "October 2024",
     kind: "wedding",
     intro:
-      "A late-monsoon house wedding for Swati and Sushin — two days of guests, ceremonies and quiet corners, documented as they actually unfolded rather than as they were planned to.",
+      "A late-monsoon house wedding for Swati and Sushin · two days of guests, ceremonies and quiet corners, documented as they actually unfolded rather than as they were planned to.",
     cover: 9,
     sequence: [9, 15, 17, 19, 20, 26, 27, 39],
   },
@@ -54,7 +54,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     date: "April 2024",
     kind: "wedding",
     intro:
-      "A Bengaluru wedding for Bhavana and Jayanth — close family, longer rituals, and the kind of glances and laughs that go missing in posed photographs.",
+      "A Bengaluru wedding for Bhavana and Jayanth · close family, longer rituals, and the kind of glances and laughs that go missing in posed photographs.",
     cover: 11,
     sequence: [11, 22, 23, 24, 21, 25, 38],
   },
@@ -65,7 +65,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     date: "December 2024",
     kind: "ritual",
     intro:
-      "A night with Theyyam in Kannur — fire, drumbeat, and the heavy, dignified pull of a centuries-old ritual still very much alive on the Malabar coast.",
+      "A night with Theyyam in Kannur · fire, drumbeat, and the heavy, dignified pull of a centuries-old ritual still very much alive on the Malabar coast.",
     cover: 5,
     sequence: [5, 8, 14, 45, 31],
   },
@@ -76,7 +76,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     date: "June 2025",
     kind: "concert",
     intro:
-      "Agam live in Bengaluru — stagelight, instruments in motion, and a crowd carried, slowly and then all at once, by the music.",
+      "Agam live in Bengaluru · stagelight, instruments in motion, and a crowd carried, slowly and then all at once, by the music.",
     cover: 2,
     sequence: [2, 4, 41, 42],
   },
@@ -87,7 +87,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     date: "2025 & 2026",
     kind: "events",
     intro:
-      "An evolving collection of Chennai's stage and street — frames from concerts, openings, and performances I keep returning to around the city.",
+      "An evolving collection of Chennai's stage and street · frames from concerts, openings, and performances I keep returning to around the city.",
     cover: 30,
     sequence: [30, 32, 33, 34, 35, 44],
   },

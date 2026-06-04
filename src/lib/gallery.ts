@@ -426,8 +426,8 @@ export const GALLERY: Photo[] = [
 ];
 
 // Override the default "Frame NN" alts with event-aware text. Priority:
-//   1. PHOTO_META (rich per-frame metadata) — wins when present
-//   2. CASE_STUDIES sequence membership — story title/location/date
+//   1. PHOTO_META (rich per-frame metadata) · wins when present
+//   2. CASE_STUDIES sequence membership · story title/location/date
 //   3. Generic fallback
 // Boosts SEO + lightbox / screen-reader context.
 {

@@ -14,7 +14,7 @@ export const Route = createFileRoute("/press")({
       {
         name: "description",
         content:
-          "Selected editorial features that have used Ganesh Partheeban's photographs — from The Hindu and NDTV Profit to UN ESCAP, Cornell University, and Condé Nast Traveller.",
+          "Selected editorial features that have used Ganesh Partheeban's photographs · from The Hindu and NDTV Profit to UN ESCAP, Cornell University, and Condé Nast Traveller.",
       },
       { property: "og:title", content: "Press · Moments by Ganesh Partheeban" },
       { property: "og:url", content: absoluteUrl("/press") },

@@ -26,7 +26,7 @@ export default function Lightbox({
   const touchStartX = useRef<number | null>(null);
   const [fullLoaded, setFullLoaded] = useState(false);
 
-  // Reset load state whenever the index changes — new image needs to load.
+  // Reset load state whenever the index changes · new image needs to load.
   useEffect(() => {
     setFullLoaded(false);
   }, [index]);
@@ -188,7 +188,7 @@ export default function Lightbox({
           <p className="font-display text-sm text-white sm:text-base">
             {meta.title}
             {meta.detail && (
-              <span className="text-white/70"> — {meta.detail}</span>
+              <span className="text-white/70"> · {meta.detail}</span>
             )}
           </p>
         )}

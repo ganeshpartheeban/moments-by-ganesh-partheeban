@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Inkyhaus · Build Brief</title>
+<style>
+  @page { size: A4; margin: 22mm 18mm 22mm 18mm; }
+  :root {
+    --accent: #8a4f2b;
+    --ink: #1a1a1a;
+    --mute: #5a5a5a;
+    --line: #d8d3cb;
+    --bg-soft: #f6f2eb;
+    --code-bg: #f5f2ec;
+    --code-border: #e3ddd0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", Arial; color: var(--ink); font-size: 10.5pt; line-height: 1.55; }
+  h1, h2, h3, h4 { font-family: Georgia, "Iowan Old Style", serif; letter-spacing: -0.01em; }
+  h1 { font-size: 30pt; line-height: 1.05; margin: 0 0 6pt; }
+  h2 { font-size: 18pt; margin: 22pt 0 6pt; padding-top: 6pt; border-top: 1px solid var(--line); }
+  h2:first-of-type { border-top: 0; padding-top: 0; }
+  h3 { font-size: 13pt; margin: 14pt 0 5pt; color: var(--accent); }
+  h4 { font-size: 11.5pt; margin: 10pt 0 4pt; }
+  p { margin: 0 0 8pt; }
+  ul, ol { margin: 0 0 10pt 18pt; padding: 0; }
+  li { margin-bottom: 3pt; }
+  strong { color: var(--ink); }
+  em { color: var(--accent); font-style: normal; font-family: Georgia, serif; }
+  a { color: var(--accent); text-decoration: none; }
+  code { font-family: "SF Mono", "Menlo", "Consolas", monospace; font-size: 9.2pt; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+  pre { font-family: "SF Mono", "Menlo", "Consolas", monospace; font-size: 8.7pt; line-height: 1.45; background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 4px; padding: 10pt 12pt; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; margin: 6pt 0 12pt; page-break-inside: avoid; }
+  pre code { background: transparent; padding: 0; font-size: inherit; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 14pt 0; }
+  .cover { padding: 14pt 0 18pt; border-bottom: 1px solid var(--line); margin-bottom: 14pt; }
+  .label { font-size: 8.5pt; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mute); font-weight: 500; }
+  .accent-dot { color: var(--accent); }
+  .meta { color: var(--mute); font-size: 9pt; margin-top: 4pt; }
+  .callout { background: var(--bg-soft); border-left: 3px solid var(--accent); padding: 8pt 12pt; margin: 8pt 0 12pt; border-radius: 0 4px 4px 0; }
+  .small { font-size: 9pt; color: var(--mute); }
+  .toc { columns: 2; column-gap: 24pt; font-size: 9.5pt; }
+  .toc ol { list-style: none; margin: 0; padding: 0; }
+  .toc li { margin-bottom: 2pt; }
+  .pagebreak { page-break-after: always; }
+  .keep { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <p class="label">Build brief · Vol. I</p>
+  <h1>Inkyhaus<br><em>European audience · German primary</em></h1>
+  <p class="meta">Self-contained technical specification + deploy &amp; form-backend snippets, prepared from the Real Moments Studio architecture.</p>
+</div>
+
+<section class="toc keep">
+  <p class="label">Index</p>
+  <ol>
+    <li>01 · Goals</li>
+    <li>02 · Tech stack (fixed)</li>
+    <li>03 · Information architecture</li>
+    <li>04 · SEO requirements</li>
+    <li>05 · i18n</li>
+    <li>06 · Performance non-negotiables</li>
+    <li>07 · Mobile UX</li>
+    <li>08 · Content patterns reused</li>
+    <li>09 · Repository layout</li>
+    <li>10 · What I want from you</li>
+    <li>11 · Deploy &amp; form snippets</li>
+    <li>&nbsp;&nbsp;&nbsp;&nbsp;a. GH Actions workflow</li>
+    <li>&nbsp;&nbsp;&nbsp;&nbsp;b. wrangler.jsonc</li>
+    <li>&nbsp;&nbsp;&nbsp;&nbsp;c. .env.example</li>
+    <li>&nbsp;&nbsp;&nbsp;&nbsp;d. form-config.ts</li>
+    <li>&nbsp;&nbsp;&nbsp;&nbsp;e. Apps Script source</li>
+    <li>&nbsp;&nbsp;&nbsp;&nbsp;f. Client submission pattern</li>
+    <li>&nbsp;&nbsp;&nbsp;&nbsp;g. IP geolocation helper</li>
+    <li>&nbsp;&nbsp;&nbsp;&nbsp;h. Rate-limit-per-email pattern</li>
+  </ol>
+</section>
+
+<h2>01 · Goals</h2>
+<ul>
+  <li>Fast, content-first marketing site.</li>
+  <li>Mobile-first — most traffic on phones.</li>
+  <li>SEO-optimised for German + English queries.</li>
+  <li>Lead capture without a backend server.</li>
+  <li>Cloudflare-hosted, GitHub Actions auto-deploy.</li>
+  <li>Lighthouse 95+ across the board on mobile.</li>
+</ul>
+
+<h2>02 · Tech stack <span class="small">(fix this stack — do not propose alternatives)</span></h2>
+<ul>
+  <li><strong>Framework:</strong> TanStack Start (SSR React 19) with file-based routing via TanStack Router. Use typed routes and dynamic params (e.g. <code>/work/$slug</code>).</li>
+  <li><strong>Bundler:</strong> Vite 7.</li>
+  <li><strong>Language:</strong> TypeScript, strict mode.</li>
+  <li><strong>Styling:</strong> Tailwind CSS 4 with the OKLCH colour system. No CSS-in-JS.</li>
+  <li><strong>Hosting:</strong> Cloudflare Workers via <code>@cloudflare/vite-plugin</code>. <code>wrangler.jsonc</code> for config. Don't propose Pages or Vercel.</li>
+  <li><strong>Deploy:</strong> GitHub Actions calling <code>cloudflare/wrangler-action@v3</code>. Pass build-time secrets via <code>env:</code> and Cloudflare deploy secrets via <code>with:</code>.</li>
+  <li><strong>Image processing:</strong> <code>sharp</code> for variant generation, <code>exifr</code> for EXIF read at build time. Generate AVIF + WebP + JPEG at multiple widths (e.g. 480/600/800/1000/1400) for thumbs, plus a full-res variant for the lightbox.</li>
+  <li><strong>Forms:</strong> Google Apps Script as the backend (no server). Token-gated POST endpoint, URL + token injected via <code>VITE_FORM_ENDPOINT</code> and <code>VITE_FORM_TOKEN</code> env vars. Submissions write to Google Sheets + trigger email notifications. Add a graceful 3-provider IP geolocation lookup (ipapi.co → ipwho.is → api.country.is, 4s timeout each), fired lazily on first form focus.</li>
+  <li><strong>Analytics:</strong> Cloudflare Web Analytics (free, no cookies). Bind via the Cloudflare dashboard at the edge — no script tag needed.</li>
+  <li><strong>Fonts:</strong> self-host one editorial serif (Fraunces variable) + one geometric sans (Inter Tight variable) via <code>@fontsource-variable</code>. Use <code>font-display: swap</code>. If using Google Fonts CDN, load with <code>media="print" onLoad="this.media='all'"</code> so it never blocks render.</li>
+</ul>
+
+<h2>03 · Information architecture</h2>
+<ul>
+  <li><code>/</code> — Home: hero, featured work/products, value props, social proof, CTA.</li>
+  <li><code>/about</code> — Brand story, founders, philosophy.</li>
+  <li><code>/services</code> (or <code>/products</code>) — Offerings.</li>
+  <li><code>/contact</code> — Booking / enquiry form. Anchor: <code>#booking-enquiry</code>.</li>
+  <li><code>/press</code> — Editorial features (if the PDF mentions any).</li>
+  <li><code>/work/$slug</code> — Dynamic detail pages per story/product/case.</li>
+  <li>Sitemap.xml hand-authored in <code>/public/sitemap.xml</code>, including every dynamic URL.</li>
+</ul>
+
+<h2>04 · SEO requirements</h2>
+<p>Emit JSON-LD on every relevant route — schemas to implement:</p>
+<ul>
+  <li><strong>Organization</strong> (<code>@id</code> set, single source) — root.</li>
+  <li><strong>Person</strong> (founder) — root.</li>
+  <li><strong>ProfessionalService</strong> or <strong>Store</strong> depending on offering — root.</li>
+  <li><strong>BreadcrumbList</strong> — every secondary route.</li>
+  <li><strong>ImageGallery</strong> with <code>ImageObject</code> entries that include <code>caption</code>, <code>contentLocation</code>, <code>dateCreated</code> — galleries and <code>/work/$slug</code>.</li>
+  <li><strong>Review</strong> + <strong>AggregateRating</strong> wrapped under the org <code>@id</code> — page with testimonials. Use real customer quotes from the PDF.</li>
+  <li><strong>FAQPage</strong> — services / FAQ section if present.</li>
+</ul>
+<p><strong>Per-page OG images:</strong></p>
+<ul>
+  <li>One generic <code>/og-hero.jpg</code> (1200×630) at root.</li>
+  <li>Per-story OG images generated at build time via <code>scripts/generate-og.mjs</code> using sharp to smart-crop each story's cover to 1200×630 and write to <code>/public/og/&lt;slug&gt;.jpg</code>. Wire as <code>prebuild</code> in <code>package.json</code>.</li>
+  <li>Every page emits <code>og:title</code>, <code>og:description</code>, <code>og:image</code> (with width/height/alt/type), <code>twitter:card=summary_large_image</code>, <code>twitter:image</code>.</li>
+</ul>
+<p><strong>Other SEO:</strong></p>
+<ul>
+  <li><code>&lt;link rel="canonical"&gt;</code> on every page.</li>
+  <li><code>robots: index, follow, max-image-preview:large</code>.</li>
+  <li><code>og:locale=de_DE</code> primary; alternate <code>en_GB</code>.</li>
+  <li><code>&lt;html lang="de"&gt;</code> (or current locale, dynamic).</li>
+  <li>Self-hosted favicon + apple-touch-icon + brand logo as both favicon source and OG fallback.</li>
+</ul>
+
+<h2>05 · i18n</h2>
+<p>Context-based i18n with <code>useI18n()</code> hook. Strings live in a single <code>src/lib/i18n.tsx</code> module as <code>Record&lt;Locale, Record&lt;Key, string&gt;&gt;</code>.</p>
+<ul>
+  <li>Locales: <strong>de</strong> (primary), <strong>en</strong>. Optionally <strong>fr</strong>, <strong>es</strong>, <strong>it</strong> — leave scaffolding so adding one is purely a strings file.</li>
+  <li>Toggle stored in <code>localStorage</code>. Default locale auto-detected from <code>navigator.language</code> on first visit, fallback <code>de</code>.</li>
+  <li>Language toggle built but optionally hidden behind a feature flag if launching with one locale only.</li>
+</ul>
+
+<h2>06 · Performance non-negotiables</h2>
+<ul>
+  <li><strong>Code-splitting:</strong> React.lazy + Suspense for the lightbox, modals, cookie notice, floating contact button, bottom tab bar.</li>
+  <li><strong>Hero LCP:</strong> <code>&lt;link rel="preload" as="image" imagesrcset imagesizes&gt;</code> with a 480w variant for mobile. <code>fetchpriority="high"</code> on the hero img.</li>
+  <li><strong>Content-visibility:</strong> <code>content-visibility: auto</code> + <code>contain-intrinsic-size</code> on off-screen masonry photos.</li>
+  <li><strong>IntersectionObserver:</strong> pause expensive animations when offscreen.</li>
+  <li><strong>matchMedia, not resize listeners</strong>, for responsive column counts.</li>
+  <li><strong>Async font CSS:</strong> never render-blocking.</li>
+  <li><strong>Image sizes attr:</strong> every gallery img has a correct <code>sizes=</code> to avoid over-fetching on mobile.</li>
+  <li>Sitemap, robots.txt, well-formed cache headers via Cloudflare <code>_headers</code> file.</li>
+</ul>
+
+<h2>07 · Mobile UX</h2>
+<ul>
+  <li><strong>Bottom tab bar:</strong> 4-tab fixed-bottom nav. Hide on scroll-down, show on scroll-up. <code>env(safe-area-inset-bottom)</code> padding for notched devices.</li>
+  <li><strong>Header:</strong> sticky top with brand on the left, Enquire CTA on the right (visible on mobile). No hamburger — bottom tab bar replaces it.</li>
+  <li><strong>Floating WhatsApp</strong> (source-aware): prefilled message includes context from current route. Sits above the bottom tab bar.</li>
+  <li><strong>Tap feedback:</strong> <code>active:scale-[0.985]</code> with <code>transition-transform</code> on every photo/card button, <code>motion-reduce:transition-none</code>.</li>
+  <li><strong>Page transitions:</strong> 220ms cross-fade on route change via <code>&lt;main key={pathname} className="page-transition"&gt;</code> and a CSS keyframe. Respect <code>prefers-reduced-motion</code>.</li>
+  <li><strong>Scroll-to-top</strong> on route change (subscribe to router <code>onResolved</code>, skip when <code>to.hash</code> is present).</li>
+  <li><code>overflow-x: clip</code> on html/body as a safety net.</li>
+  <li><strong>Image lightbox:</strong> full-screen, keyboard + swipe nav, LQIP blur placeholder (start at <code>filter: blur(14px)</code>, clear on <code>onLoad</code>), <code>photoIndices</code> prop to scope the cycler to a subset, position indicator (n / total), safe-area-inset padding.</li>
+  <li><strong>Cookie notice:</strong> 10s auto-dismiss with persistent flag, safe-area aware.</li>
+  <li><strong>Engagement modal:</strong> 1-day cooldown in localStorage.</li>
+</ul>
+
+<h2>08 · Content patterns reused</h2>
+<ul>
+  <li><strong>Per-photo metadata module</strong> (<code>src/lib/photo-meta.ts</code>) keyed by 1-based image number, with title/detail/venue/location/date/featuring. Used for alt text, gallery captions, lightbox captions, and ImageGallery JSON-LD.</li>
+  <li><strong>Case-study / story module</strong> (<code>src/lib/case-studies.ts</code>) with <code>slug, title, location, date, kind, intro, cover, sequence</code> — driving the dynamic <code>/work/$slug</code> route and the home story grid.</li>
+  <li><strong>Animated StoryCards</strong> that cycle through their sequence on a stagger (per-card delay + drift) with lazy-mounted frames so initial DOM weight stays low.</li>
+  <li><strong>Footer Index No.</strong> that changes per route (<code>01 · Home</code>, <code>02 · About</code>, <code>Story · &lt;Title&gt;</code>) for an editorial touch.</li>
+</ul>
+
+<h2>09 · Repository layout</h2>
+<pre>src/
+  routes/                   file-based routing (incl. work.$slug.tsx)
+    __root.tsx              header, footer, providers, JSON-LD
+  components/               Lightbox, StoryCard, FloatingContact,
+                             BottomTabBar, EngagementModal, CookieNotice
+  lib/
+    case-studies.ts         OR products.ts — content
+    photo-meta.ts
+    gallery.ts              loads /public/gallery-thumbs + full
+    press.ts
+    seo.ts                  buildOrganizationLD / Person / Review /
+                             ImageGallery / FAQ / Breadcrumb
+    i18n.tsx
+    masonry.ts              useColumnCount + distribute
+    form-config.ts          env-driven FORM_ENDPOINT + FORM_TOKEN
+  assets/                   source images (gitignored beyond a sample)
+  styles.css                Tailwind 4 + custom keyframes
+scripts/
+  generate-og.mjs           per-story OG image generation (prebuild)
+public/
+  gallery-thumbs/           generated AVIF/WebP/JPEG variants
+  gallery-full/             full-res variants
+  og/                       generated per-story OG images
+  hero-{480,800,1200,1600}.{avif,webp,jpg}
+  sitemap.xml
+  _headers                  Cloudflare cache headers
+  favicon.svg, apple-touch-icon.png
+.env.local                  VITE_FORM_ENDPOINT, VITE_FORM_TOKEN, VITE_SITE_URL
+wrangler.jsonc
+.github/workflows/deploy.yml</pre>
+
+<h2>10 · What I want from you</h2>
+<ol>
+  <li>Read the attached PDF and extract the brand story, voice, offerings, testimonials, and any imagery references.</li>
+  <li>Propose the IA (page list + content per page) based on the PDF.</li>
+  <li>Confirm what languages I'm shipping at launch (German only, or German + English).</li>
+  <li>Scaffold the project end-to-end matching the spec above.</li>
+  <li>Implement page-by-page. Push to commit only after I approve each page visually.</li>
+</ol>
+<div class="callout">Ask clarifying questions before writing code if anything in the PDF conflicts with this spec or is ambiguous (brand colour, exact offerings, contact details, WhatsApp number, Google Sheet / Apps Script endpoint). Do <strong>not</strong> install new frameworks or substitute parts of the stack. If something feels missing, ask — don't add it.</div>
+
+<div class="pagebreak"></div>
+
+<h2>11 · Deploy &amp; form snippets</h2>
+
+<h3>a · <code>.github/workflows/deploy.yml</code></h3>
+<pre><code>name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # allow manual runs from the Actions tab
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          VITE_FORM_ENDPOINT: ${{ secrets.VITE_FORM_ENDPOINT }}
+          VITE_FORM_TOKEN: ${{ secrets.VITE_FORM_TOKEN }}
+          VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
+        run: npm run build
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+</code></pre>
+<p class="small"><strong>GitHub secrets to add:</strong> <code>CLOUDFLARE_API_TOKEN</code>, <code>CLOUDFLARE_ACCOUNT_ID</code>, <code>VITE_FORM_ENDPOINT</code>, <code>VITE_FORM_TOKEN</code>, <code>VITE_SITE_URL</code>. The double-binding (<code>env:</code> + <code>with:</code>) is intentional — wrangler-action needs both depending on internal version behaviour.</p>
+
+<h3>b · <code>wrangler.jsonc</code></h3>
+<pre><code>{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "inkyhaus-app",
+  "compatibility_date": "2025-09-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "src/server.ts"
+}
+</code></pre>
+
+<h3>c · <code>.env.example</code></h3>
+<pre><code># Copy this file to .env.local and fill in the values.
+# Both end up in the client bundle at build time — not server-side secrets.
+
+# Booking-form Google Apps Script Web App URL.
+VITE_FORM_ENDPOINT=https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
+
+# Shared token the form sends; must match FORM_TOKEN in the Apps Script.
+VITE_FORM_TOKEN=change-me
+
+# Canonical site URL — used for OG tags, JSON-LD, and canonical links.
+# No trailing slash.
+VITE_SITE_URL=https://inkyhaus.de
+</code></pre>
+
+<h3>d · <code>src/lib/form-config.ts</code></h3>
+<pre><code>const endpoint = import.meta.env.VITE_FORM_ENDPOINT as string | undefined;
+const token = import.meta.env.VITE_FORM_TOKEN as string | undefined;
+
+if (import.meta.env.DEV &amp;&amp; (!endpoint || !token)) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    "[form-config] VITE_FORM_ENDPOINT and/or VITE_FORM_TOKEN are not set. " +
+      "Form submissions will fail silently in production. " +
+      "Set them in .env.local (local dev) and in your CI secrets (deploy).",
+  );
+}
+
+export const FORM_ENDPOINT = endpoint ?? "";
+export const FORM_TOKEN = token ?? "";
+</code></pre>
+
+<h3>e · Apps Script source — paste into <code>Code.gs</code></h3>
+<p class="small">Reconstructed from the actual form contract used by this client. Drop-in compatible.</p>
+<pre><code>// Inkyhaus enquiry intake — Google Apps Script Web App.
+// Append form submissions to a Google Sheet and notify the owner by email.
+
+const FORM_TOKEN = "REPLACE_WITH_SAME_VALUE_AS_VITE_FORM_TOKEN";
+const SHEET_ID = "REPLACE_WITH_GOOGLE_SHEET_ID";       // from the sheet URL
+const SHEET_NAME = "Enquiries";                          // tab name
+const NOTIFY_EMAIL = "you@inkyhaus.de";                 // owner inbox
+
+const HEADERS = [
+  "Timestamp", "Type", "Name", "Email", "Phone",
+  "EventType", "Date", "Location", "Budget", "Message",
+  "Source", "IPLocation", "UserAgent",
+];
+
+function doPost(e) {
+  try {
+    const params = (e &amp;&amp; e.parameter) || {};
+    if (params.token !== FORM_TOKEN) {
+      return _json({ ok: false, error: "Invalid token" }, 403);
+    }
+
+    const sheet = _openSheet();
+    const now = new Date();
+    const row = [
+      now,
+      params.type || "enquiry",
+      params.name || "",
+      params.email || "",
+      params.phone || "",
+      params.eventType || "",
+      params.date || "",
+      params.location || "",
+      params.budget || "",
+      params.message || "",
+      params.source || "",
+      params.ipLocation || params.location || "",
+      params.userAgent || "",
+    ];
+    sheet.appendRow(row);
+
+    _notify(params, now);
+
+    return _json({ ok: true });
+  } catch (err) {
+    return _json({ ok: false, error: String(err) }, 500);
+  }
+}
+
+function doGet() {
+  return _json({ ok: true, service: "Inkyhaus enquiry intake" });
+}
+
+function _openSheet() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    sheet.appendRow(HEADERS);
+    sheet.setFrozenRows(1);
+  } else if (sheet.getLastRow() === 0) {
+    sheet.appendRow(HEADERS);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function _notify(p, when) {
+  const subject = `New enquiry · ${p.name || "anon"} · ${p.eventType || p.type || ""}`;
+  const body = [
+    `Time: ${when.toISOString()}`,
+    `Name: ${p.name || "-"}`,
+    `Email: ${p.email || "-"}`,
+    `Phone: ${p.phone || "-"}`,
+    `Type: ${p.eventType || p.type || "-"}`,
+    `Date: ${p.date || "-"}`,
+    `Location: ${p.location || "-"}`,
+    `Budget: ${p.budget || "-"}`,
+    `Source: ${p.source || "-"}`,
+    `IP location: ${p.ipLocation || p.location || "-"}`,
+    "",
+    "Message:",
+    p.message || "(none)",
+  ].join("\n");
+  MailApp.sendEmail(NOTIFY_EMAIL, subject, body);
+}
+
+function _json(payload, statusCode) {
+  // Apps Script Web Apps can't set arbitrary status codes via ContentService,
+  // but the client uses mode:"no-cors" anyway — payload is for debugging.
+  if (statusCode) Logger.log("status=" + statusCode + " body=" + JSON.stringify(payload));
+  return ContentService
+    .createTextOutput(JSON.stringify(payload))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+</code></pre>
+
+<p><strong>Deploy steps for the Apps Script:</strong></p>
+<ol>
+  <li>Create a new Google Sheet → copy its ID from the URL.</li>
+  <li>Extensions → Apps Script → paste the code above.</li>
+  <li>Fill in <code>FORM_TOKEN</code>, <code>SHEET_ID</code>, <code>NOTIFY_EMAIL</code>.</li>
+  <li>Deploy → New deployment → type: Web app → Execute as: Me, Who has access: Anyone → Deploy.</li>
+  <li>Copy the resulting <code>/exec</code> URL into <code>VITE_FORM_ENDPOINT</code>.</li>
+  <li>The form uses <code>mode: "no-cors"</code> so the browser can't read the response — the script logs and emails the owner so you have a delivery trail.</li>
+</ol>
+
+<h3>f · Client-side form submission pattern</h3>
+<pre><code>const handleSubmit = async (e: React.FormEvent&lt;HTMLFormElement&gt;) =&gt; {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const data = new FormData(form);
+  data.set("token", FORM_TOKEN);
+  data.set("type", "enquiry");
+  data.set("source", window.location.pathname);
+  data.set("userAgent", navigator.userAgent);
+  // Optionally inject IP-geo lookup result here.
+  await fetch(FORM_ENDPOINT, {
+    method: "POST",
+    body: data,
+    mode: "no-cors",
+  });
+};
+</code></pre>
+
+<h3>g · IP geolocation helper</h3>
+<p class="small">Three-provider fallback with per-request timeout. Resolves to a human-readable string like <code>Berlin, Berlin, Germany (94.x.x.x)</code> or empty if every provider is blocked. Fire it lazily on first form focus so it doesn't burn requests on every page view.</p>
+<pre><code>const LOCATION_TIMEOUT_MS = 4000;
+
+function withTimeout&lt;T&gt;(promise: Promise&lt;T&gt;, ms: number): Promise&lt;T&gt; {
+  return new Promise((resolve, reject) =&gt; {
+    const id = setTimeout(() =&gt; reject(new Error("timeout")), ms);
+    promise.then(
+      (v) =&gt; {
+        clearTimeout(id);
+        resolve(v);
+      },
+      (err) =&gt; {
+        clearTimeout(id);
+        reject(err);
+      },
+    );
+  });
+}
+
+async function resolveLocation(): Promise&lt;string&gt; {
+  const providers: Array&lt;() =&gt; Promise&lt;string&gt;&gt; = [
+    async () =&gt; {
+      const r = await fetch("https://ipapi.co/json/");
+      const j = await r.json();
+      const parts = [j.city, j.region, j.country_name].filter(Boolean);
+      return parts.length ? `${parts.join(", ")}${j.ip ? ` (${j.ip})` : ""}` : "";
+    },
+    async () =&gt; {
+      const r = await fetch("https://ipwho.is/");
+      const j = await r.json();
+      if (j &amp;&amp; j.success !== false) {
+        const parts = [j.city, j.region, j.country].filter(Boolean);
+        return parts.length ? `${parts.join(", ")}${j.ip ? ` (${j.ip})` : ""}` : "";
+      }
+      return "";
+    },
+    async () =&gt; {
+      const r = await fetch("https://api.country.is/");
+      const j = await r.json();
+      return j &amp;&amp; j.country ? `${j.country}${j.ip ? ` (${j.ip})` : ""}` : "";
+    },
+  ];
+  for (const p of providers) {
+    try {
+      const result = await withTimeout(p(), LOCATION_TIMEOUT_MS);
+      if (result) return result;
+    } catch {
+      // try next provider
+    }
+  }
+  return "";
+}
+</code></pre>
+
+<p><strong>Wiring (deferred trigger):</strong></p>
+<pre><code>const locationRef = useRef&lt;string&gt;("");
+const locationPromiseRef = useRef&lt;Promise&lt;void&gt; | null&gt;(null);
+
+const ensureLocationLookup = () =&gt; {
+  if (locationPromiseRef.current) return;
+  locationPromiseRef.current = resolveLocation()
+    .then((loc) =&gt; {
+      locationRef.current = loc;
+    })
+    .catch(() =&gt; {
+      // All providers blocked / offline — submit goes through with empty location.
+    });
+};
+
+// On the form root:
+&lt;form onFocusCapture={ensureLocationLookup} onSubmit={handleSubmit}&gt;...&lt;/form&gt;
+
+// Inside handleSubmit, wait up to 2s before sending:
+if (!locationRef.current &amp;&amp; locationPromiseRef.current) {
+  try { await withTimeout(locationPromiseRef.current, 2000); } catch {}
+}
+data.set("location", locationRef.current);
+</code></pre>
+
+<h3>h · Rate-limit-per-email pattern</h3>
+<p class="small">localStorage-based soft cap so a single email can't spam the inbox. Apps Script-side validation should still exist for the real ceiling (this only blocks the casual repeat-clicker).</p>
+<pre><code>const SUBMISSIONS_KEY = "inkyhaus-enquiry-emails";
+const MAX_PER_EMAIL = 5;
+
+function getSubmittedCount(email: string): number {
+  try {
+    const raw = localStorage.getItem(SUBMISSIONS_KEY);
+    const map: Record&lt;string, number&gt; = raw ? JSON.parse(raw) : {};
+    return map[email.toLowerCase().trim()] ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+function recordSubmission(email: string) {
+  try {
+    const raw = localStorage.getItem(SUBMISSIONS_KEY);
+    const map: Record&lt;string, number&gt; = raw ? JSON.parse(raw) : {};
+    const key = email.toLowerCase().trim();
+    map[key] = (map[key] ?? 0) + 1;
+    localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(map));
+  } catch {
+    // localStorage may be unavailable (private mode, storage quota).
+    // Server-side validation in the Apps Script remains the real ceiling.
+  }
+}
+</code></pre>
+
+<p><strong>Wiring inside handleSubmit:</strong></p>
+<pre><code>const email = String(data.get("email") || "").trim();
+if (getSubmittedCount(email) &gt;= MAX_PER_EMAIL) {
+  setStatus("limit");                // show a friendly "you've already enquired" message
+  return;
+}
+// ... send ...
+recordSubmission(email);             // only on successful POST
+</code></pre>
+
+<div class="callout"><strong>Server-side hardening (optional):</strong> add a similar counter inside the Apps Script keyed by email using <code>PropertiesService.getScriptProperties()</code> — that survives across browsers and incognito, while the localStorage version only stops the same device.</div>
+
+<hr>
+<p class="small">End of brief. Ship the PDF with the brand reference document together when starting the new project.</p>
+
+</body>
+</html>

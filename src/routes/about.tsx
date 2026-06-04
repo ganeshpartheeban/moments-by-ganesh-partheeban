@@ -38,7 +38,7 @@ export const Route = createFileRoute("/about")({
       {
         name: "description",
         content:
-          "Meet Ganesh Partheeban, an independent candid wedding and event photographer based in Chennai, Tamil Nadu. Documentary coverage across India — weddings, family functions, concerts, shows, behind-the-scenes.",
+          "Meet Ganesh Partheeban, an independent candid wedding and event photographer based in Chennai, Tamil Nadu. Documentary coverage across India · weddings, family functions, concerts, shows, behind-the-scenes.",
       },
       { property: "og:title", content: "About · Moments by Ganesh Partheeban" },
       { property: "og:url", content: absoluteUrl("/about") },
@@ -209,7 +209,7 @@ function TestimonialCarousel({ items }: { items: Testimonial[] }) {
   const count = items.length;
 
   // Auto-advance to the next testimonial every 15s. The timer is keyed on
-  // `index` so any manual nav (prev/next) resets the clock — visitors don't
+  // `index` so any manual nav (prev/next) resets the clock · visitors don't
   // get yanked forward immediately after clicking back.
   useEffect(() => {
     if (count <= 1) return;

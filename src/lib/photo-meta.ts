@@ -8,7 +8,7 @@
  */
 
 export type PhotoMeta = {
-  /** Primary subject — event name, artist, brand. Always shown. */
+  /** Primary subject · event name, artist, brand. Always shown. */
   title: string;
   /** Additional context (e.g. occasion the event marked). */
   detail?: string;

@@ -40,7 +40,7 @@ export const Route = createFileRoute("/work/$slug")({
         const meta = PHOTO_META[n];
         const caption = meta
           ? [
-              meta.title + (meta.detail ? ` — ${meta.detail}` : ""),
+              meta.title + (meta.detail ? ` · ${meta.detail}` : ""),
               meta.featuring && `featuring ${meta.featuring}`,
               [meta.venue, meta.location].filter(Boolean).join(", "),
               meta.date,
@@ -69,7 +69,7 @@ export const Route = createFileRoute("/work/$slug")({
         },
         {
           name: "description",
-          content: `A short photographic story from ${study.title} — documented candidly by Ganesh Partheeban in ${study.location}, ${study.date}.`,
+          content: `A short photographic story from ${study.title} · documented candidly by Ganesh Partheeban in ${study.location}, ${study.date}.`,
         },
         { property: "og:title", content: `${study.title} · ${study.location}` },
         {
@@ -78,7 +78,7 @@ export const Route = createFileRoute("/work/$slug")({
         },
         {
           property: "og:description",
-          content: `Candid photography from ${study.title} — ${study.location}, ${study.date}.`,
+          content: `Candid photography from ${study.title} · ${study.location}, ${study.date}.`,
         },
         { property: "og:image", content: absoluteUrl(`/og/${study.slug}.jpg`) },
         {
@@ -90,7 +90,7 @@ export const Route = createFileRoute("/work/$slug")({
         { property: "og:image:height", content: "630" },
         {
           property: "og:image:alt",
-          content: `${study.title} — ${study.location}`,
+          content: `${study.title} · ${study.location}`,
         },
         { name: "twitter:card", content: "summary_large_image" },
         {
@@ -114,7 +114,7 @@ export const Route = createFileRoute("/work/$slug")({
           children: ldScriptBody(
             buildImageGalleryLD(galleryImages, {
               name: `${study.title} · ${titleSuffix}`,
-              description: `Candid photographs from ${study.title} — ${study.location}, ${study.date}.`,
+              description: `Candid photographs from ${study.title} · ${study.location}, ${study.date}.`,
               url: `/work/${study.slug}`,
             }),
           ),
@@ -138,7 +138,7 @@ function CaseStudyPage() {
   );
 
   const [openPhotoIndex, setOpenPhotoIndex] = useState<number | null>(null);
-  // Cap masonry at 3 columns — stories feel more focused than the home gallery.
+  // Cap masonry at 3 columns · stories feel more focused than the home gallery.
   const cols = useColumnCount(3);
   const columns = useMemo(
     () => distribute(frames.map((f) => f.photo), cols),
@@ -156,7 +156,7 @@ function CaseStudyPage() {
 
   return (
     <div>
-      {/* Hero — compact on mobile, expansive on desktop. */}
+      {/* Hero · compact on mobile, expansive on desktop. */}
       <section className="mx-auto max-w-[1800px] px-4 pt-6 pb-6 sm:px-6 sm:pt-16 sm:pb-12 md:px-10 md:pt-20 md:pb-16">
         <p className="inline-flex items-center gap-2 font-mono-label text-[11px] text-muted-foreground sm:text-xs">
           <Aperture className="h-3.5 w-3.5 text-accent" />
@@ -268,7 +268,7 @@ function CaseStudyPage() {
                                 {meta.title}
                                 {meta.detail && (
                                   <span className="text-muted-foreground">
-                                    {" "}— {meta.detail}
+                                    {" "}· {meta.detail}
                                   </span>
                                 )}
                               </p>

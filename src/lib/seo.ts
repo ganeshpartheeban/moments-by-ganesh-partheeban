@@ -1,5 +1,5 @@
 /**
- * SEO helpers — site-wide constants and JSON-LD builders.
+ * SEO helpers · site-wide constants and JSON-LD builders.
  *
  * SITE_URL can be overridden at build time with `VITE_SITE_URL`. After
  * deploying to a final domain, set it in `.env.local` so canonical links
@@ -165,7 +165,7 @@ export function buildImageGalleryLD(
   return {
     "@context": "https://schema.org",
     "@type": "ImageGallery",
-    name: opts?.name ?? `${SITE_NAME} — Selected Frames`,
+    name: opts?.name ?? `${SITE_NAME} · Selected Frames`,
     ...(opts?.description ? { description: opts.description } : {}),
     ...(opts?.url ? { url: absoluteUrl(opts.url) } : {}),
     creator: { "@id": `${SITE_URL}#person` },

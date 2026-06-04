@@ -16,17 +16,17 @@ export default function StoryCard({
   study: CaseStudy;
   /** Eager-load the first frame (use for above-fold cards). */
   eager?: boolean;
-  /** Position among siblings — used to offset the cycle so cards don't all flip together. */
+  /** Position among siblings · used to offset the cycle so cards don't all flip together. */
   staggerIndex?: number;
 }) {
   const frames = study.sequence;
   const [active, setActive] = useState(0);
   const [inView, setInView] = useState(false);
-  // Track which frames have been shown — render only mounted ones to keep DOM light.
+  // Track which frames have been shown · render only mounted ones to keep DOM light.
   const [mounted, setMounted] = useState<Set<number>>(() => new Set([0]));
   const cardRef = useRef<HTMLDivElement | null>(null);
 
-  // Pause the auto-cycle when the card is offscreen — saves CPU + battery.
+  // Pause the auto-cycle when the card is offscreen · saves CPU + battery.
   useEffect(() => {
     if (!cardRef.current || typeof IntersectionObserver === "undefined") {
       setInView(true);

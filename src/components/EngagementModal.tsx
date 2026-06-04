@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Aperture, ArrowUpRight } from "@/components/icons";
+import { Aperture } from "@/components/icons";
 import { useI18n } from "@/lib/i18n";
 
 const STORAGE_KEY = "rms-engagement-dismissed-at";
@@ -23,7 +23,7 @@ export default function EngagementModal() {
       const dismissedAt = raw ? Number(raw) : 0;
       dismissed = dismissedAt > 0 && Date.now() - dismissedAt < SUPPRESS_FOR_MS;
     } catch {
-      // localStorage unavailable — fail open, show once.
+      // localStorage unavailable · fail open, show once.
     }
     if (dismissed) return;
 
@@ -34,10 +34,10 @@ export default function EngagementModal() {
       setOpen(true);
     };
 
-    // Trigger 1 — time on page.
+    // Trigger 1 · time on page.
     const timerId = setTimeout(trigger, DELAY_MS);
 
-    // Trigger 2 — visitor reaches the end of the gallery (home page only).
+    // Trigger 2 · visitor reaches the end of the gallery (home page only).
     // Whichever fires first wins; the other is cancelled.
     let observer: IntersectionObserver | undefined;
     if (location.pathname === "/" && "IntersectionObserver" in window) {
@@ -55,7 +55,7 @@ export default function EngagementModal() {
         return true;
       };
       if (!attach()) {
-        // Gallery still mounting — retry next frame.
+        // Gallery still mounting · retry next frame.
         requestAnimationFrame(() => attach());
       }
     }
@@ -85,7 +85,7 @@ export default function EngagementModal() {
     try {
       localStorage.setItem(STORAGE_KEY, String(Date.now()));
     } catch {
-      // No-op — modal still hides for the current page load.
+      // No-op · modal still hides for the current page load.
     }
   };
 
@@ -128,7 +128,7 @@ export default function EngagementModal() {
           </span>
         </button>
 
-        <div className="px-6 pb-8 pt-10 sm:px-10 sm:pb-10 sm:pt-12">
+        <div className="px-6 pb-7 pt-9 sm:px-9 sm:pb-9 sm:pt-10">
           <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
             <Aperture className="h-3.5 w-3.5 text-accent" />
             {t("modal.label")}
@@ -136,7 +136,7 @@ export default function EngagementModal() {
 
           <h2
             id="engagement-modal-title"
-            className="mt-5 font-display text-3xl leading-[1.05] tracking-tight text-balance sm:text-4xl"
+            className="mt-4 font-display text-2xl leading-[1.1] tracking-tight text-balance sm:text-3xl"
           >
             {t("modal.headline.before")}{" "}
             <em className="not-italic text-accent">
@@ -145,17 +145,22 @@ export default function EngagementModal() {
             ?
           </h2>
 
-          <p className="mt-5 text-muted-foreground sm:text-lg">{t("modal.body")}</p>
+          <p className="mt-3 text-sm text-muted-foreground sm:text-base">{t("modal.body")}</p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
               to="/contact"
               hash="booking-enquiry"
               onClick={close}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-display text-base text-background transition-opacity hover:opacity-90"
+              className="group inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-display text-base text-background transition-opacity hover:opacity-90"
             >
               {t("modal.cta.enquire")}
-              <ArrowUpRight className="h-4 w-4" />
+              <span
+                aria-hidden
+                className="transition-transform group-hover:translate-x-0.5"
+              >
+                →
+              </span>
             </Link>
             <Link
               to="/"
@@ -173,7 +178,7 @@ export default function EngagementModal() {
             </Link>
           </div>
 
-          <p className="mt-8 font-mono-label text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-6 font-mono-label text-[10px] text-muted-foreground/70">
             {t("modal.footnote")}
           </p>
         </div>

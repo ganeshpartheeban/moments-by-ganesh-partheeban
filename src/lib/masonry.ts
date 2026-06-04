@@ -36,7 +36,7 @@ export function useColumnCount(max = 4): number {
 
 /**
  * Distribute items into N columns using a shortest-column-first heuristic.
- * Each item must expose width/height — its aspect ratio determines column height.
+ * Each item must expose width/height · its aspect ratio determines column height.
  */
 export function distribute<T extends { width: number; height: number }>(
   items: T[],

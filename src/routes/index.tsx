@@ -31,7 +31,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Candid wedding, reception, engagement, concert and event photography across India by Ganesh Partheeban. Based in Chennai, documenting moments as they happen — natural, honest, fast delivery.",
+          "Candid wedding, reception, engagement, concert and event photography across India by Ganesh Partheeban. Based in Chennai, documenting moments as they happen · natural, honest, fast delivery.",
       },
       {
         property: "og:title",
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Candid photography across India — weddings, events, concerts, shows and behind-the-scenes. Moments, honestly documented.",
+          "Candid photography across India · weddings, events, concerts, shows and behind-the-scenes. Moments, honestly documented.",
       },
     ],
     links: [{ rel: "canonical", href: SITE_URL }],
@@ -330,7 +330,7 @@ function OtherFrames() {
                           <p className="font-display text-sm text-foreground">
                             {meta.title}
                             {meta.detail && (
-                              <span className="text-muted-foreground"> — {meta.detail}</span>
+                              <span className="text-muted-foreground"> · {meta.detail}</span>
                             )}
                           </p>
                         )}

@@ -3,7 +3,7 @@
  *
  * Both are baked into the client bundle (Vite VITE_* substitution) so they
  * are not server-side secrets. The token's only job is to deter casual
- * abuse — the Apps Script enforces real validation server-side.
+ * abuse · the Apps Script enforces real validation server-side.
  */
 
 const endpoint = import.meta.env.VITE_FORM_ENDPOINT as string | undefined;

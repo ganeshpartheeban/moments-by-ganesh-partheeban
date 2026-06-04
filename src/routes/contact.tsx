@@ -28,7 +28,7 @@ export const Route = createFileRoute("/contact")({
       {
         name: "description",
         content:
-          "Book Ganesh Partheeban for candid wedding, reception, engagement, concert or event photography. Based in Chennai, available across India. Send an enquiry — replies within a day or two.",
+          "Book Ganesh Partheeban for candid wedding, reception, engagement, concert or event photography. Based in Chennai, available across India. Send an enquiry · replies within a day or two.",
       },
       { property: "og:title", content: "Contact · Moments by Ganesh Partheeban" },
       { property: "og:url", content: absoluteUrl("/contact") },
@@ -215,7 +215,7 @@ function recordSubmission(email: string) {
     localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(map));
   } catch {
     // localStorage may be unavailable (private mode, storage quota). Limit
-    // becomes server-side-only — acceptable degradation.
+    // becomes server-side-only · acceptable degradation.
   }
 }
 
@@ -314,7 +314,7 @@ function BookingEnquiry() {
         locationRef.current = loc;
       })
       .catch(() => {
-        // All providers blocked / offline — submit will go through with empty location.
+        // All providers blocked / offline · submit will go through with empty location.
       });
   };
 
@@ -338,7 +338,7 @@ function BookingEnquiry() {
       try {
         await withTimeout(locationPromiseRef.current, 2000);
       } catch {
-        // Location lookup didn't finish in time — send without it.
+        // Location lookup didn't finish in time · send without it.
       }
     }
     data.set("location", locationRef.current);
@@ -505,7 +505,7 @@ function BookingEnquiry() {
             />
           </div>
 
-          {/* Honeypot — bots fill this; real users never see it. */}
+          {/* Honeypot · bots fill this; real users never see it. */}
           <input
             type="text"
             name="website"
@@ -528,7 +528,7 @@ function BookingEnquiry() {
                   ? t("contact.form.limit")
                   : status === "error"
                     ? t("contact.form.retry")
-                    : `${t("contact.form.submit")} ↗`}
+                    : `${t("contact.form.submit")} →`}
           </button>
 
           {status === "limit" && (
