@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import portrait from "@/assets/portrait.jpg";
 import { Aperture, Camera, Lens, Sparkle, ArrowUpRight } from "@/components/icons";
 import {
@@ -141,7 +141,7 @@ function AboutPage() {
         className="scroll-mt-20 border-b border-border bg-secondary/40"
       >
         <div className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-14 md:px-10 md:py-18">
-          <div className="grid gap-12 md:grid-cols-[3fr_2fr] md:gap-16">
+          <div className="grid gap-12 lg:grid-cols-[3fr_2fr] lg:gap-16">
             <div>
               <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
                 <Sparkle className="h-3.5 w-3.5 text-accent" />
@@ -149,7 +149,7 @@ function AboutPage() {
               </p>
               <TestimonialCarousel items={TESTIMONIALS} />
             </div>
-            <div className="border-t border-border pt-12 md:border-l md:border-t-0 md:pl-12 md:pt-0">
+            <div className="border-t border-border pt-12 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0">
               <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
                 <Sparkle className="h-3.5 w-3.5 text-accent" />
                 {t("about.testimonials.shareYours")}
@@ -160,7 +160,8 @@ function AboutPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-14 md:px-10 md:py-18">
+      <section className="border-t border-border bg-secondary/60">
+        <div className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-14 md:px-10 md:py-18">
         <div className="grid gap-12 md:grid-cols-12">
           <div className="md:col-span-4">
             <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
@@ -197,6 +198,7 @@ function AboutPage() {
             <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
         </div>
+        </div>
       </section>
     </div>
   );
@@ -206,11 +208,10 @@ const CAROUSEL_INTERVAL_MS = 15_000;
 
 function TestimonialCarousel({ items }: { items: Testimonial[] }) {
   const [index, setIndex] = useState(0);
+  const touchStartX = useRef<number | null>(null);
   const count = items.length;
 
-  // Auto-advance to the next testimonial every 15s. The timer is keyed on
-  // `index` so any manual nav (prev/next) resets the clock · visitors don't
-  // get yanked forward immediately after clicking back.
+  // Auto-advance every 15s. Resets when index changes (manual nav).
   useEffect(() => {
     if (count <= 1) return;
     if (typeof window === "undefined") return;
@@ -223,55 +224,70 @@ function TestimonialCarousel({ items }: { items: Testimonial[] }) {
 
   if (count === 0) return null;
 
-  const go = (delta: number) =>
-    setIndex((i) => (i + delta + count) % count);
+  const go = (target: number) => {
+    setIndex(((target % count) + count) % count);
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) > 50) go(index + (dx < 0 ? 1 : -1));
+  };
+
+  const active = items[index];
 
   return (
     <div className="mt-10 md:mt-12">
-      <div className="relative overflow-hidden">
-        <div
-          className="flex transition-transform duration-500 ease-out"
-          style={{ transform: `translateX(calc(${-index * 80}% + 10%))` }}
-        >
-          {items.map((t, i) => {
-            const active = i === index;
-            return (
-              <figure
-                key={i}
-                aria-hidden={!active}
-                className="w-[80%] flex-shrink-0 px-2 sm:px-4"
-              >
-                <div
-                  className={
-                    "flex flex-col gap-6 border-l-2 bg-background p-6 transition-opacity duration-500 sm:p-8 " +
-                    (active
-                      ? "border-accent opacity-100"
-                      : "border-border opacity-40")
-                  }
-                >
-                  <p className="font-display text-lg leading-snug sm:text-xl md:text-2xl">
-                    <span className="text-accent">“</span>
-                    {t.q}
-                    <span className="text-accent">”</span>
-                  </p>
-                  <figcaption>
-                    <p className="font-display text-base text-foreground">{t.name}</p>
-                    <p className="mt-1 font-mono-label text-xs text-muted-foreground">
-                      {t.venue}
-                    </p>
-                  </figcaption>
-                </div>
-              </figure>
-            );
-          })}
-        </div>
+      <div
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        className="relative"
+      >
+        {/* Render every card stacked, only one visible · no scroll math.
+            We keep all in the DOM (rather than just `active`) so the
+            transition-opacity crossfade works on swap. */}
+        {items.map((t, i) => {
+          const isActive = i === index;
+          return (
+            <figure
+              key={i}
+              aria-hidden={!isActive}
+              className={
+                "flex flex-col gap-6 border-l-2 bg-background p-5 transition-opacity duration-500 sm:p-8 " +
+                (isActive
+                  ? "relative z-10 border-accent opacity-100"
+                  : "pointer-events-none absolute inset-0 border-border opacity-0")
+              }
+            >
+              <p className="font-display text-lg leading-snug sm:text-xl md:text-2xl">
+                <span className="text-accent">“</span>
+                {t.q}
+                <span className="text-accent">”</span>
+              </p>
+              <figcaption>
+                <p className="font-display text-base text-foreground">{t.name}</p>
+                <p className="mt-1 font-mono-label text-xs text-muted-foreground">
+                  {t.venue}
+                </p>
+              </figcaption>
+            </figure>
+          );
+        })}
+        {/* Hidden srOnly label so screen readers know the active testimonial. */}
+        <span className="sr-only" aria-live="polite">
+          Testimonial {index + 1} of {count}: {active.q}
+        </span>
       </div>
 
       {count > 1 && (
         <div className="mt-6 flex items-center gap-4">
           <button
             type="button"
-            onClick={() => go(-1)}
+            onClick={() => go(index - 1)}
             aria-label="Previous testimonial"
             className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:border-accent hover:text-accent"
           >
@@ -279,7 +295,7 @@ function TestimonialCarousel({ items }: { items: Testimonial[] }) {
           </button>
           <button
             type="button"
-            onClick={() => go(1)}
+            onClick={() => go(index + 1)}
             aria-label="Next testimonial"
             className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:border-accent hover:text-accent"
           >

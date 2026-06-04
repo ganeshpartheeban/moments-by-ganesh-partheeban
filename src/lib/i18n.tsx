@@ -37,7 +37,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
       "Candid photography across weddings, concerts, and live events. No posing, no heavy edits · just the day as it happened.",
     "home.hero.cta.book": "Book your event",
     "home.hero.cta.instagram": "Enquire on Instagram",
-    "home.hero.booking.window": "Bookings open",
+    "home.hero.booking.window": "Bookings open now",
 
     // Home · selected work
     "home.work.label": "Selected frames",
@@ -125,7 +125,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "about.specialization.label": "Specialization",
     "about.specialization.01": "Natural expressions",
     "about.specialization.02": "Real emotions",
-    "about.specialization.03": "Minimal interference",
+    "about.specialization.03": "Quiet presence",
     "about.specialization.04": "Timeless visual storytelling",
     "about.cta": "Start a conversation",
 
@@ -157,15 +157,15 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "services.coverage.label": "Coverage area",
     "services.coverage.title": "Available across India.",
     "services.coverage.body":
-      "Bookings accepted across India. Travel and stay billed separately from the coverage.",
+      "Bookings accepted across the country. Most begin with a quick chat over WhatsApp or email.",
     "services.coverage.cta": "Check date availability",
 
     // Contact
     "contact.label": "Contact",
-    "contact.headline.l1": "Get in touch.",
-    "contact.headline.l2.accent": "Send a note.",
+    "contact.headline.l1": "Get in touch",
+    "contact.headline.l2.accent": "send a note",
     "contact.body":
-      "Candid coverage across India. Replies within a day or two · bookings confirmed by date availability.",
+      "Candid coverage across India. Replies within a day.",
     "contact.card.fastestReply": "Fastest reply",
     "contact.card.fullBriefs": "For full briefs",
     "contact.testimonials.label": "Words from clients",
@@ -195,7 +195,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "contact.form.limit": "Limit reached",
     "contact.form.retry": "Try again ↻",
     "contact.form.sentNote":
-      "Enquiry received. I'll reply to the email you provided within a day or two.",
+      "Enquiry received. I'll reply within a day.",
     "contact.form.limitNote":
       "You've already sent five enquiries from this device. Please email ganeshpartheeban@gmail.com directly for any follow-up.",
     "contact.form.errorNote": "Couldn't send. Please email ganeshpartheeban@gmail.com directly.",
@@ -230,10 +230,10 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "modal.label": "A note",
     "modal.headline.before": "Looking for a candid",
     "modal.headline.accent": "photographer",
-    "modal.body": "Drop a note and I'll get back within a day or two.",
+    "modal.body": "Drop a note and I'll get back within a day.",
     "modal.cta.enquire": "Enquire",
     "modal.cta.work": "Browse work",
-    "modal.footnote": "Replies within a day or two",
+    "modal.footnote": "",
 
     // Cookie
     "cookie.body":
@@ -245,7 +245,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "footer.coverage.area": "Available across India",
     "footer.coverage.note":
       "Travel and stay are billed separately from event coverage.",
-    "footer.booking.badge": "Bookings open for 2026",
+    "footer.booking.badge": "Bookings open now",
     "footer.made": "Made with care · Tamil Nadu",
     "footer.index": "Index No. 01",
     "footer.tagline": "Photographs that feel like the moment itself.",
@@ -284,7 +284,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
       "இயற்கையான தருணங்கள். உண்மையான உணர்வுகள். விரைவான டெலிவரி. திருமணங்கள், நிகழ்வுகள், இசை நிகழ்ச்சிகள், காட்சிகள் மற்றும் அதற்கு இடையேயான அனைத்தையும் இயற்கையாகப் படம்பிடிக்கும் ஒரு கேண்டிட் புகைப்படக்காரர். கட்டாய போஸ்கள் இல்லை, அதிக எடிட்டிங் இல்லை, செயற்கையான ஸ்டைலிங் இல்லை.",
     "home.hero.cta.book": "உங்கள் நிகழ்வை முன்பதிவு செய்யுங்கள்",
     "home.hero.cta.instagram": "Instagram-இல் தொடர்பு கொள்ளுங்கள்",
-    "home.hero.booking.window": "முன்பதிவு திறந்துள்ளது",
+    "home.hero.booking.window": "இப்போது முன்பதிவு திறந்துள்ளது",
 
     "home.work.label": "தேர்ந்தெடுக்கப்பட்ட படங்கள்",
     "home.work.title":
@@ -487,7 +487,7 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "footer.coverage.area": "இந்தியா முழுவதும் கிடைக்கும்",
     "footer.coverage.note":
       "பயணம் மற்றும் தங்கும் செலவுகள் நிகழ்வுக் கட்டணத்திலிருந்து தனியாக வழங்கப்படும்.",
-    "footer.booking.badge": "2026க்கான முன்பதிவுகள் திறந்துள்ளன",
+    "footer.booking.badge": "இப்போது முன்பதிவு திறந்துள்ளது",
     "footer.made": "அன்புடன் உருவாக்கப்பட்டது · தமிழ்நாடு",
     "footer.index": "தொகுப்பு எண் 01",
     "footer.tagline": "தருணத்தைப் போலவே உணரும் புகைப்படங்கள்.",

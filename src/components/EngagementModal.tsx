@@ -178,9 +178,6 @@ export default function EngagementModal() {
             </Link>
           </div>
 
-          <p className="mt-6 font-mono-label text-[10px] text-muted-foreground/70">
-            {t("modal.footnote")}
-          </p>
         </div>
       </div>
     </div>

@@ -104,7 +104,7 @@ function Hero() {
             <p className="rise rise-3 mt-6 max-w-xl text-base leading-relaxed text-muted-foreground md:mt-8 md:text-lg">
               {t("home.hero.body")}
             </p>
-            <p className="rise rise-3 mt-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/[0.06] px-3 py-1 font-mono-label text-[11px] text-accent">
+            <p className="rise rise-3 mt-6 inline-flex w-fit max-w-full items-center gap-2 whitespace-nowrap rounded-full border border-accent/30 bg-accent/[0.06] px-3 py-1 font-mono-label text-[11px] text-accent">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
@@ -260,7 +260,7 @@ function OtherFrames() {
   if (standaloneIndices.length === 0) return null;
 
   return (
-    <section className="border-t border-border bg-secondary/20">
+    <section className="border-t border-border bg-secondary/50">
       <div className="w-full px-3 py-14 sm:px-6 sm:py-20 md:px-8 md:py-24">
         <div className="mx-auto mb-10 max-w-[1800px] md:mb-14">
           <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
@@ -381,7 +381,7 @@ function Philosophy() {
     { n: "06", title: t("philosophy.06.title"), body: t("philosophy.06.body") },
   ];
   return (
-    <section className="border-y border-border bg-secondary/40">
+    <section className="border-y border-border bg-background">
       <div className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-14 md:px-10 md:py-20">
         <div className="grid gap-10 md:grid-cols-12 md:gap-12">
           <div className="md:col-span-4">
@@ -419,7 +419,7 @@ function Philosophy() {
 function Press() {
   const { t } = useI18n();
   return (
-    <section className="border-y border-border bg-secondary/40">
+    <section className="border-y border-border bg-secondary/70">
       <div className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-14 md:px-10 md:py-18">
         <div className="grid gap-10 md:grid-cols-12 md:gap-12">
           <div className="md:col-span-4">

@@ -36,7 +36,7 @@ export default function FloatingContact() {
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 64px + 0.75rem)",
         right: "calc(env(safe-area-inset-right, 0px) + 1rem)",
       }}
-      className="group fixed z-30 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-background shadow-lg shadow-accent/30 transition-transform hover:scale-105 active:scale-95 sm:!bottom-8 sm:!right-8 sm:h-14 sm:w-14"
+      className="group fixed z-30 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-background shadow-lg shadow-accent/30 transition-transform hover:scale-105 active:scale-95 md:!bottom-8 md:!right-8 md:h-14 md:w-14"
     >
       <WhatsApp className="h-5 w-5 sm:h-6 sm:w-6" />
     </a>

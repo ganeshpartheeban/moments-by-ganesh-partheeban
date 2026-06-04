@@ -61,9 +61,10 @@ export default function BottomTabBar() {
       aria-label="Primary"
       style={{
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        boxShadow: "0 -8px 24px -12px rgba(20, 12, 4, 0.18), 0 -1px 0 0 rgba(20, 12, 4, 0.08)",
       }}
       className={
-        "fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-md transition-transform duration-300 ease-out sm:hidden " +
+        "fixed inset-x-0 bottom-0 z-40 border-t border-foreground/15 bg-secondary/95 backdrop-blur-md transition-transform duration-300 ease-out md:hidden " +
         (hidden ? "translate-y-full" : "translate-y-0")
       }
     >

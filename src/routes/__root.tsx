@@ -292,7 +292,7 @@ function RootShellContents() {
             paddingBottom:
               "calc(env(safe-area-inset-bottom, 0px) + var(--tab-bar-pad, 0px))",
           }}
-          className="page-transition flex-1 [--tab-bar-pad:64px] sm:[--tab-bar-pad:0px]"
+          className="page-transition flex-1 [--tab-bar-pad:64px] md:[--tab-bar-pad:0px]"
         >
           <Outlet />
         </main>
@@ -338,14 +338,15 @@ function SiteHeader() {
           }
           className="group flex shrink-0 items-baseline gap-2"
         >
-          <span className="font-display text-base tracking-tight text-foreground sm:text-xl md:text-2xl">
+          <span className="truncate font-display text-base tracking-tight text-foreground sm:text-xl md:text-lg lg:text-2xl">
             <em className="not-italic text-accent">{t("header.brand.prefix")}</em>{" "}
             {t("header.brand.suffix")}
           </span>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-1 sm:text-sm md:gap-2">
+        {/* Desktop nav · only at md+ so it never has to wrap. Below md, the
+            bottom tab bar handles primary navigation. */}
+        <nav className="hidden min-w-0 md:flex md:flex-shrink-0 md:items-center md:justify-end md:gap-0.5 md:text-xs lg:gap-2 lg:text-sm">
           {NAV_ITEMS.map((item) => {
             const isWork = item.to === "/";
             const link = (
@@ -361,7 +362,7 @@ function SiteHeader() {
                   className: "text-muted-foreground hover:text-foreground",
                 }}
                 onClick={(e) => handleNavClick(e, item)}
-                className="px-2 py-2 font-mono-label transition-colors sm:px-3"
+                className="whitespace-nowrap px-2 py-2 font-mono-label transition-colors lg:px-3"
               >
                 {t(item.tKey)}
               </Link>
@@ -418,17 +419,18 @@ function SiteHeader() {
                 },
               )
             }
-            className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-mono-label text-xs text-background transition-opacity hover:opacity-90 sm:text-sm"
+            className="ml-2 inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-accent px-3 py-1.5 font-mono-label text-xs text-background transition-opacity hover:opacity-90 lg:px-4 lg:py-2 lg:text-sm"
           >
             {t("nav.enquire")} <span aria-hidden>→</span>
           </Link>
         </nav>
 
-        {/* Mobile-only Enquire CTA on the right. */}
+        {/* Mobile + tablet Enquire CTA on the right (anything below md, where
+            the bottom tab bar handles the rest of nav). */}
         <Link
           to="/contact"
           hash="booking-enquiry"
-          className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-2 font-mono-label text-[11px] text-background transition-opacity hover:opacity-90 active:scale-95 sm:hidden"
+          className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-2 font-mono-label text-[11px] text-background transition-opacity hover:opacity-90 active:scale-95 md:hidden"
         >
           {t("nav.enquire")} <span aria-hidden>→</span>
         </Link>
@@ -467,17 +469,17 @@ function SiteFooter() {
   return (
     <footer className="mt-10 border-t border-border bg-background sm:mt-16">
       <div className="mx-auto max-w-[1800px] px-4 py-10 sm:px-6 sm:py-14 md:px-10 md:py-20">
-        <div className="grid gap-12 sm:grid-cols-2 md:grid-cols-12 md:gap-16">
-          <div className="sm:col-span-2 md:col-span-6">
+        <div className="grid gap-10 sm:grid-cols-2 sm:gap-12 lg:grid-cols-12 lg:gap-16">
+          <div className="sm:col-span-2 lg:col-span-6">
             <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
               <Film className="h-3.5 w-3.5 text-accent" />
               Index No. {footerIndex.num} · {footerIndex.label}
             </p>
-            <h2 className="mt-6 font-display text-3xl leading-[1.05] tracking-tight text-foreground text-balance sm:text-4xl md:text-5xl lg:text-6xl">
+            <h2 className="mt-4 font-display text-2xl leading-[1.1] tracking-tight text-foreground text-balance sm:mt-6 sm:text-4xl md:text-5xl lg:text-6xl">
               Photographs that feel like the moment itself.
             </h2>
           </div>
-          <div className="md:col-span-3">
+          <div className="lg:col-span-3">
             <p className="font-mono-label text-muted-foreground">Contact</p>
             <ul className="mt-6 space-y-3 text-foreground">
               <li>
@@ -519,7 +521,7 @@ function SiteFooter() {
               </li>
             </ul>
           </div>
-          <div className="md:col-span-3">
+          <div className="lg:col-span-3">
             <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
               <MapPin className="h-3.5 w-3.5 text-accent" />
               {t("footer.coverage")}
@@ -528,13 +530,13 @@ function SiteFooter() {
             <p className="mt-2 text-sm text-muted-foreground">
               {t("footer.coverage.note")}
             </p>
-            <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/[0.06] px-3 py-1 font-mono-label text-xs text-accent">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+            <p className="mt-5 inline-flex w-fit max-w-full items-center gap-2 whitespace-nowrap rounded-full border border-accent/40 bg-accent/[0.06] px-3 py-1 font-mono-label text-xs text-accent">
+              <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-accent" />
               {t("footer.booking.badge")}
             </p>
           </div>
         </div>
-        <div className="mt-20 flex flex-col gap-3 border-t border-border pt-8 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
+        <div className="mt-12 flex flex-col gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:mt-16 sm:pt-8 md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} Ganesh Partheeban. Candid Photographer.</p>
           <p className="inline-flex flex-wrap items-center gap-x-2 font-mono-label">
             Natural moments

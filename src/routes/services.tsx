@@ -257,7 +257,8 @@ function ServicesPage() {
       </section>
 
       {/* Approach + Coverage */}
-      <section className="mx-auto grid max-w-[1800px] gap-10 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-2 md:gap-12 md:px-10 md:py-20">
+      <section className="border-t border-border bg-secondary/60">
+        <div className="mx-auto grid max-w-[1800px] gap-10 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-2 md:gap-12 md:px-10 md:py-20">
         <div>
           <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
             <Aperture className="h-3.5 w-3.5 text-accent" />
@@ -297,6 +298,7 @@ function ServicesPage() {
           >
             {t("services.coverage.cta")} <span>→</span>
           </Link>
+        </div>
         </div>
       </section>
     </div>

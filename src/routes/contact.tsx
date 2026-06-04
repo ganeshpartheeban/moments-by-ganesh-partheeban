@@ -28,7 +28,7 @@ export const Route = createFileRoute("/contact")({
       {
         name: "description",
         content:
-          "Book Ganesh Partheeban for candid wedding, reception, engagement, concert or event photography. Based in Chennai, available across India. Send an enquiry · replies within a day or two.",
+          "Book Ganesh Partheeban for candid wedding, reception, engagement, concert or event photography. Based in Chennai, available across India. Send an enquiry · replies within a day.",
       },
       { property: "og:title", content: "Contact · Moments by Ganesh Partheeban" },
       { property: "og:url", content: absoluteUrl("/contact") },
@@ -151,7 +151,8 @@ function ContactPage() {
       <BookingEnquiry />
 
       {/* FAQ */}
-      <section className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-14 md:px-10 md:py-20">
+      <section className="border-t border-border bg-secondary/55">
+        <div className="mx-auto max-w-[1800px] px-4 py-14 sm:px-6 sm:py-14 md:px-10 md:py-20">
         <div className="grid gap-10 md:grid-cols-12 md:gap-12">
           <div className="md:col-span-4">
             <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
@@ -175,6 +176,7 @@ function ContactPage() {
               </div>
             ))}
           </dl>
+        </div>
         </div>
       </section>
     </div>
@@ -358,8 +360,8 @@ function BookingEnquiry() {
 
   return (
     <section id="booking-enquiry" className="scroll-mt-20 bg-foreground text-background">
-      <div className="mx-auto grid max-w-[1800px] gap-10 px-4 py-10 sm:px-6 sm:py-16 md:grid-cols-12 md:gap-16 md:px-10 md:py-20">
-        <div className="md:col-span-5">
+      <div className="mx-auto grid max-w-[1800px] gap-10 px-4 py-10 sm:px-6 sm:py-16 md:px-10 md:py-20 lg:grid-cols-12 lg:gap-16">
+        <div className="lg:col-span-5">
           <p className="inline-flex items-center gap-2 font-mono-label text-background/60">
             <Camera className="h-3.5 w-3.5 text-accent" />
             {t("contact.bookingEnquiry.label")}
@@ -426,7 +428,7 @@ function BookingEnquiry() {
         <form
           onSubmit={handleSubmit}
           onFocusCapture={ensureLocationLookup}
-          className="relative md:col-span-7 rounded-xs border border-background/25 bg-background/[0.03] p-4 sm:p-6 md:p-10"
+          className="relative rounded-xs border border-background/25 bg-background/[0.03] p-4 sm:p-6 md:p-10 lg:col-span-7"
         >
           <Field n="01" label={t("contact.form.name")} name="name" placeholder="Sai Karthik" required />
           <Field
