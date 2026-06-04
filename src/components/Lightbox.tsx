@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GALLERY, formatExif, type Photo } from "@/lib/gallery";
 import { PHOTO_META } from "@/lib/photo-meta";
 
@@ -9,32 +9,55 @@ export default function Lightbox({
   index,
   onClose,
   onChange,
+  photoIndices,
 }: {
+  /** Gallery index of the open photo (0-based into GALLERY). */
   index: number | null;
   onClose: () => void;
   onChange: (i: number) => void;
+  /**
+   * Subset of gallery indices to cycle through. When provided, prev/next stay
+   * within this list. When omitted, the viewer cycles through the entire
+   * GALLERY (legacy behavior).
+   */
+  photoIndices?: number[];
 }) {
   const open = index !== null;
   const touchStartX = useRef<number | null>(null);
+  const [fullLoaded, setFullLoaded] = useState(false);
+
+  // Reset load state whenever the index changes — new image needs to load.
+  useEffect(() => {
+    setFullLoaded(false);
+  }, [index]);
+
+  const scope = useMemo(
+    () => photoIndices ?? GALLERY.map((_, i) => i),
+    [photoIndices],
+  );
+
+  const position = index === null ? -1 : scope.indexOf(index);
+
   const go = useCallback(
     (delta: number) => {
-      if (index === null) return;
-      onChange((index + delta + GALLERY.length) % GALLERY.length);
+      if (position < 0) return;
+      const next = scope[(position + delta + scope.length) % scope.length];
+      onChange(next);
     },
-    [index, onChange],
+    [position, scope, onChange],
   );
 
   useEffect(() => {
-    if (index === null) return;
+    if (position < 0) return;
     const ids = [
-      (index - 1 + GALLERY.length) % GALLERY.length,
-      (index + 1) % GALLERY.length,
+      scope[(position - 1 + scope.length) % scope.length],
+      scope[(position + 1) % scope.length],
     ];
     ids.forEach((i) => {
       const img = new window.Image();
       img.src = `${fullBase(i)}.jpg`;
     });
-  }, [index]);
+  }, [position, scope]);
 
   useEffect(() => {
     if (!open) return;
@@ -80,7 +103,7 @@ export default function Lightbox({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`Photograph ${index + 1} of ${GALLERY.length}`}
+      aria-label={`Photograph ${Math.max(position, 0) + 1} of ${scope.length}`}
       className="fixed inset-0 z-50 flex flex-col bg-black/95 text-white backdrop-blur-sm"
       onClick={onClose}
       style={{
@@ -91,7 +114,10 @@ export default function Lightbox({
         paddingRight: "env(safe-area-inset-right, 0px)",
       }}
     >
-      <div className="flex items-center justify-end px-4 py-4 md:px-8">
+      <div className="flex items-center justify-between gap-3 px-4 py-4 md:px-8">
+        <span className="font-mono-label text-xs text-white/60">
+          {Math.max(position, 0) + 1} / {scope.length}
+        </span>
         <button
           type="button"
           onClick={onClose}
@@ -108,14 +134,16 @@ export default function Lightbox({
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        <button
-          type="button"
-          onClick={() => go(-1)}
-          aria-label="Previous photograph"
-          className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-lg text-white/90 transition-colors hover:border-white hover:text-white sm:left-3 sm:h-12 sm:w-12 md:left-6"
-        >
-          <span aria-hidden>←</span>
-        </button>
+        {scope.length > 1 && (
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            aria-label="Previous photograph"
+            className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-lg text-white/90 transition-colors hover:border-white hover:text-white sm:left-3 sm:h-12 sm:w-12 md:left-6"
+          >
+            <span aria-hidden>←</span>
+          </button>
+        )}
 
         <picture key={index} style={{ display: "contents" }}>
           <source type="image/avif" srcSet={`${fullBase(index)}.avif`} />
@@ -125,25 +153,31 @@ export default function Lightbox({
             alt={p.alt}
             draggable={false}
             decoding="async"
+            onLoad={() => setFullLoaded(true)}
             style={{
               backgroundImage: `url(${thumbUrl(index)})`,
               backgroundSize: "contain",
               backgroundRepeat: "no-repeat",
               backgroundPosition: "center",
-              willChange: "transform",
+              willChange: "transform, filter",
+              filter: fullLoaded ? "none" : "blur(14px)",
+              transform: fullLoaded ? "scale(1)" : "scale(1.02)",
+              transition: "filter 350ms ease-out, transform 350ms ease-out",
             }}
             className="block h-auto max-h-full w-auto max-w-full select-none object-contain"
           />
         </picture>
 
-        <button
-          type="button"
-          onClick={() => go(1)}
-          aria-label="Next photograph"
-          className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-lg text-white/90 transition-colors hover:border-white hover:text-white sm:right-3 sm:h-12 sm:w-12 md:right-6"
-        >
-          <span aria-hidden>→</span>
-        </button>
+        {scope.length > 1 && (
+          <button
+            type="button"
+            onClick={() => go(1)}
+            aria-label="Next photograph"
+            className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-lg text-white/90 transition-colors hover:border-white hover:text-white sm:right-3 sm:h-12 sm:w-12 md:right-6"
+          >
+            <span aria-hidden>→</span>
+          </button>
+        )}
       </div>
 
       <div

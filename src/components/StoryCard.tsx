@@ -74,7 +74,7 @@ export default function StoryCard({
     <Link
       to="/work/$slug"
       params={{ slug: study.slug }}
-      className="group block focus:outline-none"
+      className="group block transition-transform duration-150 ease-out focus:outline-none active:scale-[0.985] motion-reduce:transition-none"
     >
       <div
         ref={cardRef}

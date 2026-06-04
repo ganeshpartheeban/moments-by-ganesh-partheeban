@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Aperture, ArrowUpRight, Camera, MapPin } from "@/components/icons";
 import {
   absoluteUrl,
@@ -156,15 +156,15 @@ function CaseStudyPage() {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="mx-auto max-w-[1800px] px-4 pt-12 pb-10 sm:px-6 sm:pt-16 sm:pb-12 md:px-10 md:pt-20 md:pb-16">
-        <p className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
+      {/* Hero — compact on mobile, expansive on desktop. */}
+      <section className="mx-auto max-w-[1800px] px-4 pt-6 pb-6 sm:px-6 sm:pt-16 sm:pb-12 md:px-10 md:pt-20 md:pb-16">
+        <p className="inline-flex items-center gap-2 font-mono-label text-[11px] text-muted-foreground sm:text-xs">
           <Aperture className="h-3.5 w-3.5 text-accent" />
           {kindLabel(study.kind)}
         </p>
-        <div className="mt-6 grid gap-8 md:grid-cols-12 md:gap-12">
+        <div className="mt-3 grid gap-4 sm:mt-6 sm:gap-8 md:grid-cols-12 md:gap-12">
           <div className="md:col-span-8">
-            <h1 className="font-display text-4xl leading-[1] tracking-tight text-balance sm:text-5xl md:text-7xl lg:text-8xl">
+            <h1 className="font-display text-3xl leading-[1] tracking-tight text-balance sm:text-5xl md:text-7xl lg:text-8xl">
               {titleParts ? (
                 <>
                   {titleParts.before}{" "}
@@ -175,8 +175,19 @@ function CaseStudyPage() {
                 study.title
               )}
             </h1>
+            <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono-label text-xs text-muted-foreground sm:hidden">
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="h-3 w-3 text-accent" />
+                {study.location}
+              </span>
+              <span aria-hidden>·</span>
+              <span className="inline-flex items-center gap-1.5">
+                <Camera className="h-3 w-3 text-accent" />
+                {study.date}
+              </span>
+            </p>
           </div>
-          <div className="md:col-span-4 md:pt-6">
+          <div className="hidden md:col-span-4 md:block md:pt-6">
             <dl className="space-y-4">
               <div>
                 <dt className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
@@ -195,10 +206,10 @@ function CaseStudyPage() {
             </dl>
           </div>
         </div>
-        <p className="mt-10 max-w-2xl text-muted-foreground md:text-lg">
+        <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:mt-10 sm:text-base md:text-lg">
           {study.intro}
         </p>
-        <p className="mt-4 font-mono-label text-xs text-muted-foreground/70">
+        <p className="mt-3 hidden font-mono-label text-xs text-muted-foreground/70 sm:block">
           Click any frame to view it full-screen.
         </p>
       </section>
@@ -222,7 +233,7 @@ function CaseStudyPage() {
                         type="button"
                         onClick={() => setOpenPhotoIndex(galleryIndex)}
                         aria-label={`Open ${p.alt} in viewer`}
-                        className="block w-full cursor-zoom-in bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                        className="block w-full cursor-zoom-in bg-background transition-transform duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.985] motion-reduce:transition-none"
                       >
                         <picture>
                           <source
@@ -332,15 +343,65 @@ function CaseStudyPage() {
         </div>
       </section>
 
+      {/* Mobile-only sticky enquiry bar — appears after scrolling past the hero. */}
+      <StickyEnquiryBar kind={study.kind} hidden={openPhotoIndex !== null} />
+
       {openPhotoIndex !== null && (
         <Suspense fallback={null}>
           <Lightbox
             index={openPhotoIndex}
+            photoIndices={frames.map((f) => f.galleryIndex)}
             onClose={() => setOpenPhotoIndex(null)}
             onChange={setOpenPhotoIndex}
           />
         </Suspense>
       )}
+    </div>
+  );
+}
+
+function StickyEnquiryBar({
+  kind,
+  hidden,
+}: {
+  kind: string;
+  hidden: boolean;
+}) {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onScroll = () => {
+      // Reveal once user has scrolled past ~80vh — past the hero.
+      setShow(window.scrollY > window.innerHeight * 0.8);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const label = kind === "wedding" ? "Enquire for your day" : "Enquire about coverage";
+
+  return (
+    <div
+      aria-hidden={!show || hidden}
+      style={{
+        paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)",
+        paddingRight: "calc(env(safe-area-inset-right, 0px) + 5rem)",
+      }}
+      className={
+        "fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 pt-3 backdrop-blur-md transition-transform duration-300 ease-out sm:hidden " +
+        (show && !hidden ? "translate-y-0" : "pointer-events-none translate-y-full")
+      }
+    >
+      <Link
+        to="/contact"
+        hash="booking-enquiry"
+        className="flex w-full items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 font-display text-base text-background shadow-md shadow-accent/20 active:scale-[0.98]"
+      >
+        {label}
+        <ArrowUpRight className="h-4 w-4" />
+      </Link>
     </div>
   );
 }

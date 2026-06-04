@@ -17,8 +17,20 @@ export default function CookieNotice() {
     }
     if (!dismissed) {
       // Tiny delay so the notice doesn't compete with first paint.
-      const id = setTimeout(() => setVisible(true), 1200);
-      return () => clearTimeout(id);
+      const showId = setTimeout(() => setVisible(true), 1200);
+      // Auto-dismiss after 10s — counts as acknowledged so it doesn't reappear.
+      const hideId = setTimeout(() => {
+        setVisible(false);
+        try {
+          localStorage.setItem(STORAGE_KEY, "1");
+        } catch {
+          // ignore
+        }
+      }, 1200 + 10_000);
+      return () => {
+        clearTimeout(showId);
+        clearTimeout(hideId);
+      };
     }
   }, []);
 

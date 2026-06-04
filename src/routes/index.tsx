@@ -134,17 +134,17 @@ function Hero() {
               <picture>
                 <source
                   type="image/avif"
-                  srcSet="/hero-800.avif 800w, /hero-1200.avif 1200w, /hero-1600.avif 1600w"
+                  srcSet="/hero-480.avif 480w, /hero-800.avif 800w, /hero-1200.avif 1200w, /hero-1600.avif 1600w"
                   sizes={HERO_SIZES}
                 />
                 <source
                   type="image/webp"
-                  srcSet="/hero-800.webp 800w, /hero-1200.webp 1200w, /hero-1600.webp 1600w"
+                  srcSet="/hero-480.webp 480w, /hero-800.webp 800w, /hero-1200.webp 1200w, /hero-1600.webp 1600w"
                   sizes={HERO_SIZES}
                 />
                 <img
                   src="/hero-1200.jpg"
-                  srcSet="/hero-800.jpg 800w, /hero-1200.jpg 1200w, /hero-1600.jpg 1600w"
+                  srcSet="/hero-480.jpg 480w, /hero-800.jpg 800w, /hero-1200.jpg 1200w, /hero-1600.jpg 1600w"
                   sizes={HERO_SIZES}
                   width={1200}
                   height={1500}
@@ -179,7 +179,7 @@ function Marquee() {
     "Available across India",
   ];
   return (
-    <div className="overflow-hidden border-b border-border py-4 sm:py-6">
+    <div className="hidden overflow-hidden border-b border-border py-4 sm:block sm:py-6">
       <div className="flex gap-8 whitespace-nowrap px-4 sm:gap-12 sm:px-6 md:px-10">
         {[...words, ...words].map((w, i) => (
           <span
@@ -298,7 +298,7 @@ function OtherFrames() {
                       type="button"
                       onClick={() => setOpenIndex(galleryIndex)}
                       aria-label={`Open ${p.alt} in viewer`}
-                      className="block w-full cursor-zoom-in bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      className="block w-full cursor-zoom-in bg-background transition-transform duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.985] motion-reduce:transition-none"
                     >
                       <picture>
                         <source
@@ -360,6 +360,7 @@ function OtherFrames() {
         <Suspense fallback={null}>
           <Lightbox
             index={openIndex}
+            photoIndices={standaloneIndices}
             onClose={() => setOpenIndex(null)}
             onChange={setOpenIndex}
           />

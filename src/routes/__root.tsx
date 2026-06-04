@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -14,7 +15,7 @@ import appCss from "../styles.css?url";
 // Lazy — only fetched in browser after first paint, never in SSR bundle.
 const EngagementModal = lazy(() => import("@/components/EngagementModal"));
 const CookieNotice = lazy(() => import("@/components/CookieNotice"));
-const FloatingWhatsApp = lazy(() => import("@/components/FloatingWhatsApp"));
+const FloatingContact = lazy(() => import("@/components/FloatingContact"));
 import { Aperture, Instagram, Mail, MapPin, Film } from "@/components/icons";
 import {
   SITE_URL,
@@ -199,7 +200,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         as: "image",
         href: "/hero-1200.avif",
         imagesrcset:
-          "/hero-800.avif 800w, /hero-1200.avif 1200w, /hero-1600.avif 1600w",
+          "/hero-480.avif 480w, /hero-800.avif 800w, /hero-1200.avif 1200w, /hero-1600.avif 1600w",
         imagesizes: "(min-width: 1024px) 40vw, (min-width: 640px) 50vw, 100vw",
         type: "image/avif",
         fetchPriority: "high",
@@ -266,17 +267,31 @@ function RootComponent() {
 }
 
 function RootShellContents() {
+  const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // Scroll to top on every route change (hash links still work — they
+  // scroll themselves before this effect runs).
+  useEffect(() => {
+    const unsub = router.subscribe("onResolved", ({ toLocation, fromLocation }) => {
+      if (fromLocation?.pathname === toLocation.pathname) return;
+      if (toLocation.hash) return;
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    });
+    return unsub;
+  }, [router]);
+
   return (
     <>
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
-        <main className="flex-1">
+        <main key={pathname} className="page-transition flex-1">
           <Outlet />
         </main>
         <SiteFooter />
       </div>
       <Suspense fallback={null}>
-        <FloatingWhatsApp />
+        <FloatingContact />
         <EngagementModal />
         <CookieNotice />
       </Suspense>
@@ -296,9 +311,23 @@ function SiteHeader() {
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
+    // Mobile back gesture / hardware back button — consume one history entry
+    // so it closes the menu first instead of navigating away.
+    const stateMarker = { __mobileMenu: true };
+    window.history.pushState(stateMarker, "");
+    const onPop = () => setOpen(false);
+    window.addEventListener("popstate", onPop);
+
     return () => {
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("popstate", onPop);
       document.body.style.overflow = prev;
+      // If the menu is closing via UI (not back gesture), drop our pushed entry
+      // so the user's history doesn't grow with stale markers.
+      if (window.history.state && window.history.state.__mobileMenu) {
+        window.history.back();
+      }
     };
   }, [open]);
 
@@ -417,14 +446,23 @@ function SiteHeader() {
           </Link>
         </nav>
 
-        {/* Mobile hamburger */}
+        {/* Mobile: compact Enquire + hamburger */}
+        <div className="flex items-center gap-2 sm:hidden">
+          <Link
+            to="/contact"
+            hash="booking-enquiry"
+            onClick={() => setOpen(false)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-2 font-mono-label text-[11px] text-background transition-opacity hover:opacity-90"
+          >
+            {t("nav.enquire")} <span aria-hidden>↗</span>
+          </Link>
         <button
           type="button"
           aria-expanded={open}
           aria-controls="mobile-nav"
           aria-label={open ? "Close menu" : "Open menu"}
           onClick={() => setOpen((o) => !o)}
-          className="relative z-50 -mr-1 flex h-10 w-10 items-center justify-center sm:hidden"
+          className="relative z-50 -mr-1 flex h-10 w-10 items-center justify-center"
         >
           <span className="relative block h-4 w-6">
             <span
@@ -447,17 +485,22 @@ function SiteHeader() {
             />
           </span>
         </button>
+        </div>
       </div>
 
       {/* Mobile menu panel */}
       <div
         id="mobile-nav"
         inert={!open}
+        style={{
+          height: "calc(100dvh - 57px)",
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)",
+        }}
         className={
-          "fixed inset-x-0 top-[57px] z-40 origin-top overflow-hidden bg-background transition-[max-height,opacity] duration-300 sm:hidden " +
+          "fixed inset-x-0 top-[57px] z-40 overflow-y-auto overscroll-contain bg-background transition-opacity duration-200 sm:hidden " +
           (open
-            ? "max-h-[80vh] border-b border-border/60 opacity-100"
-            : "pointer-events-none max-h-0 opacity-0")
+            ? "border-b border-border/60 opacity-100"
+            : "pointer-events-none opacity-0")
         }
       >
         <nav className="flex flex-col px-4 py-4">
