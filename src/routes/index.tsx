@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { lazy, Suspense, useMemo, useState, type CSSProperties } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { GALLERY, formatExif } from "@/lib/gallery";
 import { Aperture, Camera, Film, Lens, Sparkle, ArrowUpRight } from "@/components/icons";
 import {
@@ -292,7 +292,6 @@ function OtherFrames() {
                   <figure
                     key={galleryIndex}
                     className="group"
-                    style={{ contentVisibility: "auto", containIntrinsicSize: "auto 700px" } as CSSProperties}
                   >
                     <button
                       type="button"
