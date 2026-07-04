@@ -138,6 +138,35 @@ function CaseStudyPage() {
   );
 
   const [openPhotoIndex, setOpenPhotoIndex] = useState<number | null>(null);
+
+  // Deep-link: `?photo=N` (1-based gallery number) opens the lightbox on
+  // that photo, provided it's part of this story's sequence.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get("photo");
+    if (!raw) return;
+    const n = parseInt(raw, 10);
+    if (Number.isNaN(n)) return;
+    const galleryIndex = n - 1;
+    if (frames.some((f) => f.galleryIndex === galleryIndex)) {
+      setOpenPhotoIndex(galleryIndex);
+    }
+  }, [frames]);
+
+  // Keep `?photo=N` in sync with the currently-open photo.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (openPhotoIndex === null) {
+      params.delete("photo");
+    } else {
+      params.set("photo", String(openPhotoIndex + 1));
+    }
+    const qs = params.toString();
+    const url = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
+    window.history.replaceState(null, "", url);
+  }, [openPhotoIndex]);
   // Cap masonry at 3 columns · stories feel more focused than the home gallery.
   const cols = useColumnCount(3);
   const columns = useMemo(

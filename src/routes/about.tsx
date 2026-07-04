@@ -29,6 +29,11 @@ const TESTIMONIALS = [
     name: "Vignesh Kavikumar",
     venue: "Chennai, 2024",
   },
+  {
+    q: "Ganesh made our reception memories immortal. We invited him as a friend and he showed up with a DSLR, and ended up giving us the best gift we could imagine. My wife's exact words were: 'If I knew your friend earlier I would have hired him for the event instead.' He has a spectacular talent for freezing beautiful moments in time.",
+    name: "Shruthi and Mani",
+    venue: "Bengaluru, 2026",
+  },
 ];
 
 export const Route = createFileRoute("/about")({
@@ -208,11 +213,31 @@ const CAROUSEL_INTERVAL_MS = 15_000;
 
 function TestimonialCarousel({ items }: { items: Testimonial[] }) {
   const [index, setIndex] = useState(0);
+  const [userInteracted, setUserInteracted] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const count = items.length;
 
-  // Auto-advance every 15s. Resets when index changes (manual nav).
+  // Deep-link on load: honour `#testimonial-N` (1-based) in the URL.
+  // We also scroll the section into view so the shared link lands users
+  // on the quote itself instead of the page top.
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const match = window.location.hash.match(/^#testimonial-(\d+)$/i);
+    if (!match) return;
+    const n = Math.max(0, Math.min(count - 1, parseInt(match[1], 10) - 1));
+    setIndex(n);
+    setUserInteracted(true); // suppress auto-advance so their target stays
+    // Defer scroll one frame so the section is mounted.
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`testimonial-${n + 1}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, [count]);
+
+  // Auto-advance every 15s, unless the user has already picked a card
+  // (either via deep link or manual nav) · we don't want to yank them off it.
+  useEffect(() => {
+    if (userInteracted) return;
     if (count <= 1) return;
     if (typeof window === "undefined") return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -220,11 +245,22 @@ function TestimonialCarousel({ items }: { items: Testimonial[] }) {
       setIndex((i) => (i + 1) % count);
     }, CAROUSEL_INTERVAL_MS);
     return () => window.clearTimeout(id);
-  }, [count, index]);
+  }, [count, index, userInteracted]);
+
+  // Keep the URL hash in sync with the visible testimonial so users can
+  // just copy their address bar to share the current one.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const desired = `#testimonial-${index + 1}`;
+    if (window.location.hash !== desired) {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search + desired);
+    }
+  }, [index]);
 
   if (count === 0) return null;
 
   const go = (target: number) => {
+    setUserInteracted(true);
     setIndex(((target % count) + count) % count);
   };
 
@@ -255,9 +291,10 @@ function TestimonialCarousel({ items }: { items: Testimonial[] }) {
           return (
             <figure
               key={i}
+              id={`testimonial-${i + 1}`}
               aria-hidden={!isActive}
               className={
-                "flex flex-col gap-6 border-l-2 bg-background p-5 transition-opacity duration-500 sm:p-8 " +
+                "scroll-mt-24 flex flex-col gap-6 border-l-2 bg-background p-5 transition-opacity duration-500 sm:p-8 " +
                 (isActive
                   ? "relative z-10 border-accent opacity-100"
                   : "pointer-events-none absolute inset-0 border-border opacity-0")
