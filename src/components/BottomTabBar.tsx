@@ -56,6 +56,22 @@ export default function BottomTabBar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Overlays (the lightbox) lock body scroll while open. Closing one is not
+  // a scroll, so a bar hidden by the earlier scroll-down would stay hidden
+  // until the user scrolls up · and their next tap lands on the page behind
+  // it. Show the bar again as soon as the lock is released.
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof MutationObserver === "undefined") return;
+    let wasLocked = document.body.style.overflow === "hidden";
+    const obs = new MutationObserver(() => {
+      const locked = document.body.style.overflow === "hidden";
+      if (wasLocked && !locked) setHidden(false);
+      wasLocked = locked;
+    });
+    obs.observe(document.body, { attributes: true, attributeFilter: ["style"] });
+    return () => obs.disconnect();
+  }, []);
+
   return (
     <nav
       aria-label="Primary"

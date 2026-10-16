@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import portrait from "@/assets/portrait.jpg";
 import { Aperture, Camera, Lens, Sparkle, ArrowUpRight } from "@/components/icons";
@@ -212,9 +212,11 @@ function AboutPage() {
 const CAROUSEL_INTERVAL_MS = 15_000;
 
 function TestimonialCarousel({ items }: { items: Testimonial[] }) {
+  const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const [userInteracted, setUserInteracted] = useState(false);
   const touchStartX = useRef<number | null>(null);
+  const didSyncHash = useRef(false);
   const count = items.length;
 
   // Deep-link on load: honour `#testimonial-N` (1-based) in the URL.
@@ -248,14 +250,32 @@ function TestimonialCarousel({ items }: { items: Testimonial[] }) {
   }, [count, index, userInteracted]);
 
   // Keep the URL hash in sync with the visible testimonial so users can
-  // just copy their address bar to share the current one.
+  // just copy their address bar to share the current one. This goes
+  // through the router (never a raw history.replaceState call) so it can't
+  // stomp on TanStack Router's own history bookkeeping, and the very first
+  // run is skipped so it never fires on mount and overwrites the inbound
+  // deep link handled above.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const desired = `#testimonial-${index + 1}`;
-    if (window.location.hash !== desired) {
-      window.history.replaceState(null, "", window.location.pathname + window.location.search + desired);
+    if (!didSyncHash.current) {
+      didSyncHash.current = true;
+      return;
     }
-  }, [index]);
+    // Only once the user has picked a card: the 15s auto-advance should
+    // not rewrite the URL every time it rotates.
+    if (!userInteracted) return;
+    const desired = `testimonial-${index + 1}`;
+    if (window.location.hash === `#${desired}`) return;
+    navigate({
+      to: ".",
+      hash: desired,
+      search: (prev) => prev,
+      replace: true,
+      resetScroll: false,
+      // The user is already looking at this card; don't let the router
+      // scroll it into view on every sync.
+      hashScrollIntoView: false,
+    });
+  }, [index, userInteracted, navigate]);
 
   if (count === 0) return null;
 

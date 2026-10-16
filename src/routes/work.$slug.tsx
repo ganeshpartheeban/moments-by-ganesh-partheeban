@@ -1,5 +1,5 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Aperture, ArrowUpRight, Camera, MapPin } from "@/components/icons";
 import {
   absoluteUrl,
@@ -17,7 +17,23 @@ const Lightbox = lazy(() => import("@/components/Lightbox"));
 const thumbBase = (i: number) => `/gallery-thumbs/g${i + 1}`;
 const SIZES = "(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw";
 
+type WorkSlugSearch = { photo?: number };
+
+function validateWorkSlugSearch(
+  search: Record<string, unknown>,
+): WorkSlugSearch {
+  const raw = search.photo;
+  const n =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string"
+        ? parseInt(raw, 10)
+        : NaN;
+  return Number.isFinite(n) ? { photo: n } : {};
+}
+
 export const Route = createFileRoute("/work/$slug")({
+  validateSearch: validateWorkSlugSearch,
   loader: ({ params }) => {
     const study = findCaseStudy(params.slug);
     if (!study) throw notFound();
@@ -127,6 +143,8 @@ export const Route = createFileRoute("/work/$slug")({
 
 function CaseStudyPage() {
   const study = Route.useLoaderData();
+  const { photo } = Route.useSearch();
+  const navigate = useNavigate();
 
   // Resolve the sequence's gallery indices once.
   const frames = useMemo(
@@ -138,35 +156,41 @@ function CaseStudyPage() {
   );
 
   const [openPhotoIndex, setOpenPhotoIndex] = useState<number | null>(null);
+  const didSyncSearch = useRef(false);
 
   // Deep-link: `?photo=N` (1-based gallery number) opens the lightbox on
   // that photo, provided it's part of this story's sequence.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const raw = params.get("photo");
-    if (!raw) return;
-    const n = parseInt(raw, 10);
-    if (Number.isNaN(n)) return;
-    const galleryIndex = n - 1;
+    if (photo === undefined) return;
+    const galleryIndex = photo - 1;
     if (frames.some((f) => f.galleryIndex === galleryIndex)) {
       setOpenPhotoIndex(galleryIndex);
     }
-  }, [frames]);
+  }, [photo, frames]);
 
-  // Keep `?photo=N` in sync with the currently-open photo.
+  // Keep `?photo=N` in sync with the currently-open photo. This goes
+  // through the router (never a raw history.replaceState call) so it can't
+  // stomp on TanStack Router's own history bookkeeping, and the very first
+  // run is skipped so it never fires before there's anything to sync.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (openPhotoIndex === null) {
-      params.delete("photo");
-    } else {
-      params.set("photo", String(openPhotoIndex + 1));
+    if (!didSyncSearch.current) {
+      didSyncSearch.current = true;
+      return;
     }
-    const qs = params.toString();
-    const url = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
-    window.history.replaceState(null, "", url);
-  }, [openPhotoIndex]);
+    const desired = openPhotoIndex === null ? undefined : openPhotoIndex + 1;
+    if (desired === photo) return;
+    navigate({
+      to: ".",
+      search: (prev) => {
+        const next = { ...prev };
+        if (desired === undefined) delete next.photo;
+        else next.photo = desired;
+        return next;
+      },
+      replace: true,
+      resetScroll: false,
+    });
+  }, [openPhotoIndex, photo, navigate]);
   // Cap masonry at 3 columns · stories feel more focused than the home gallery.
   const cols = useColumnCount(3);
   const columns = useMemo(

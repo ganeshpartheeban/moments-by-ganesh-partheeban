@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { GALLERY, formatExif } from "@/lib/gallery";
 import { Aperture, Camera, Film, Lens, Sparkle, ArrowUpRight } from "@/components/icons";
 import {
@@ -21,7 +21,21 @@ const thumbBase = (i: number) => `/gallery-thumbs/g${i + 1}`;
 const THUMB_SIZES = "(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw";
 const HERO_SIZES = "(min-width: 1024px) 40vw, (min-width: 640px) 50vw, 100vw";
 
+type IndexSearch = { photo?: number };
+
+function validateIndexSearch(search: Record<string, unknown>): IndexSearch {
+  const raw = search.photo;
+  const n =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string"
+        ? parseInt(raw, 10)
+        : NaN;
+  return Number.isFinite(n) ? { photo: n } : {};
+}
+
 export const Route = createFileRoute("/")({
+  validateSearch: validateIndexSearch,
   head: () => ({
     meta: [
       {
@@ -244,7 +258,10 @@ function Stories() {
 
 function OtherFrames() {
   const { t } = useI18n();
+  const { photo } = Route.useSearch();
+  const navigate = useNavigate();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const didSyncSearch = useRef(false);
 
   const standaloneIndices = useMemo(
     () => GALLERY.map((_, i) => i).filter((i) => !STORY_NUMBERS_SET.has(i + 1)),
@@ -260,31 +277,38 @@ function OtherFrames() {
   // Deep-link: `?photo=N` (1-based gallery number) opens the lightbox on
   // that photo, provided it's part of this page's scope.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const raw = params.get("photo");
-    if (!raw) return;
-    const n = parseInt(raw, 10);
-    if (Number.isNaN(n)) return;
-    const galleryIndex = n - 1;
+    if (photo === undefined) return;
+    const galleryIndex = photo - 1;
     if (standaloneIndices.includes(galleryIndex)) {
       setOpenIndex(galleryIndex);
     }
-  }, [standaloneIndices]);
+  }, [photo, standaloneIndices]);
 
-  // Sync `?photo=N` with whatever the lightbox is currently showing.
+  // Keep `?photo=N` in sync with whatever the lightbox is currently showing.
+  // This goes through the router (never a raw history.replaceState call) so
+  // it can't stomp on TanStack Router's own history bookkeeping, and the
+  // very first run is skipped so it never fires before there's anything to
+  // sync (that would otherwise rewrite the URL on every mount, even when
+  // nothing changed).
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (openIndex === null) {
-      params.delete("photo");
-    } else {
-      params.set("photo", String(openIndex + 1));
+    if (!didSyncSearch.current) {
+      didSyncSearch.current = true;
+      return;
     }
-    const qs = params.toString();
-    const url = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
-    window.history.replaceState(null, "", url);
-  }, [openIndex]);
+    const desired = openIndex === null ? undefined : openIndex + 1;
+    if (desired === photo) return;
+    navigate({
+      to: ".",
+      search: (prev) => {
+        const next = { ...prev };
+        if (desired === undefined) delete next.photo;
+        else next.photo = desired;
+        return next;
+      },
+      replace: true,
+      resetScroll: false,
+    });
+  }, [openIndex, photo, navigate]);
 
   if (standaloneIndices.length === 0) return null;
 
