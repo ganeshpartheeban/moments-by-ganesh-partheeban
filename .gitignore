@@ -25,12 +25,6 @@ dist-ssr
 .env.local
 .env.*.local
 
-# Source-of-truth photo originals. Optimized variants in public/gallery-thumbs/
-# and public/gallery-full/ are the ones that ship — originals stay on local disk.
-src/assets/gallery-*.jpg
-src/assets/gallery-*.JPG
-src/assets/hero.jpg
-src/assets/hero.JPG
 
 # Editor directories and files
 .vscode/*
