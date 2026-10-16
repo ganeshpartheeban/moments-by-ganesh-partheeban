@@ -13,6 +13,11 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import appCss from "../styles.css?url";
 
 // Lazy · only fetched in browser after first paint, never in SSR bundle.
+// Google Fonts CSS for the display serif + label sans. One URL, used by the
+// preload hint, the async loader script and the no-JS fallback link.
+const FONT_CSS_URL =
+  "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Inter+Tight:wght@300..600&display=swap";
+
 const EngagementModal = lazy(() => import("@/components/EngagementModal"));
 const CookieNotice = lazy(() => import("@/components/CookieNotice"));
 const FloatingContact = lazy(() => import("@/components/FloatingContact"));
@@ -179,6 +184,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         type: "application/ld+json",
         children: ldScriptBody(buildPersonLD()),
       } as Record<string, string>,
+      // Font CSS, attached asynchronously. A script-inserted stylesheet never
+      // blocks first paint, and unlike the old media="print" + onload swap it
+      // survives React, which drops string event handlers from <link>.
+      {
+        children: `(function(){var l=document.createElement('link');l.rel='stylesheet';l.href=${JSON.stringify(FONT_CSS_URL)};document.head.appendChild(l);})();`,
+      } as Record<string, string>,
       // Cloudflare Web Analytics · privacy-friendly, no cookies.
       // Token comes from CF Dashboard → Web Analytics → site beacon.
       ...(import.meta.env.VITE_CF_BEACON_TOKEN
@@ -200,35 +211,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "preload",
         as: "image",
         href: "/hero-1200.avif",
-        imagesrcset:
+        imageSrcSet:
           "/hero-480.avif 480w, /hero-800.avif 800w, /hero-1200.avif 1200w, /hero-1600.avif 1600w",
-        imagesizes: "(min-width: 1024px) 40vw, (min-width: 640px) 50vw, 100vw",
+        imageSizes: "(min-width: 1024px) 40vw, (min-width: 640px) 50vw, 100vw",
         type: "image/avif",
         fetchPriority: "high",
       } as Record<string, string>,
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      // Non-blocking font CSS load · fetched at low priority and applied after
-      // first paint. Body text falls back to system fonts for ~200ms while the
-      // serif CSS streams in. font-display: swap on the @font-face rules keeps
-      // the swap smooth.
-      {
-        rel: "preload",
-        as: "style",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@300;400;500;600&display=swap",
-      },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@300;400;500;600&display=swap",
-        media: "print",
-        onLoad: "this.media='all';this.onload=null;",
-      } as Record<string, string>,
-      // Fallback when JS is disabled
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@300;400;500;600&display=swap",
-        media: "(scripting: none)",
-      } as Record<string, string>,
+      // Font CSS is preloaded here and attached by the inline loader in
+      // `scripts`, so it never blocks first paint; text shows in fallback
+      // fonts for a moment and font-display: swap keeps the switch smooth.
+      { rel: "preload", as: "style", href: FONT_CSS_URL },
+      // Fallback when JS is disabled (the async loader cannot run).
+      { rel: "stylesheet", href: FONT_CSS_URL, media: "(scripting: none)" } as Record<string, string>,
       {
         rel: "stylesheet",
         href: appCss,
