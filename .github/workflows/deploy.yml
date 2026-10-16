@@ -33,6 +33,7 @@ jobs:
           VITE_FORM_ENDPOINT: ${{ secrets.VITE_FORM_ENDPOINT }}
           VITE_FORM_TOKEN: ${{ secrets.VITE_FORM_TOKEN }}
           VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
+          VITE_CF_BEACON_TOKEN: ${{ secrets.VITE_CF_BEACON_TOKEN }}
         run: npm run build
 
       - name: Deploy to Cloudflare Workers
