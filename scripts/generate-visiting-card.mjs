@@ -591,8 +591,14 @@ async function runV2(outDir) {
   }
 
   // --- PHOTO SIDE -----------------------------------------------------------
-  async function photoArt(index, dataUri) {
-    const idxLabel = `No. ${String(index + 1).padStart(2, "0")} / 06`;
+  // `topGradient` adds a second soft ink band behind the logo mark at the
+  // top (for variants where the photo's top-left corner is unpredictable,
+  // e.g. the hero shot) — off by default so the six story variants render
+  // exactly as before. `indexText` is the bottom-right label; pass null to
+  // omit it entirely (used for the hero variant, which isn't part of the
+  // numbered series). When `topGradient` is on, the guaranteed dark band
+  // makes the monogram's ink outline redundant, so it's dropped.
+  async function photoArt({ dataUri, indexText, topGradient = false }) {
     const logoSize = 8;
     const gradTop = 60; // mm, full-bleed coords — a little more than the bottom third, for legibility
     const nameSize = pt(15);
@@ -612,6 +618,28 @@ async function runV2(outDir) {
     });
     const roleSize = pt(roleSizePt);
 
+    // Top band: ink ~58% opaque at the very top edge, fading to transparent
+    // by ~23.5% of the card height — a calm landing spot for the mark
+    // regardless of what the photo does up there.
+    const topGradHeight = FULL_H * 0.235;
+    const topGradSvg = topGradient
+      ? `
+  <defs>
+    <linearGradient id="topFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${INK}" stop-opacity="0.58"/>
+      <stop offset="100%" stop-color="${INK}" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="${FULL_W}" height="${topGradHeight.toFixed(2)}" fill="url(#topFade)"/>`
+      : "";
+
+    const indexSvg =
+      indexText != null
+        ? `
+  <text x="${SAFE_RIGHT}" y="${indexY}" text-anchor="end" font-family="${FONT_SANS}" font-weight="500"
+        font-size="${indexSize}" letter-spacing="0.08em" fill="${CREAM_DIM}">${indexText}</text>`
+        : "";
+
     return `
   <image href="${dataUri}" x="0" y="0" width="${FULL_W}" height="${FULL_H}" preserveAspectRatio="xMidYMid slice"/>
 
@@ -623,15 +651,15 @@ async function runV2(outDir) {
     </linearGradient>
   </defs>
   <rect x="0" y="${gradTop}" width="${FULL_W}" height="${FULL_H - gradTop}" fill="url(#bottomFade)"/>
+  ${topGradSvg}
 
-  ${monogram(SAFE_X, SAFE_Y, logoSize, { frame: CREAM, letter: CREAM, dot: ACCENT, outline: INK })}
+  ${monogram(SAFE_X, SAFE_Y, logoSize, { frame: CREAM, letter: CREAM, dot: ACCENT, outline: topGradient ? undefined : INK })}
 
   <text x="${SAFE_X}" y="${nameY}" font-family="${FONT_DISPLAY}" font-weight="500"
         font-size="${nameSize}" letter-spacing="-0.01em" fill="${CREAM}">Ganesh Partheeban</text>
   <text x="${SAFE_X}" y="${roleY}" font-family="${FONT_SANS}" font-weight="500"
         font-size="${roleSize}" letter-spacing="0.2em" fill="${CREAM}">CANDID PHOTOGRAPHER</text>
-  <text x="${SAFE_RIGHT}" y="${indexY}" text-anchor="end" font-family="${FONT_SANS}" font-weight="500"
-        font-size="${indexSize}" letter-spacing="0.08em" fill="${CREAM_DIM}">${idxLabel}</text>
+  ${indexSvg}
   `;
   }
 
@@ -767,21 +795,51 @@ async function runV2(outDir) {
   for (let i = 0; i < PHOTOS.length; i++) {
     const src = findPhotoSource(PHOTOS[i].n);
     const dataUri = await photoDataUri(src, FULL_W_PX, FULL_H_PX);
-    photoInners.push(await photoArt(i, dataUri));
+    photoInners.push(await photoArt({ dataUri, indexText: `No. ${String(i + 1).padStart(2, "0")} / 06` }));
     console.log(`v2: built photo ${i + 1}/6 (gallery-${PHOTOS[i].n}, ${PHOTOS[i].title})`);
   }
   const typeInner = await typeArt();
 
+  // --- Hero variant: the site's hero photograph --------------------------
+  // `attention`/`entropy` smart-crop both fixated on the sunlit, high-
+  // contrast wave texture on the right of the frame and missed the boat
+  // entirely (checked by eye). The boat + fisherman actually sit dead
+  // centre in the source frame, so a plain centred crop is used instead.
+  function findHeroSource() {
+    const candidates = [
+      path.join(ROOT, "src/assets/hero.JPG"),
+      path.join(ROOT, "src/assets/hero.jpg"),
+      path.join(ROOT, "public/hero.jpg"),
+      path.join(ROOT, "public/hero-1600.jpg"),
+    ];
+    for (const c of candidates) if (existsSync(c)) return c;
+    throw new Error("No hero source photo found (src/assets/hero.JPG / public/hero.jpg / public/hero-1600.jpg)");
+  }
+  const heroSrc = findHeroSource();
+  const heroBuf = await sharp(heroSrc)
+    .rotate()
+    .resize(FULL_W_PX, FULL_H_PX, { fit: "cover", position: "centre" })
+    .jpeg({ quality: 92, mozjpeg: true, chromaSubsampling: "4:4:4" })
+    .toBuffer();
+  const heroDataUri = `data:image/jpeg;base64,${heroBuf.toString("base64")}`;
+  // No index line (it isn't part of the numbered series) and the top
+  // gradient is on, so the monogram drops its ink outline (see photoArt).
+  const heroInner = await photoArt({ dataUri: heroDataUri, indexText: null, topGradient: true });
+  console.log(`v2: built hero photo (${path.basename(heroSrc)}, centred crop)`);
+
   const photoSvgsFigma = photoInners.map((inner) => wrapSvg(inner + trimGuide(guideOpts), FULL_W, FULL_H));
   const typeSvgFigma = wrapSvg(typeInner + trimGuide(guideOpts), FULL_W, FULL_H);
+  const heroSvgFigma = wrapSvg(heroInner + trimGuide(guideOpts), FULL_W, FULL_H);
   const photoSvgsRender = photoInners.map((inner) => wrapSvg(inner, FULL_W, FULL_H));
   const typeSvgRender = wrapSvg(typeInner, FULL_W, FULL_H);
+  const heroSvgRender = wrapSvg(heroInner, FULL_W, FULL_H);
 
   for (let i = 0; i < 6; i++) {
     await writeFile(path.join(outDir, `photo-${String(i + 1).padStart(2, "0")}.svg`), photoSvgsFigma[i], "utf8");
   }
   await writeFile(path.join(outDir, "type.svg"), typeSvgFigma, "utf8");
-  console.log("v2: wrote photo-01.svg … photo-06.svg, type.svg");
+  await writeFile(path.join(outDir, "photo-hero.svg"), heroSvgFigma, "utf8");
+  console.log("v2: wrote photo-01.svg … photo-06.svg, type.svg, photo-hero.svg");
 
   // --- PDFs --------------------------------------------------------------
   const setPages = [];
@@ -797,6 +855,9 @@ async function runV2(outDir) {
     console.log(`v2: wrote ${name}`);
   }
 
+  await renderPdf([heroSvgRender, typeSvgRender], path.join(outDir, "visiting-card-print-hero.pdf"), FULL_W, FULL_H);
+  console.log("v2: wrote visiting-card-print-hero.pdf");
+
   // --- PNGs (300dpi, trimmed) ----------------------------------------------
   const photoPngPaths = [];
   for (let i = 0; i < 6; i++) {
@@ -810,6 +871,11 @@ async function runV2(outDir) {
   const typePngPath = path.join(outDir, "type.png");
   await fullBleedToTrimmedPng(typeFullBleed, typePngPath, FULL_W_PX, FULL_H_PX, TRIM_W_PX, TRIM_H_PX);
   console.log(`v2: wrote ${typePngPath}`);
+
+  const heroFullBleed = await shootFullBleed(heroSvgRender, "v2-hero.html", FULL_W_PX, FULL_H_PX);
+  const heroPngPath = path.join(outDir, "photo-hero.png");
+  await fullBleedToTrimmedPng(heroFullBleed, heroPngPath, FULL_W_PX, FULL_H_PX, TRIM_W_PX, TRIM_H_PX);
+  console.log(`v2: wrote ${heroPngPath}`);
 
   // --- preview.png: contact sheet, 6 photos + type, on neutral ground -----
   const TILE_W = 220;
@@ -837,6 +903,41 @@ async function runV2(outDir) {
   await sharp(Buffer.from(previewSvg)).composite(composites).png().toFile(previewPath);
   console.log(`v2: wrote ${previewPath}`);
 
+  // --- preview-hero.png: hero side next to the type side -------------------
+  {
+    const PCW = 640;
+    const PCH = Math.round((PCW * TRIM_H) / TRIM_W);
+    const G = 48;
+    const P = 48;
+    const LH = 34;
+    const pW = P * 2 + PCW * 2 + G;
+    const pH = P * 2 + LH + PCH;
+    const [heroSmall, typeSmall] = await Promise.all([
+      sharp(heroPngPath).resize(PCW, PCH).toBuffer(),
+      sharp(typePngPath).resize(PCW, PCH).toBuffer(),
+    ]);
+    const hx = P;
+    const tx = P + PCW + G;
+    const cy = P + LH;
+    const ov = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${pW}" height="${pH}">
+      <rect width="${pW}" height="${pH}" fill="#e7e2d8"/>
+      <text x="${hx}" y="${P + 20}" font-family="sans-serif" font-size="15" letter-spacing="2" fill="#7a7266">HERO</text>
+      <text x="${tx}" y="${P + 20}" font-family="sans-serif" font-size="15" letter-spacing="2" fill="#7a7266">TYPE</text>
+      <rect x="${hx - 1}" y="${cy - 1}" width="${PCW + 2}" height="${PCH + 2}" fill="none" stroke="#b9b2a3" stroke-width="1"/>
+      <rect x="${tx - 1}" y="${cy - 1}" width="${PCW + 2}" height="${PCH + 2}" fill="none" stroke="#b9b2a3" stroke-width="1"/>
+    </svg>`;
+    const previewHeroPath = path.join(outDir, "preview-hero.png");
+    await sharp(Buffer.from(ov))
+      .composite([
+        { input: heroSmall, left: hx, top: cy },
+        { input: typeSmall, left: tx, top: cy },
+      ])
+      .png()
+      .toFile(previewHeroPath);
+    console.log(`v2: wrote ${previewHeroPath}`);
+  }
+
   // --- PRINT-NOTES.md -------------------------------------------------------
   const notes = `# Visiting card (v2, vertical series) — print notes
 
@@ -857,6 +958,11 @@ async function runV2(outDir) {
   shops can quote directly from visiting-card-print-set.pdf (all 12 pages,
   in photo/type/photo/type… order) or from the six individual
   visiting-card-print-0N.pdf files if they prefer one file per design.
+- A seventh, optional "hero" front (photo-hero / visiting-card-print-hero.pdf)
+  uses the site's own hero photograph instead of a case-study cover, with an
+  added top ink gradient behind the logo mark and no Index No. line — keep
+  it outside the six-way print split above, or swap it in for one of the six
+  if a stronger singular card is wanted.
 
 ## Color
 - The PDFs/PNGs are generated in RGB (Chrome's print-to-PDF has no CMYK
