@@ -9,13 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as PressRouteImport } from './routes/press'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorkSlugRouteImport } from './routes/work.$slug'
+import { Route as ServicesSlugRouteImport } from './routes/services_.$slug'
+import { Route as PhotographerInCityRouteImport } from './routes/photographer-in.$city'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
   path: '/services',
@@ -46,6 +54,16 @@ const WorkSlugRoute = WorkSlugRouteImport.update({
   path: '/work/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServicesSlugRoute = ServicesSlugRouteImport.update({
+  id: '/services_/$slug',
+  path: '/services/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PhotographerInCityRoute = PhotographerInCityRouteImport.update({
+  id: '/photographer-in/$city',
+  path: '/photographer-in/$city',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -53,6 +71,9 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/press': typeof PressRoute
   '/services': typeof ServicesRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/photographer-in/$city': typeof PhotographerInCityRoute
+  '/services/$slug': typeof ServicesSlugRoute
   '/work/$slug': typeof WorkSlugRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +82,9 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/press': typeof PressRoute
   '/services': typeof ServicesRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/photographer-in/$city': typeof PhotographerInCityRoute
+  '/services/$slug': typeof ServicesSlugRoute
   '/work/$slug': typeof WorkSlugRoute
 }
 export interface FileRoutesById {
@@ -70,6 +94,9 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/press': typeof PressRoute
   '/services': typeof ServicesRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/photographer-in/$city': typeof PhotographerInCityRoute
+  '/services_/$slug': typeof ServicesSlugRoute
   '/work/$slug': typeof WorkSlugRoute
 }
 export interface FileRouteTypes {
@@ -80,9 +107,21 @@ export interface FileRouteTypes {
     | '/contact'
     | '/press'
     | '/services'
+    | '/sitemap.xml'
+    | '/photographer-in/$city'
+    | '/services/$slug'
     | '/work/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/contact' | '/press' | '/services' | '/work/$slug'
+  to:
+    | '/'
+    | '/about'
+    | '/contact'
+    | '/press'
+    | '/services'
+    | '/sitemap.xml'
+    | '/photographer-in/$city'
+    | '/services/$slug'
+    | '/work/$slug'
   id:
     | '__root__'
     | '/'
@@ -90,6 +129,9 @@ export interface FileRouteTypes {
     | '/contact'
     | '/press'
     | '/services'
+    | '/sitemap.xml'
+    | '/photographer-in/$city'
+    | '/services_/$slug'
     | '/work/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -99,11 +141,21 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   PressRoute: typeof PressRoute
   ServicesRoute: typeof ServicesRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  PhotographerInCityRoute: typeof PhotographerInCityRoute
+  ServicesSlugRoute: typeof ServicesSlugRoute
   WorkSlugRoute: typeof WorkSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/services': {
       id: '/services'
       path: '/services'
@@ -146,6 +198,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/services_/$slug': {
+      id: '/services_/$slug'
+      path: '/services/$slug'
+      fullPath: '/services/$slug'
+      preLoaderRoute: typeof ServicesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/photographer-in/$city': {
+      id: '/photographer-in/$city'
+      path: '/photographer-in/$city'
+      fullPath: '/photographer-in/$city'
+      preLoaderRoute: typeof PhotographerInCityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -155,6 +221,9 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   PressRoute: PressRoute,
   ServicesRoute: ServicesRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  PhotographerInCityRoute: PhotographerInCityRoute,
+  ServicesSlugRoute: ServicesSlugRoute,
   WorkSlugRoute: WorkSlugRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "@/components/icons";
-import { kindLabel, type CaseStudy } from "@/lib/case-studies";
+import type { CaseStudy } from "@/lib/case-studies";
+import { useI18n } from "@/lib/i18n";
+import { localize } from "@/lib/localize";
 
 const thumb = (num: number, size: 600 | 800 | 1000 | 1400) => `/gallery-thumbs/g${num}-${size}`;
 
@@ -125,7 +127,7 @@ function nextCardId(): number {
 }
 
 export default function StoryCard({
-  study,
+  study: rawStudy,
   eager = false,
   staggerIndex: _staggerIndex = 0,
 }: {
@@ -135,6 +137,8 @@ export default function StoryCard({
   /** Unused by the shared scheduler; kept for prop compatibility. */
   staggerIndex?: number;
 }) {
+  const { t, locale } = useI18n();
+  const study = localize(rawStudy, locale);
   const frames = study.sequence;
   const [active, setActive] = useState(0);
   const [inView, setInView] = useState(false);
@@ -228,6 +232,7 @@ export default function StoryCard({
     <Link
       to="/work/$slug"
       params={{ slug: study.slug }}
+      data-story-slug={study.slug}
       className="group block transition-transform duration-150 ease-out focus:outline-none active:scale-[0.985] motion-reduce:transition-none"
     >
       <div ref={cardRef} className="relative aspect-[4/5] w-full overflow-hidden bg-secondary">
@@ -268,7 +273,7 @@ export default function StoryCard({
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-5 sm:p-6">
           <div className="text-white">
             <p className="font-mono-label text-[10px] uppercase tracking-wider text-white/70">
-              {kindLabel(study.kind)}
+              {t(`kind.${study.kind}`)}
             </p>
             <h3 className="mt-1 font-display text-xl leading-tight tracking-tight text-balance sm:text-2xl md:text-3xl">
               {study.title}

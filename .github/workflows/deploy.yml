@@ -34,6 +34,7 @@ jobs:
           VITE_FORM_TOKEN: ${{ secrets.VITE_FORM_TOKEN }}
           VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
           VITE_CF_BEACON_TOKEN: ${{ secrets.VITE_CF_BEACON_TOKEN }}
+          VITE_GA4_ID: ${{ secrets.VITE_GA4_ID }}
         run: npm run build
 
       - name: Deploy to Cloudflare Workers

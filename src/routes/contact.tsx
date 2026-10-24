@@ -16,29 +16,20 @@ import {
   ldScriptBody,
 } from "@/lib/seo";
 import { FORM_ENDPOINT, FORM_TOKEN } from "@/lib/form-config";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, translate, type Locale } from "@/lib/i18n";
+import { getAttribution, track } from "@/lib/analytics";
 
 export const Route = createFileRoute("/contact")({
-  head: () => ({
+  head: ({ match }) => {
+    const locale = (match.context as { locale: Locale }).locale;
+    const tr = (k: string) => translate(locale, k);
+    return {
     meta: [
-      {
-        title:
-          "Contact · Book Candid Wedding & Event Photography · Ganesh Partheeban",
-      },
-      {
-        name: "description",
-        content:
-          "Book Ganesh Partheeban for candid wedding, reception, engagement, concert or event photography. Based in Chennai, available across India. Send an enquiry · replies within a day.",
-      },
-      { property: "og:title", content: "Contact · Moments by Ganesh Partheeban" },
-      { property: "og:url", content: absoluteUrl("/contact") },
-      {
-        property: "og:description",
-        content:
-          "Enquire about candid photography across India. Bookings confirmed by date availability.",
-      },
+      { title: tr("meta.contact.title") },
+      { name: "description", content: tr("meta.contact.desc") },
+      { property: "og:title", content: tr("meta.contact.title") },
+      { property: "og:description", content: tr("meta.contact.desc") },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/contact") }],
     scripts: [
       {
         type: "application/ld+json",
@@ -54,7 +45,8 @@ export const Route = createFileRoute("/contact")({
         ),
       } as Record<string, string>,
     ],
-  }),
+    };
+  },
   component: ContactPage,
 });
 
@@ -180,6 +172,52 @@ function ContactPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+const FOUND_VIA = [
+  { value: "Instagram", key: "contact.form.foundVia.instagram" },
+  { value: "Google search", key: "contact.form.foundVia.google" },
+  { value: "Google Maps / Business Profile", key: "contact.form.foundVia.maps" },
+  { value: "WhatsApp or a friend", key: "contact.form.foundVia.friend" },
+  { value: "Wedding marketplace", key: "contact.form.foundVia.marketplace" },
+  { value: "Press / Unsplash", key: "contact.form.foundVia.press" },
+  { value: "Other", key: "contact.form.foundVia.other" },
+] as const;
+
+function CopyEmail({ email }: { email: string }) {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(email);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = email;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+      } catch {
+        // nothing more to try
+      }
+      ta.remove();
+    }
+    track("email_copy", { page_path: window.location.pathname });
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button
+      type="button"
+      onClick={onCopy}
+      aria-live="polite"
+      className="ml-3 rounded-full border border-background/30 px-3 py-0.5 font-mono-label text-xs text-background/80 transition-colors hover:border-accent hover:text-accent"
+    >
+      {copied ? t("contact.copied") : t("contact.copyEmail")}
+    </button>
   );
 }
 
@@ -334,6 +372,10 @@ function BookingEnquiry() {
 
     data.set("eventType", eventType);
     data.set("token", FORM_TOKEN);
+    data.set("type", "enquiry");
+    data.set("source", "contact-form");
+    data.set("userAgent", navigator.userAgent);
+    for (const [k, v] of Object.entries(getAttribution())) data.set(k, v);
 
     // If the location lookup is still in flight, wait up to 2s for it.
     if (!locationRef.current && locationPromiseRef.current) {
@@ -344,11 +386,19 @@ function BookingEnquiry() {
       }
     }
     data.set("location", locationRef.current);
+    data.set("ipLocation", locationRef.current);
 
     setStatus("sending");
     try {
       await fetch(FORM_ENDPOINT, { method: "POST", body: data, mode: "no-cors" });
       recordSubmission(email);
+      track("form_submit", {
+        form: "booking",
+        found_via: String(data.get("foundVia") || ""),
+        event_type: eventType,
+        budget: String(data.get("budget") || ""),
+        city: String(data.get("city") || ""),
+      });
       setStatus("sent");
       form.reset();
       setEventType("Wedding");
@@ -404,6 +454,7 @@ function BookingEnquiry() {
                 >
                   ganeshpartheeban@gmail.com
                 </a>
+                <CopyEmail email="ganeshpartheeban@gmail.com" />
               </dd>
             </div>
             <div>
@@ -428,19 +479,31 @@ function BookingEnquiry() {
         <form
           onSubmit={handleSubmit}
           onFocusCapture={ensureLocationLookup}
+          data-track-form="booking"
           className="relative rounded-xs border border-background/25 bg-background/[0.03] p-4 sm:p-6 md:p-10 lg:col-span-7"
         >
-          <Field n="01" label={t("contact.form.name")} name="name" placeholder="Sai Karthik" required />
+          <Field n="01" label={t("contact.form.name")} name="name" placeholder="Sai Karthik" required autoComplete="name" />
           <Field
             n="02"
+            label={t("contact.form.phone")}
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            pattern="[+0-9][0-9 ()-]{8,18}"
+            placeholder="+91 98XXX XXXXX"
+            required
+          />
+          <Field
+            n="03"
             label={t("contact.form.email")}
             name="email"
             type="email"
+            autoComplete="email"
             placeholder="saikarthik@gmail.com"
-            required
           />
-          <Field n="03" label={t("contact.form.date")} name="date" placeholder="October 18, 2027" />
-          <Field n="04" label={t("contact.form.city")} name="city" placeholder="Bengaluru" />
+          <Field n="04" label={t("contact.form.date")} name="date" placeholder="October 18, 2027" />
+          <Field n="05" label={t("contact.form.city")} name="city" placeholder="Bengaluru" />
 
           <div className="border-b border-background/25 py-6">
             <p className="font-mono-label text-xs text-background/50">
@@ -507,6 +570,31 @@ function BookingEnquiry() {
             />
           </div>
 
+          <div className="border-b border-background/25 py-6">
+            <label
+              htmlFor="foundVia"
+              className="font-mono-label text-xs text-background/50"
+            >
+              08 / {t("contact.form.foundVia")}
+            </label>
+            <select
+              id="foundVia"
+              name="foundVia"
+              required
+              defaultValue=""
+              className="mt-3 w-full bg-transparent text-background focus:outline-none"
+            >
+              <option value="" disabled className="bg-foreground text-background">
+                {t("contact.form.foundVia.placeholder")}
+              </option>
+              {FOUND_VIA.map((o) => (
+                <option key={o.value} value={o.value} className="bg-foreground text-background">
+                  {t(o.key)}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Honeypot · bots fill this; real users never see it. */}
           <input
             type="text"
@@ -568,6 +656,9 @@ function Field({
   type = "text",
   placeholder,
   required,
+  inputMode,
+  pattern,
+  autoComplete,
 }: {
   n: string;
   label: string;
@@ -575,6 +666,9 @@ function Field({
   type?: string;
   placeholder?: string;
   required?: boolean;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  pattern?: string;
+  autoComplete?: string;
 }) {
   return (
     <div className="border-b border-background/25 py-6">
@@ -587,6 +681,9 @@ function Field({
         type={type}
         required={required}
         placeholder={placeholder}
+        inputMode={inputMode}
+        pattern={pattern}
+        autoComplete={autoComplete}
         className="mt-3 w-full bg-transparent text-background placeholder:text-background/40 focus:outline-none"
       />
     </div>

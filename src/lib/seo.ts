@@ -6,6 +6,9 @@
  * and OG images resolve to absolute URLs.
  */
 
+import { CITIES } from "./cities";
+import { SERVICES, BASE_PRICE, type ServiceLine, type Faq } from "./services";
+
 export const SITE_URL =
   (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, "") ??
   "https://ganeshpartheeban.in";
@@ -66,13 +69,14 @@ export function buildOrganizationLD(): StructuredData {
       jobTitle: PHOTOGRAPHER.role,
       sameAs: [PHOTOGRAPHER.instagram, PHOTOGRAPHER.unsplash],
     },
+    telephone: "+91 98844 26838",
     areaServed: [
       { "@type": "Country", name: "India" },
       { "@type": "State", name: "Tamil Nadu" },
-      { "@type": "City", name: "Chennai" },
-      { "@type": "City", name: "Bengaluru" },
-      { "@type": "City", name: "Coimbatore" },
-      { "@type": "City", name: "Pondicherry" },
+      ...CITIES.filter((c) => c.areaType === "City").map((c) => ({
+        "@type": "City",
+        name: c.name,
+      })),
     ],
     address: {
       "@type": "PostalAddress",
@@ -89,7 +93,26 @@ export function buildOrganizationLD(): StructuredData {
       "Behind-the-Scenes Photography",
     ],
     sameAs: [PHOTOGRAPHER.instagram, PHOTOGRAPHER.unsplash],
-    knowsLanguage: ["English", "Tamil"],
+    knowsLanguage: ["en", "ta"],
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Photography services",
+      itemListElement: SERVICES.map((sv) => ({
+        "@type": "Offer",
+        url: absoluteUrl(`/services/${sv.slug}`),
+        ...(sv.comingSoon
+          ? {}
+          : {
+              priceSpecification: {
+                "@type": "PriceSpecification",
+                priceCurrency: BASE_PRICE.currency,
+                minPrice: sv.fromPrice ?? BASE_PRICE.amount,
+                description: BASE_PRICE.label,
+              },
+            }),
+        itemOffered: { "@type": "Service", name: sv.title, description: sv.short },
+      })),
+    },
   };
 }
 
@@ -144,7 +167,7 @@ export function buildServiceListLD(
         description: s.description,
         provider: { "@id": `${SITE_URL}#org` },
         areaServed: { "@type": "Country", name: "India" },
-        url: s.slug ? absoluteUrl(`/services${s.slug}`) : absoluteUrl("/services"),
+        url: s.slug ? absoluteUrl(`/services/${s.slug}`) : absoluteUrl("/services"),
       },
     })),
   };
@@ -221,7 +244,7 @@ export function buildReviewsLD(
   };
 }
 
-export function buildFAQLD(faqs: Array<{ q: string; a: string }>): StructuredData {
+export function buildFAQLD(faqs: Faq[]): StructuredData {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -236,3 +259,69 @@ export function buildFAQLD(faqs: Array<{ q: string; a: string }>): StructuredDat
 /** Serializes one JSON-LD object as the body of a `<script>` tag. */
 export const ldScriptBody = (data: StructuredData): string =>
   JSON.stringify(data).replace(/</g, "\\u003c");
+
+
+/** Service schema for one service page. */
+export function buildServiceLD(sv: ServiceLine): StructuredData {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": absoluteUrl(`/services/${sv.slug}`) + "#service",
+    name: sv.title,
+    serviceType: sv.title,
+    description: sv.short,
+    url: absoluteUrl(`/services/${sv.slug}`),
+    provider: { "@id": `${SITE_URL}#org` },
+    areaServed: [
+      { "@type": "Country", name: "India" },
+      ...CITIES.filter((c) => c.areaType === "City").map((c) => ({
+        "@type": "City",
+        name: c.name,
+      })),
+    ],
+    ...(sv.comingSoon
+      ? {}
+      : {
+          offers: {
+            "@type": "Offer",
+            priceCurrency: BASE_PRICE.currency,
+            priceSpecification: {
+              "@type": "PriceSpecification",
+              priceCurrency: BASE_PRICE.currency,
+              minPrice: sv.fromPrice ?? BASE_PRICE.amount,
+              description: BASE_PRICE.label,
+            },
+          },
+        }),
+  };
+}
+
+/** ProfessionalService with areaServed for one city page. */
+export function buildCityLD(city: {
+  slug: string;
+  name: string;
+  state: string;
+  areaType: "City" | "Country";
+}): StructuredData {
+  return {
+    "@context": "https://schema.org",
+    "@type": ["ProfessionalService", "LocalBusiness"],
+    "@id": absoluteUrl(`/photographer-in/${city.slug}`) + "#service",
+    name: `${SITE_NAME} · ${city.name}`,
+    url: absoluteUrl(`/photographer-in/${city.slug}`),
+    image: absoluteUrl("/og-hero.jpg"),
+    telephone: "+91 98844 26838",
+    parentOrganization: { "@id": `${SITE_URL}#org` },
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: PHOTOGRAPHER.city,
+      addressRegion: PHOTOGRAPHER.region,
+      addressCountry: "IN",
+    },
+    areaServed:
+      city.areaType === "Country"
+        ? { "@type": "Country", name: "India" }
+        : { "@type": "City", name: city.name, containedInPlace: { "@type": "AdministrativeArea", name: city.state } },
+    priceRange: "₹₹",
+  };
+}

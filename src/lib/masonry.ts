@@ -5,14 +5,8 @@ import { useEffect, useState } from "react";
  * `max` caps the count (e.g. story pages use 3 max for a more focused flow).
  */
 export function useColumnCount(max = 4): number {
-  const compute = (): number => {
-    if (typeof window === "undefined") return Math.min(3, max);
-    const w = window.innerWidth;
-    const target = w >= 1280 ? 4 : w >= 1024 ? 3 : w >= 640 ? 2 : 1;
-    return Math.min(target, max);
-  };
-
-  const [cols, setCols] = useState<number>(compute);
+  // First render must match the server (no window access), then sync after mount.
+  const [cols, setCols] = useState<number>(Math.min(3, max));
 
   useEffect(() => {
     const queries: MediaQueryList[] = [
@@ -27,6 +21,7 @@ export function useColumnCount(max = 4): number {
           max,
         ),
       );
+    update();
     queries.forEach((q) => q.addEventListener("change", update));
     return () => queries.forEach((q) => q.removeEventListener("change", update));
   }, [max]);

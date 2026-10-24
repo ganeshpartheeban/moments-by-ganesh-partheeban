@@ -9,11 +9,13 @@ import {
   ldScriptBody,
 } from "@/lib/seo";
 import { PRESS } from "@/lib/press";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, translate, type Locale } from "@/lib/i18n";
 import { useColumnCount, distribute } from "@/lib/masonry";
 import { CASE_STUDIES } from "@/lib/case-studies";
+import { localizeAll } from "@/lib/localize";
 import { PHOTO_META } from "@/lib/photo-meta";
 import StoryCard from "@/components/StoryCard";
+import { CityLinks } from "@/components/SeoSections";
 
 const Lightbox = lazy(() => import("@/components/Lightbox"));
 
@@ -36,29 +38,16 @@ function validateIndexSearch(search: Record<string, unknown>): IndexSearch {
 
 export const Route = createFileRoute("/")({
   validateSearch: validateIndexSearch,
-  head: () => ({
+  head: ({ match }) => {
+    const locale = (match.context as { locale: Locale }).locale;
+    const tr = (k: string) => translate(locale, k);
+    return {
     meta: [
-      {
-        title:
-          "Candid Wedding & Event Photographer in Chennai, India · Moments by Ganesh Partheeban",
-      },
-      {
-        name: "description",
-        content:
-          "Candid wedding, reception, engagement, concert and event photography across India by Ganesh Partheeban. Based in Chennai, documenting moments as they happen · natural, honest, fast delivery.",
-      },
-      {
-        property: "og:title",
-        content: "Candid Wedding & Event Photographer · Moments by Ganesh Partheeban",
-      },
-      { property: "og:url", content: SITE_URL },
-      {
-        property: "og:description",
-        content:
-          "Candid photography across India · weddings, events, concerts, shows and behind-the-scenes. Moments, honestly documented.",
-      },
+      { title: tr("meta.home.title") },
+      { name: "description", content: tr("meta.home.desc") },
+      { property: "og:title", content: tr("meta.home.title") },
+      { property: "og:description", content: tr("meta.home.desc") },
     ],
-    links: [{ rel: "canonical", href: SITE_URL }],
     scripts: [
       {
         type: "application/ld+json",
@@ -80,7 +69,8 @@ export const Route = createFileRoute("/")({
         ),
       } as Record<string, string>,
     ],
-  }),
+    };
+  },
   component: Index,
 });
 
@@ -88,11 +78,13 @@ function Index() {
   return (
     <div>
       <Hero />
+      <FeaturedStrip />
       <Stories />
       <OtherFrames />
       <Philosophy />
       <Press />
       <CTA />
+      <WhereIShoot />
     </div>
   );
 }
@@ -216,7 +208,8 @@ const STORY_NUMBERS_SET = new Set<number>(
 );
 
 function Stories() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const stories = localizeAll(CASE_STUDIES, locale);
   return (
     <section
       id="work"
@@ -248,7 +241,7 @@ function Stories() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-3">
-        {CASE_STUDIES.map((s, i) => (
+        {stories.map((s, i) => (
           <StoryCard key={s.slug} study={s} eager={i < 3} staggerIndex={i} />
         ))}
       </div>
@@ -552,6 +545,44 @@ function CTA() {
             </Link>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+
+function FeaturedStrip() {
+  const { t } = useI18n();
+  const names = Array.from(new Set(PRESS.map((p) => p.name))).slice(0, 8);
+  return (
+    <section className="border-y border-border">
+      <div className="mx-auto flex max-w-[1800px] flex-col gap-4 px-4 py-6 sm:px-6 md:flex-row md:items-center md:gap-10 md:px-10">
+        <p className="shrink-0 font-mono-label text-muted-foreground">{t("home.featured.label")}</p>
+        <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 md:gap-x-8">
+          {names.map((n) => (
+            <li key={n} className="font-display text-lg leading-tight text-foreground/80 sm:text-xl">
+              {n}
+            </li>
+          ))}
+          <li>
+            <Link
+              to="/press"
+              className="font-mono-label text-xs text-muted-foreground transition-colors hover:text-accent"
+            >
+              {t("home.featured.all")}
+            </Link>
+          </li>
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function WhereIShoot() {
+  return (
+    <section className="border-t border-border">
+      <div className="mx-auto max-w-[1800px] px-4 py-10 sm:px-6 md:px-10 md:py-14">
+        <CityLinks />
       </div>
     </section>
   );

@@ -1,13 +1,16 @@
 import { useRouterState } from "@tanstack/react-router";
 import { WhatsApp } from "@/components/icons";
 import { CASE_STUDIES } from "@/lib/case-studies";
+import { useI18n, type Locale } from "@/lib/i18n";
+import { localize } from "@/lib/localize";
 
 const WHATSAPP_NUMBER = "919884426838";
 
-function buildWhatsAppMessage(pathname: string): string {
+function buildWhatsAppMessage(pathname: string, locale: Locale): string {
   const storyMatch = pathname.match(/^\/work\/([^/]+)\/?$/);
   if (storyMatch) {
-    const story = CASE_STUDIES.find((s) => s.slug === storyMatch[1]);
+    const found = CASE_STUDIES.find((s) => s.slug === storyMatch[1]);
+    const story = found ? localize(found, locale) : undefined;
     if (story) {
       return `Hi Ganesh, enquiring after seeing the "${story.title}" story (${story.location}).`;
     }
@@ -23,7 +26,8 @@ function buildWhatsAppMessage(pathname: string): string {
 
 export default function FloatingContact() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const waHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildWhatsAppMessage(pathname))}`;
+  const { locale } = useI18n();
+  const waHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildWhatsAppMessage(pathname, locale))}`;
 
   return (
     <a
@@ -31,6 +35,7 @@ export default function FloatingContact() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Message Ganesh on WhatsApp"
+      data-track="whatsapp-floating"
       style={{
         // Sits above the mobile bottom tab bar; desktop override below.
         bottom: "calc(env(safe-area-inset-bottom, 0px) + 64px + 0.75rem)",

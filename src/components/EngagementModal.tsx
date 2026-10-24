@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Aperture } from "@/components/icons";
+import { normalizePath } from "@/lib/locale-path";
 import { useI18n } from "@/lib/i18n";
 
 const STORAGE_KEY = "rms-engagement-dismissed-at";
@@ -92,7 +93,7 @@ export default function EngagementModal() {
   const handleWorkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     close();
     if (typeof window === "undefined") return;
-    if (window.location.pathname === "/") {
+    if (normalizePath(window.location.pathname) === "/") {
       e.preventDefault();
       document
         .getElementById("work")

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Aperture, Camera, Lens, Sparkle } from "@/components/icons";
 import { useI18n } from "@/lib/i18n";
+import LanguageToggle from "@/components/LanguageToggle";
 
 type Tab = {
   to: string;
@@ -102,6 +103,9 @@ export default function BottomTabBar() {
             </Link>
           </li>
         ))}
+        <li className="flex-1">
+          <LanguageToggle variant="tab" />
+        </li>
       </ul>
     </nav>
   );

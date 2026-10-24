@@ -9,7 +9,8 @@ import {
   ldScriptBody,
 } from "@/lib/seo";
 import { FORM_ENDPOINT, FORM_TOKEN } from "@/lib/form-config";
-import { useI18n } from "@/lib/i18n";
+import { getAttribution, track } from "@/lib/analytics";
+import { useI18n, translate, type Locale } from "@/lib/i18n";
 
 type Testimonial = { q: string; name: string; venue: string };
 
@@ -37,23 +38,16 @@ const TESTIMONIALS = [
 ];
 
 export const Route = createFileRoute("/about")({
-  head: () => ({
+  head: ({ match }) => {
+    const locale = (match.context as { locale: Locale }).locale;
+    const tr = (k: string) => translate(locale, k);
+    return {
     meta: [
-      { title: "About Ganesh Partheeban · Candid Photographer in Chennai" },
-      {
-        name: "description",
-        content:
-          "Meet Ganesh Partheeban, an independent candid wedding and event photographer based in Chennai, Tamil Nadu. Documentary coverage across India · weddings, family functions, concerts, shows, behind-the-scenes.",
-      },
-      { property: "og:title", content: "About · Moments by Ganesh Partheeban" },
-      { property: "og:url", content: absoluteUrl("/about") },
-      {
-        property: "og:description",
-        content:
-          "Independent candid photographer based in Chennai. Quiet observation, honest interaction, real moments.",
-      },
+      { title: tr("meta.about.title") },
+      { name: "description", content: tr("meta.about.desc") },
+      { property: "og:title", content: tr("meta.about.title") },
+      { property: "og:description", content: tr("meta.about.desc") },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/about") }],
     scripts: [
       {
         type: "application/ld+json",
@@ -69,7 +63,8 @@ export const Route = createFileRoute("/about")({
         children: ldScriptBody(buildReviewsLD(TESTIMONIALS)),
       } as Record<string, string>,
     ],
-  }),
+    };
+  },
   component: AboutPage,
 });
 
@@ -404,6 +399,8 @@ function TestimonialForm() {
     data.set("city", venue);
     data.set("notes", message);
     data.set("token", FORM_TOKEN);
+    data.set("type", "testimonial");
+    for (const [k, v] of Object.entries(getAttribution())) data.set(k, v);
 
     setStatus("sending");
     try {
@@ -413,6 +410,7 @@ function TestimonialForm() {
         mode: "no-cors",
       });
       setStatus("sent");
+      track("form_submit", { form: "testimonial" });
       form.reset();
     } catch {
       setErrorMsg("Couldn't send right now. Please try again later.");

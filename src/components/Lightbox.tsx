@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GALLERY, formatExif, type Photo } from "@/lib/gallery";
 import { PHOTO_META } from "@/lib/photo-meta";
+import { track } from "@/lib/analytics";
 
 const thumbUrl = (i: number) => `/gallery-thumbs/g${i + 1}-1000.jpg`;
 const fullBase = (i: number) => `/gallery-full/g${i + 1}`;
@@ -31,6 +32,14 @@ export default function Lightbox({
     setFullLoaded(false);
   }, [index]);
 
+  // One lightbox_open per open (null -> index), not per navigation.
+  useEffect(() => {
+    if (open) {
+      track("lightbox_open", { photo_index: (index ?? 0) + 1, page_path: window.location.pathname });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const scope = useMemo(
     () => photoIndices ?? GALLERY.map((_, i) => i),
     [photoIndices],
@@ -42,6 +51,10 @@ export default function Lightbox({
     (delta: number) => {
       if (position < 0) return;
       const next = scope[(position + delta + scope.length) % scope.length];
+      track("lightbox_navigate", {
+        direction: delta > 0 ? "next" : "prev",
+        photo_index: next + 1,
+      });
       onChange(next);
     },
     [position, scope, onChange],

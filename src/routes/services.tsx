@@ -8,141 +8,53 @@ import {
   ldScriptBody,
 } from "@/lib/seo";
 import { FORM_ENDPOINT, FORM_TOKEN } from "@/lib/form-config";
-import { useI18n } from "@/lib/i18n";
+import { getAttribution, track } from "@/lib/analytics";
+import { useI18n, translate, type Locale } from "@/lib/i18n";
+import { SERVICES } from "@/lib/services";
+import { localizeAll } from "@/lib/localize";
+import { CityLinks } from "@/components/SeoSections";
 
-const SERVICE_LIST_FOR_SEO = [
-  { name: "Candid Wedding Photography", description: "Full-day candid coverage of weddings and wedding-related events across India." },
-  { name: "Reception Photography", description: "Natural reception, after-party and stage coverage with family group portraits." },
-  { name: "Engagement & Pre-Wedding Photography", description: "Storytelling for roka, sagai, engagement and pre-wedding gatherings." },
-  { name: "Family & Cultural Events", description: "Candid coverage for traditional functions, cultural ceremonies and milestone family events." },
-  { name: "Events, Concerts & Behind-the-Scenes", description: "Documentary coverage for concerts, live performances, corporate events and BTS." },
-  { name: "Candid Videography (Coming Soon)", description: "Short documentary films and social-ready reels as an add-on to photography." },
-];
+const serviceList = (locale: Locale) =>
+  localizeAll(SERVICES, locale).map((sv) => ({
+    name: sv.title + (sv.comingSoon ? ` (${translate(locale, "svc.comingSoon")})` : ""),
+    description: sv.short,
+    slug: sv.slug,
+  }));
 
 export const Route = createFileRoute("/services")({
-  head: () => ({
+  head: ({ match }) => {
+    const locale = (match.context as { locale: Locale }).locale;
+    const tr = (k: string) => translate(locale, k);
+    return {
     meta: [
-      { title: "Photography Services · Weddings, Events, Concerts · Ganesh Partheeban" },
-      {
-        name: "description",
-        content:
-          "Candid photography services across India · weddings, receptions, engagement and pre-wedding, family and cultural events, concerts, shows and behind-the-scenes. Event-based pricing. Bookings from Chennai, Bengaluru and across India.",
-      },
-      { property: "og:title", content: "Services · Moments by Ganesh Partheeban" },
-      { property: "og:url", content: absoluteUrl("/services") },
-      {
-        property: "og:description",
-        content:
-          "Candid coverage for weddings, receptions, engagements, family events, concerts, shows, and behind-the-scenes across India.",
-      },
+      { title: tr("meta.services.title") },
+      { name: "description", content: tr("meta.services.desc") },
+      { property: "og:title", content: tr("meta.services.title") },
+      { property: "og:description", content: tr("meta.services.desc") },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/services") }],
     scripts: [
       {
         type: "application/ld+json",
-        children: ldScriptBody(buildServiceListLD(SERVICE_LIST_FOR_SEO)),
+        children: ldScriptBody(buildServiceListLD(serviceList(locale))),
       } as Record<string, string>,
       {
         type: "application/ld+json",
         children: ldScriptBody(
           buildBreadcrumbLD([
-            { name: "Work", url: "/" },
-            { name: "Services", url: "/services" },
+            { name: tr("nav.work"), url: "/" },
+            { name: tr("nav.services"), url: "/services" },
           ]),
         ),
       } as Record<string, string>,
     ],
-  }),
+    };
+  },
   component: ServicesPage,
 });
 
-type Service = {
-  n: string;
-  title: string;
-  body: string;
-  bullets: string[];
-  eventType: string;
-  comingSoon?: boolean;
-};
-
-const services: Service[] = [
-  {
-    n: "S01",
-    title: "Candid Wedding Photography",
-    body: "Complete candid coverage of weddings and wedding-related events, from ceremony to celebration.",
-    bullets: [
-      "Full-day candid coverage",
-      "Pre-event briefing",
-      "All wedding rituals",
-      "Social-ready exports",
-    ],
-    eventType: "Wedding",
-  },
-  {
-    n: "S02",
-    title: "Reception Photography",
-    body: "Natural coverage of interactions, emotions, and celebrations during receptions and after-parties.",
-    bullets: [
-      "Stage & guest coverage",
-      "Family group portraits",
-      "Speeches & toasts",
-      "Atmosphere photography",
-    ],
-    eventType: "Reception",
-  },
-  {
-    n: "S03",
-    title: "Engagement & Pre-Wedding",
-    body: "Authentic storytelling for intimate ceremonies, roka, sagai, and pre-wedding gatherings.",
-    bullets: [
-      "Ceremony documentation",
-      "Family interactions",
-      "Couple portraits",
-      "Decor & details",
-    ],
-    eventType: "Engagement",
-  },
-  {
-    n: "S04",
-    title: "Family & Cultural Events",
-    body: "Coverage for traditional functions, milestone celebrations, and special gatherings.",
-    bullets: [
-      "Cultural ceremonies",
-      "Multi-generational portraits",
-      "Ritual documentation",
-      "Celebration coverage",
-    ],
-    eventType: "Family / Cultural",
-  },
-  {
-    n: "S05",
-    title: "Events, Concerts & Behind-the-Scenes",
-    body: "Documentary coverage for live events, concerts, shows, and behind-the-scenes. The same observational eye, applied to stage, crowd, and crew.",
-    bullets: [
-      "Concerts & live performances",
-      "Corporate & cultural events",
-      "Shows, launches & showcases",
-      "Behind-the-scenes documentation",
-    ],
-    eventType: "Event / Concert / Show",
-  },
-  {
-    n: "S06",
-    title: "Candid Videography",
-    body: "Same documentary approach, in motion. Short films and reels that capture how the day actually felt.",
-    bullets: [
-      "Highlight reels · 3–5 minutes",
-      "Full ceremony films",
-      "Social-ready vertical cuts",
-      "Available as add-on to photography",
-    ],
-    eventType: "Videography (Notify)",
-    comingSoon: true,
-  },
-];
-
 function ServicesPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const services = localizeAll(SERVICES, locale);
   return (
     <div>
       <section className="mx-auto max-w-[1800px] px-4 pt-12 pb-10 sm:px-6 sm:pt-12 sm:pb-10 md:px-10 md:pt-18 md:pb-14">
@@ -177,7 +89,13 @@ function ServicesPage() {
               </p>
               <div className="md:col-span-6">
                 <h2 className="flex flex-wrap items-center gap-3 font-display text-2xl leading-tight tracking-tight text-balance sm:text-3xl md:text-4xl lg:text-5xl">
-                  {s.title}
+                  <Link
+                    to="/services/$slug"
+                    params={{ slug: s.slug }}
+                    className="transition-colors hover:text-accent"
+                  >
+                    {s.title}
+                  </Link>
                   {s.comingSoon && (
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/60 bg-accent/10 px-3 py-1 font-mono-label text-xs text-accent">
                       <span className="h-1.5 w-1.5 rounded-full bg-accent" />
@@ -186,7 +104,7 @@ function ServicesPage() {
                   )}
                 </h2>
                 <ul className="mt-6 grid gap-2 sm:grid-cols-2">
-                  {s.bullets.map((b) => (
+                  {s.whatYouGet.slice(0, 4).map((b) => (
                     <li
                       key={b}
                       className="flex items-start gap-2 text-sm text-muted-foreground md:text-base"
@@ -198,19 +116,28 @@ function ServicesPage() {
                 </ul>
               </div>
               <div className="md:col-span-5">
-                <p className="text-muted-foreground md:text-lg">{s.body}</p>
+                <p className="text-muted-foreground md:text-lg">{s.short}</p>
                 <div className="mt-5">
                   {s.comingSoon ? (
                     <NotifyForm />
                   ) : (
-                    <a
-                      href={`/contact?eventType=${encodeURIComponent(s.eventType)}#booking-enquiry`}
+                    <Link
+                      to="/contact"
+                      hash="booking-enquiry"
+                      search={{ eventType: s.eventType } as never}
                       className="group inline-flex items-center gap-2 border-b border-foreground pb-1 font-mono-label text-foreground transition-colors hover:text-accent hover:border-accent"
                     >
                       {t("services.enquire")}
                       <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </a>
+                    </Link>
                   )}
+                  <Link
+                    to="/services/$slug"
+                    params={{ slug: s.slug }}
+                    className="ml-6 font-mono-label text-xs text-muted-foreground transition-colors hover:text-accent"
+                  >
+                    Details →
+                  </Link>
                 </div>
               </div>
             </article>
@@ -301,6 +228,13 @@ function ServicesPage() {
         </div>
         </div>
       </section>
+
+      {/* Where I shoot */}
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-[1800px] px-4 py-12 sm:px-6 md:px-10 md:py-20">
+          <CityLinks />
+        </div>
+      </section>
     </div>
   );
 }
@@ -386,11 +320,14 @@ function NotifyForm() {
     data.set("eventType", "Videography (Notify)");
     data.set("notes", "Wants to be notified when candid videography launches.");
     data.set("token", FORM_TOKEN);
+    data.set("type", "notify");
+    for (const [k, v] of Object.entries(getAttribution())) data.set(k, v);
     data.set("location", location);
 
     try {
       await fetch(FORM_ENDPOINT, { method: "POST", body: data, mode: "no-cors" });
       setStatus("sent");
+      track("form_submit", { form: "notify" });
       setEmail("");
     } catch {
       setStatus("error");

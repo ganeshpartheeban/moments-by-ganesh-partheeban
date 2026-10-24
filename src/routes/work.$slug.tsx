@@ -8,7 +8,12 @@ import {
   ldScriptBody,
 } from "@/lib/seo";
 import { GALLERY, formatExif } from "@/lib/gallery";
-import { findCaseStudy, kindLabel } from "@/lib/case-studies";
+import { CASE_STUDIES, findCaseStudy } from "@/lib/case-studies";
+import { useI18n, translate, type Locale } from "@/lib/i18n";
+import { localize, localizeAll } from "@/lib/localize";
+import { findService } from "@/lib/services";
+import { findCity } from "@/lib/cities";
+import StoryCard from "@/components/StoryCard";
 import { PHOTO_META } from "@/lib/photo-meta";
 import { useColumnCount, distribute } from "@/lib/masonry";
 
@@ -39,16 +44,12 @@ export const Route = createFileRoute("/work/$slug")({
     if (!study) throw notFound();
     return study;
   },
-  head: ({ loaderData }) => {
-    const study = loaderData;
-    if (!study) return { meta: [{ title: "Story not found" }] };
-    const labelByKind: Record<string, string> = {
-      wedding: "A wedding in frames",
-      concert: "A concert in frames",
-      ritual: "A ritual in frames",
-      events: "Concerts & events in frames",
-    };
-    const titleSuffix = labelByKind[study.kind] ?? "In frames";
+  head: ({ loaderData, match }) => {
+    const locale = (match.context as { locale: Locale }).locale;
+    const raw = loaderData;
+    if (!raw) return { meta: [{ title: "Story not found" }] };
+    const study = localize(raw, locale);
+    const titleSuffix = translate(locale, `kind.${study.kind}`).replace(", in frames", " in frames");
     const galleryImages = study.sequence
       .map((n) => {
         const p = GALLERY[n - 1];
@@ -81,20 +82,24 @@ export const Route = createFileRoute("/work/$slug")({
     return {
       meta: [
         {
-          title: `${study.title} · ${titleSuffix} · Ganesh Partheeban`,
+          title: translate(locale, "meta.work.title", { title: study.title, kind: titleSuffix }),
         },
         {
           name: "description",
-          content: `A short photographic story from ${study.title} · documented candidly by Ganesh Partheeban in ${study.location}, ${study.date}.`,
+          content: translate(locale, "meta.work.desc", {
+            title: study.title,
+            location: study.location,
+            date: study.date,
+          }),
         },
         { property: "og:title", content: `${study.title} · ${study.location}` },
         {
-          property: "og:url",
-          content: absoluteUrl(`/work/${study.slug}`),
-        },
-        {
           property: "og:description",
-          content: `Candid photography from ${study.title} · ${study.location}, ${study.date}.`,
+          content: translate(locale, "meta.work.desc", {
+            title: study.title,
+            location: study.location,
+            date: study.date,
+          }),
         },
         { property: "og:image", content: absoluteUrl(`/og/${study.slug}.jpg`) },
         {
@@ -114,13 +119,12 @@ export const Route = createFileRoute("/work/$slug")({
           content: absoluteUrl(`/og/${study.slug}.jpg`),
         },
       ],
-      links: [{ rel: "canonical", href: absoluteUrl(`/work/${study.slug}`) }],
       scripts: [
         {
           type: "application/ld+json",
           children: ldScriptBody(
             buildBreadcrumbLD([
-              { name: "Work", url: "/" },
+              { name: translate(locale, "nav.work"), url: "/" },
               { name: study.title, url: `/work/${study.slug}` },
             ]),
           ),
@@ -142,7 +146,8 @@ export const Route = createFileRoute("/work/$slug")({
 });
 
 function CaseStudyPage() {
-  const study = Route.useLoaderData();
+  const { t, locale } = useI18n();
+  const study = localize(Route.useLoaderData(), locale);
   const { photo } = Route.useSearch();
   const navigate = useNavigate();
 
@@ -213,7 +218,7 @@ function CaseStudyPage() {
       <section className="mx-auto max-w-[1800px] px-4 pt-6 pb-6 sm:px-6 sm:pt-16 sm:pb-12 md:px-10 md:pt-20 md:pb-16">
         <p className="inline-flex items-center gap-2 font-mono-label text-[11px] text-muted-foreground sm:text-xs">
           <Aperture className="h-3.5 w-3.5 text-accent" />
-          {kindLabel(study.kind)}
+          {t(`kind.${study.kind}`)}
         </p>
         <div className="mt-3 grid gap-4 sm:mt-6 sm:gap-8 md:grid-cols-12 md:gap-12">
           <div className="md:col-span-8">
@@ -245,14 +250,14 @@ function CaseStudyPage() {
               <div>
                 <dt className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
                   <MapPin className="h-3.5 w-3.5 text-accent" />
-                  Location
+                  {t("work.location")}
                 </dt>
                 <dd className="mt-1 font-display text-xl">{study.location}</dd>
               </div>
               <div>
                 <dt className="inline-flex items-center gap-2 font-mono-label text-muted-foreground">
                   <Camera className="h-3.5 w-3.5 text-accent" />
-                  Documented
+                  {t("work.documented")}
                 </dt>
                 <dd className="mt-1 font-display text-xl">{study.date}</dd>
               </div>
@@ -262,8 +267,9 @@ function CaseStudyPage() {
         <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:mt-10 sm:text-base md:text-lg">
           {study.intro}
         </p>
+        <StoryTags study={study} />
         <p className="mt-3 hidden font-mono-label text-xs text-muted-foreground/70 sm:block">
-          Click any frame to view it full-screen.
+          {t("work.clickHint")}
         </p>
       </section>
 
@@ -356,32 +362,32 @@ function CaseStudyPage() {
         </div>
       </section>
 
+      <MoreRow study={study} />
+
       {/* CTA */}
       <section className="bg-foreground text-background">
         <div className="mx-auto max-w-[1800px] px-4 py-10 sm:px-6 sm:py-16 md:px-10 md:py-20">
           <div className="grid items-end gap-10 md:grid-cols-12">
             <div className="md:col-span-8">
               <p className="font-mono-label text-background/60">
-                Photographs that feel like the moment itself
+                {t("footer.tagline")}
               </p>
               <h2 className="mt-6 font-display text-4xl leading-[1] tracking-tight text-balance sm:text-5xl md:text-7xl">
-                {study.kind === "wedding"
-                  ? "Want a story like this for "
-                  : "Want this kind of coverage for "}
-                <em className="not-italic text-accent">your day</em>?
+                {t(study.kind === "wedding" ? "work.cta.wedding" : "work.cta.other")}{" "}
+                <em className="not-italic text-accent">{t("work.cta.accent")}</em>
+                {t("work.cta.after")}
               </h2>
             </div>
             <div className="md:col-span-4">
               <p className="text-background/70">
-                Send a note about your event. Bookings are confirmed by date
-                availability.
+                {t("work.cta.body")}
               </p>
               <Link
                 to="/contact"
                 hash="booking-enquiry"
                 className="group mt-8 inline-flex items-center gap-2 border-b border-background pb-1 font-display text-lg transition-colors hover:border-accent hover:text-accent"
               >
-                Enquire
+                {t("nav.enquire")}
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
               <Link
@@ -389,7 +395,7 @@ function CaseStudyPage() {
                 hash="work"
                 className="mt-6 block font-mono-label text-xs text-background/60 hover:text-background"
               >
-                ← Back to all work
+                {t("work.back")}
               </Link>
             </div>
           </div>
@@ -410,3 +416,81 @@ function CaseStudyPage() {
   );
 }
 
+
+
+const tagClass =
+  "inline-flex items-center rounded-full border border-border px-3 py-1 font-mono-label text-[10px] text-muted-foreground transition-colors hover:border-accent hover:text-accent";
+
+function StoryTags({ study }: { study: NonNullable<ReturnType<typeof findCaseStudy>> }) {
+  const { t, locale } = useI18n();
+  const rawCity = findCity(study.citySlug);
+  const city = rawCity ? localize(rawCity, locale) : undefined;
+  return (
+    <div className="mt-5 flex flex-wrap items-center gap-2">
+      {study.services.map((slug) => {
+        const rawSv = findService(slug);
+        const sv = rawSv ? localize(rawSv, locale) : undefined;
+        return sv ? (
+          <Link key={slug} to="/services/$slug" params={{ slug }} className={tagClass}>
+            {sv.title}
+          </Link>
+        ) : null;
+      })}
+      {city && (
+        <Link to="/photographer-in/$city" params={{ city: city.slug }} className={tagClass}>
+          {t("work.tag.photographerIn", { name: city.name })}
+        </Link>
+      )}
+      {study.ceremonies?.map((c) => (
+        <span
+          key={c}
+          className="inline-flex items-center rounded-full bg-accent/[0.06] px-3 py-1 font-mono-label text-[10px] text-accent"
+        >
+          {c}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function MoreRow({ study }: { study: NonNullable<ReturnType<typeof findCaseStudy>> }) {
+  const { t, locale } = useI18n();
+  const allStories = localizeAll(CASE_STUDIES, locale);
+  const sameCity = allStories.filter(
+    (s) => s.slug !== study.slug && s.citySlug === study.citySlug,
+  );
+  const sameService = allStories.filter(
+    (s) =>
+      s.slug !== study.slug &&
+      !sameCity.includes(s) &&
+      s.services.some((x) => study.services.includes(x)),
+  );
+  const rawSv = findService(study.services[0]);
+  const firstSv = rawSv ? localize(rawSv, locale) : undefined;
+  const groups = [
+    { label: t("work.moreIn", { name: study.location }), items: sameCity },
+    {
+      label: firstSv
+        ? t("work.moreSvc", { name: locale === "en" ? firstSv.title.toLowerCase() : firstSv.title })
+        : t("work.moreStories"),
+      items: sameService,
+    },
+  ].filter((g) => g.items.length > 0);
+  if (groups.length === 0) return null;
+  return (
+    <section className="border-t border-border">
+      <div className="mx-auto max-w-[1800px] space-y-12 px-4 py-12 sm:px-6 md:px-10 md:py-16">
+        {groups.map((g) => (
+          <div key={g.label}>
+            <p className="font-mono-label text-muted-foreground">{g.label}</p>
+            <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {g.items.map((s, i) => (
+                <StoryCard key={s.slug} study={s} staggerIndex={i} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}

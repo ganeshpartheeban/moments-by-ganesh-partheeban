@@ -2,29 +2,19 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Aperture, Sparkle, ArrowUpRight } from "@/components/icons";
 import { absoluteUrl, buildBreadcrumbLD, ldScriptBody } from "@/lib/seo";
 import { PRESS, type PressCategory } from "@/lib/press";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, translate, type Locale } from "@/lib/i18n";
 
 export const Route = createFileRoute("/press")({
-  head: () => ({
+  head: ({ match }) => {
+    const locale = (match.context as { locale: Locale }).locale;
+    const tr = (k: string) => translate(locale, k);
+    return {
     meta: [
-      {
-        title:
-          "Press · Photographs by Ganesh Partheeban featured in editorial publications",
-      },
-      {
-        name: "description",
-        content:
-          "Selected editorial features that have used Ganesh Partheeban's photographs · from The Hindu and NDTV Profit to UN ESCAP, Cornell University, and Condé Nast Traveller.",
-      },
-      { property: "og:title", content: "Press · Moments by Ganesh Partheeban" },
-      { property: "og:url", content: absoluteUrl("/press") },
-      {
-        property: "og:description",
-        content:
-          "Editorial features that have used Ganesh Partheeban's photographs.",
-      },
+      { title: tr("meta.press.title") },
+      { name: "description", content: tr("meta.press.desc") },
+      { property: "og:title", content: tr("meta.press.title") },
+      { property: "og:description", content: tr("meta.press.desc") },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/press") }],
     scripts: [
       {
         type: "application/ld+json",
@@ -36,7 +26,8 @@ export const Route = createFileRoute("/press")({
         ),
       } as Record<string, string>,
     ],
-  }),
+    };
+  },
   component: PressPage,
 });
 

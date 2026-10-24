@@ -1,12 +1,6 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useRouter, useRouterState } from "@tanstack/react-router";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { localeFromHref, localizedPath } from "@/lib/locale-path";
 
 export type Locale = "en" | "ta";
 
@@ -181,11 +175,23 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "contact.bookingEnquiry.footnote.l1": "Bookings confirmed by date availability.",
     "contact.bookingEnquiry.footnote.l2": "Travel & stay charges quoted separately.",
     "contact.form.name": "Your name",
-    "contact.form.email": "Email",
+    "contact.form.phone": "WhatsApp number",
+    "contact.form.email": "Email (optional)",
     "contact.form.date": "Event date",
     "contact.form.city": "City",
     "contact.form.eventType": "Event type",
     "contact.form.budget": "Budget (₹ INR)",
+    "contact.form.foundVia": "How did you find me?",
+    "contact.form.foundVia.placeholder": "Choose one",
+    "contact.form.foundVia.instagram": "Instagram",
+    "contact.form.foundVia.google": "Google search",
+    "contact.form.foundVia.maps": "Google Maps / Business Profile",
+    "contact.form.foundVia.friend": "WhatsApp or a friend",
+    "contact.form.foundVia.marketplace": "Wedding marketplace (WedMeGood etc.)",
+    "contact.form.foundVia.press": "Press / Unsplash",
+    "contact.form.foundVia.other": "Other",
+    "contact.copyEmail": "Copy email",
+    "contact.copied": "Copied",
     "contact.form.notes": "Tell me about it",
     "contact.form.notes.placeholder":
       "Who's getting married, what's the vibe, which functions, anything special I should know…",
@@ -261,6 +267,91 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "common.close": "Close",
     "common.previous": "Previous",
     "common.next": "Next",
+
+    // SEO pages, locale chrome and per-route meta
+    "nav.stories": "Stories",
+    "seo.whereIShoot": "Where I shoot",
+    "seo.otherPlaces": "Other places I shoot",
+    "seo.questions": "Questions",
+    "seo.goodToKnow": "Good to know.",
+    "seo.cta.body": "Send the date, venue and a few lines. Bookings are confirmed by date availability.",
+    "svc.comingSoon": "Coming soon",
+    "svc.pricing": "Pricing",
+    "svc.from": "From",
+    "svc.perEvent": "per event",
+    "svc.comingSoon.note": "Leave your email on the services page to be told when it launches.",
+    "svc.pricing.note": "Event-based, never hourly ({base}). Travel and stay quoted separately. Digital delivery only.",
+    "svc.enquireAbout": "Enquire about this",
+    "svc.whatYouGet": "What you get",
+    "svc.idealFor": "Ideal for",
+    "svc.occasions": "Occasions & ceremonies",
+    "svc.related": "Related stories",
+    "svc.other": "Other services",
+    "svc.cta.before": "Tell me about",
+    "svc.cta.accent": "your day",
+    "svc.cta.after": ".",
+    "city.lead": "Candid photographer",
+    "city.place.india": "across India",
+    "city.place.in": "in {name}",
+    "city.sub": "Weddings, events and family functions, photographed candidly. Based in Chennai, from ₹10,000 per event.",
+    "city.venues": "Well-known venues & settings",
+    "city.venues.note": "Listed for orientation. I photograph at any venue you choose.",
+    "city.photograph": "What I photograph {place}",
+    "city.stories.india": "Stories from across India",
+    "city.stories.in": "Stories shot in {name}",
+    "city.cta.india": "Planning something anywhere in India?",
+    "city.cta.in": "Planning something in {name}?",
+    "work.location": "Location",
+    "work.documented": "Documented",
+    "work.clickHint": "Click any frame to view it full-screen.",
+    "work.cta.wedding": "Want a story like this for",
+    "work.cta.other": "Want this kind of coverage for",
+    "work.cta.accent": "your day",
+    "work.cta.after": "?",
+    "work.cta.body": "Send a note about your event. Bookings are confirmed by date availability.",
+    "work.back": "← Back to all work",
+    "work.tag.photographerIn": "Photographer in {name}",
+    "work.moreIn": "More in {name}",
+    "work.moreSvc": "More {name}",
+    "work.moreStories": "More stories",
+    "kind.wedding": "A wedding, in frames",
+    "kind.concert": "A concert, in frames",
+    "kind.ritual": "A ritual, in frames",
+    "kind.events": "Concerts & events, in frames",
+    "home.featured.label": "As featured in",
+    "home.featured.all": "All features →",
+    "footer.indexNo": "Index No.",
+    "footer.idx.work": "The Work",
+    "footer.idx.about": "The Photographer",
+    "footer.idx.services": "Coverage & Offerings",
+    "footer.idx.contact": "Reach Out",
+    "footer.idx.press": "In Words",
+    "footer.idx.story": "Story · {name}",
+    "footer.idx.service": "Service · {name}",
+    "footer.idx.city": "Where I shoot · {name}",
+    "footer.idx.default": "Notes from the field",
+    "language.ta": "தமிழ்",
+    "language.en": "English",
+    "language.switch": "Switch language",
+    "meta.home.title": "Candid Wedding & Event Photographer in Chennai, India · Moments by Ganesh Partheeban",
+    "meta.home.desc": "Candid wedding, reception, engagement, concert and event photography across India by Ganesh Partheeban. Based in Chennai, documenting moments as they happen · natural, honest, fast delivery.",
+    "meta.about.title": "About Ganesh Partheeban · Candid Photographer in Chennai",
+    "meta.about.desc": "Meet Ganesh Partheeban, an independent candid wedding and event photographer based in Chennai, Tamil Nadu. Documentary coverage across India · weddings, family functions, concerts, shows, behind-the-scenes.",
+    "meta.services.title": "Photography Services · Weddings, Events, Concerts · Ganesh Partheeban",
+    "meta.services.desc": "Candid photography services across India · weddings, receptions, engagement and pre-wedding, family and cultural events, concerts, shows and behind-the-scenes. Event-based pricing. Bookings from Chennai, Bengaluru and across India.",
+    "meta.contact.title": "Contact · Book Candid Wedding & Event Photography · Ganesh Partheeban",
+    "meta.contact.desc": "Book Ganesh Partheeban for candid wedding, reception, engagement, concert or event photography. Based in Chennai, available across India. Send an enquiry · replies within a day.",
+    "meta.press.title": "Press · Photographs by Ganesh Partheeban featured in editorial publications",
+    "meta.press.desc": "Selected editorial features that have used Ganesh Partheeban's photographs · from The Hindu and NDTV Profit to UN ESCAP, Cornell University, and Condé Nast Traveller.",
+    "meta.work.title": "{title} · {kind} · Ganesh Partheeban",
+    "meta.work.desc": "A short photographic story from {title} · documented candidly by Ganesh Partheeban in {location}, {date}.",
+    "meta.service.title": "{name} in Chennai & across India · Ganesh Partheeban",
+    "meta.service.desc": "{short} Candid, documentary coverage by Ganesh Partheeban, based in Chennai and available across India. {price}",
+    "meta.price.from": "From ₹10,000 per event.",
+    "meta.price.soon": "Coming soon.",
+    "meta.city.title": "Candid Photographer {place} · Weddings, Events & Family Functions",
+    "meta.city.desc": "Candid wedding, event and family-function photography {place} by Ganesh Partheeban, based in Chennai. Event-based pricing from ₹10,000, digital delivery.",
+    "meta.og.description": "Candid photography across India. Weddings, events, concerts, shows and behind-the-scenes. Natural moments, real emotions, fast delivery.",
   },
   ta: {
     "nav.work": "வேலைகள்",
@@ -425,11 +516,23 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "contact.bookingEnquiry.footnote.l2":
       "பயணம் & தங்கும் கட்டணம் தனியாகக் கூறப்படும்.",
     "contact.form.name": "உங்கள் பெயர்",
-    "contact.form.email": "மின்னஞ்சல்",
+    "contact.form.phone": "வாட்ஸ்அப் எண்",
+    "contact.form.email": "மின்னஞ்சல் (விருப்பத்தேர்வு)",
     "contact.form.date": "நிகழ்வு தேதி",
     "contact.form.city": "நகரம்",
     "contact.form.eventType": "நிகழ்வு வகை",
     "contact.form.budget": "பட்ஜெட் (₹ INR)",
+    "contact.form.foundVia": "என்னை எப்படி கண்டுபிடித்தீர்கள்?",
+    "contact.form.foundVia.placeholder": "ஒன்றைத் தேர்ந்தெடுங்கள்",
+    "contact.form.foundVia.instagram": "இன்ஸ்டாகிராம்",
+    "contact.form.foundVia.google": "கூகுள் தேடல்",
+    "contact.form.foundVia.maps": "கூகுள் மேப்ஸ் / பிசினஸ் ப்ரொஃபைல்",
+    "contact.form.foundVia.friend": "வாட்ஸ்அப் அல்லது நண்பர் மூலம்",
+    "contact.form.foundVia.marketplace": "திருமண மார்க்கெட்பிளேஸ் (WedMeGood போன்றவை)",
+    "contact.form.foundVia.press": "பத்திரிகை / Unsplash",
+    "contact.form.foundVia.other": "மற்றவை",
+    "contact.copyEmail": "மின்னஞ்சலை நகலெடு",
+    "contact.copied": "நகலெடுக்கப்பட்டது",
     "contact.form.notes": "உங்கள் நிகழ்வைப் பற்றி",
     "contact.form.notes.placeholder":
       "யார் திருமணம் செய்கிறார்கள், எப்படிப்பட்ட வைப், எந்த சடங்குகள், நான் தெரிந்து கொள்ள வேண்டிய சிறப்பு விவரம்…",
@@ -502,51 +605,148 @@ export const TRANSLATIONS: Record<Locale, Dict> = {
     "common.close": "மூடு",
     "common.previous": "முந்தைய",
     "common.next": "அடுத்த",
+
+    // SEO pages, locale chrome and per-route meta
+    "nav.stories": "கதைகள்",
+    "seo.whereIShoot": "நான் புகைப்படம் எடுக்கும் இடங்கள்",
+    "seo.otherPlaces": "நான் செல்லும் பிற இடங்கள்",
+    "seo.questions": "கேள்விகள்",
+    "seo.goodToKnow": "தெரிந்துகொள்ள வேண்டியவை.",
+    "seo.cta.body": "தேதி, இடம் மற்றும் சில வரிகளை அனுப்புங்கள். தேதி கிடைப்பின் அடிப்படையில் முன்பதிவுகள் உறுதி செய்யப்படும்.",
+    "svc.comingSoon": "விரைவில்",
+    "svc.pricing": "கட்டணம்",
+    "svc.from": "தொடக்கம்",
+    "svc.perEvent": "ஒரு நிகழ்வுக்கு",
+    "svc.comingSoon.note": "இது தொடங்கும்போது அறிய, சேவைகள் பக்கத்தில் உங்கள் மின்னஞ்சலைப் பகிருங்கள்.",
+    "svc.pricing.note": "கட்டணம் நிகழ்வு அடிப்படையிலானது, மணிநேர அடிப்படையில் அல்ல (₹10,000 முதல்). பயணம் மற்றும் தங்குமிடச் செலவுகள் தனியாக வழங்கப்படும். டிஜிட்டல் டெலிவரி மட்டும்.",
+    "svc.enquireAbout": "இதைப் பற்றி விசாரிக்க",
+    "svc.whatYouGet": "உங்களுக்குக் கிடைப்பவை",
+    "svc.idealFor": "இவர்களுக்கு ஏற்றது",
+    "svc.occasions": "நிகழ்வுகள் மற்றும் சடங்குகள்",
+    "svc.related": "தொடர்புடைய கதைகள்",
+    "svc.other": "பிற சேவைகள்",
+    "svc.cta.before": "உங்கள்",
+    "svc.cta.accent": "நாளைப் பற்றி",
+    "svc.cta.after": " சொல்லுங்கள்.",
+    "city.lead": "கேண்டிட் புகைப்படக்காரர்",
+    "city.place.india": "இந்தியா முழுவதும்",
+    "city.place.in": "{name} பகுதியில்",
+    "city.sub": "திருமணங்கள், நிகழ்வுகள் மற்றும் குடும்ப விழாக்கள் இயல்பாகப் பதிவு செய்யப்படும். சென்னையை தளமாகக் கொண்டு, ஒரு நிகழ்வுக்கு ₹10,000 முதல்.",
+    "city.venues": "பிரபலமான இடங்கள் மற்றும் சூழல்கள்",
+    "city.venues.note": "ஒரு பார்வைக்காக மட்டும் பட்டியலிடப்பட்டுள்ளது. நீங்கள் தேர்ந்தெடுக்கும் எந்த இடத்திலும் நான் புகைப்படம் எடுப்பேன்.",
+    "city.photograph": "{place} நான் எடுக்கும் புகைப்படங்கள்",
+    "city.stories.india": "இந்தியா முழுவதிலிருந்தும் கதைகள்",
+    "city.stories.in": "{name} பகுதியில் எடுத்த கதைகள்",
+    "city.cta.india": "இந்தியாவில் எங்காவது ஒரு நிகழ்வைத் திட்டமிடுகிறீர்களா?",
+    "city.cta.in": "{name} பகுதியில் ஒரு நிகழ்வைத் திட்டமிடுகிறீர்களா?",
+    "work.location": "இடம்",
+    "work.documented": "பதிவு செய்யப்பட்டது",
+    "work.clickHint": "எந்தப் படத்தையும் தட்டினால் முழுத்திரையில் பார்க்கலாம்.",
+    "work.cta.wedding": "இது போன்ற ஒரு கதையை",
+    "work.cta.other": "இந்த மாதிரியான பதிவை",
+    "work.cta.accent": "உங்கள் நாளுக்கும்",
+    "work.cta.after": " விரும்புகிறீர்களா?",
+    "work.cta.body": "உங்கள் நிகழ்வைப் பற்றி ஒரு குறிப்பை அனுப்புங்கள். தேதி கிடைப்பின் அடிப்படையில் முன்பதிவுகள் உறுதி செய்யப்படும்.",
+    "work.back": "← அனைத்து வேலைகளுக்கும் திரும்ப",
+    "work.tag.photographerIn": "{name} பகுதியில் புகைப்படக்காரர்",
+    "work.moreIn": "{name} பகுதியில் மேலும்",
+    "work.moreSvc": "மேலும்: {name}",
+    "work.moreStories": "மேலும் கதைகள்",
+    "kind.wedding": "ஒரு திருமணம், படங்களில்",
+    "kind.concert": "ஒரு இசை நிகழ்ச்சி, படங்களில்",
+    "kind.ritual": "ஒரு சடங்கு, படங்களில்",
+    "kind.events": "இசை நிகழ்ச்சிகள் மற்றும் நிகழ்வுகள், படங்களில்",
+    "home.featured.label": "இவற்றில் இடம்பெற்றது",
+    "home.featured.all": "அனைத்து செய்திகளும் →",
+    "footer.indexNo": "தொகுப்பு எண்",
+    "footer.idx.work": "படைப்புகள்",
+    "footer.idx.about": "புகைப்படக்காரர்",
+    "footer.idx.services": "சேவைகள் மற்றும் வசதிகள்",
+    "footer.idx.contact": "தொடர்புக்கு",
+    "footer.idx.press": "செய்திகளில்",
+    "footer.idx.story": "கதை · {name}",
+    "footer.idx.service": "சேவை · {name}",
+    "footer.idx.city": "நான் செல்லும் இடம் · {name}",
+    "footer.idx.default": "களத்திலிருந்து குறிப்புகள்",
+    "language.ta": "தமிழ்",
+    "language.en": "English",
+    "language.switch": "மொழியை மாற்ற",
+    "meta.home.title": "சென்னையில் கேண்டிட் திருமண மற்றும் நிகழ்வு புகைப்படக்காரர் · Moments by Ganesh Partheeban",
+    "meta.home.desc": "கணேஷ் பார்த்திபன் எடுக்கும் கேண்டிட் திருமணம், வரவேற்பு, நிச்சயதார்த்தம், இசை நிகழ்ச்சி மற்றும் நிகழ்வு புகைப்படங்கள், இந்தியா முழுவதும். சென்னையை தளமாகக் கொண்டு, தருணங்களை நடக்கும்போதே இயல்பாகவும் நேர்மையாகவும் விரைவாகவும் பதிவு செய்கிறோம்.",
+    "meta.about.title": "கணேஷ் பார்த்திபன் பற்றி · சென்னையின் கேண்டிட் புகைப்படக்காரர்",
+    "meta.about.desc": "சென்னையை தளமாகக் கொண்ட தனிப்புகைப்படக்காரர் கணேஷ் பார்த்திபனை அறிந்துகொள்ளுங்கள். இந்தியா முழுவதும் திருமணங்களையும் நிகழ்வுகளையும் இயல்பாகப் பதிவு செய்கிறார்.",
+    "meta.services.title": "புகைப்பட சேவைகள் மற்றும் கட்டணம் · கணேஷ் பார்த்திபன்",
+    "meta.services.desc": "இந்தியா முழுவதும் கேண்டிட் திருமணம், வரவேற்பு, நிச்சயதார்த்தம், இசை நிகழ்ச்சி மற்றும் நிகழ்வு புகைப்படங்கள். நிகழ்வு அடிப்படையிலான கட்டணம் ₹10,000 முதல், டிஜிட்டல் டெலிவரி.",
+    "meta.contact.title": "கேண்டிட் புகைப்படக்காரரை முன்பதிவு செய்ய · கணேஷ் பார்த்திபனைத் தொடர்பு கொள்ளுங்கள்",
+    "meta.contact.desc": "இந்தியா முழுவதும் கேண்டிட் திருமண அல்லது நிகழ்வு புகைப்படத்திற்கு முன்பதிவு செய்ய, உங்கள் தேதி, இடம் மற்றும் நிகழ்வு விவரங்களை அனுப்புங்கள்.",
+    "meta.press.title": "செய்திகள் மற்றும் சிறப்புக் கட்டுரைகள் · கணேஷ் பார்த்திபன்",
+    "meta.press.desc": "கணேஷ் பார்த்திபனின் கேண்டிட் புகைப்படங்களை வெளியிட்ட இதழ்கள் மற்றும் தளங்கள்.",
+    "meta.work.title": "{title} · {kind} · கணேஷ் பார்த்திபன்",
+    "meta.work.desc": "{title} நிகழ்விலிருந்து ஒரு சிறிய புகைப்படக் கதை · {location}, {date} அன்று கணேஷ் பார்த்திபனால் இயல்பாகப் பதிவு செய்யப்பட்டது.",
+    "meta.service.title": "{name} · சென்னை மற்றும் இந்தியா முழுவதும் · கணேஷ் பார்த்திபன்",
+    "meta.service.desc": "{short} சென்னையை தளமாகக் கொண்ட கணேஷ் பார்த்திபனின் கேண்டிட் ஆவணப் பதிவு, இந்தியா முழுவதும் கிடைக்கும். {price}",
+    "meta.price.from": "ஒரு நிகழ்வுக்கு ₹10,000 முதல்.",
+    "meta.price.soon": "விரைவில்.",
+    "meta.city.title": "கேண்டிட் புகைப்படக்காரர் {place} · திருமணங்கள், நிகழ்வுகள் மற்றும் குடும்ப விழாக்கள்",
+    "meta.city.desc": "{place} கணேஷ் பார்த்திபனின் கேண்டிட் திருமண, நிகழ்வு மற்றும் குடும்ப விழா புகைப்படங்கள். சென்னையை தளமாகக் கொண்டவர். நிகழ்வு அடிப்படையிலான கட்டணம் ₹10,000 முதல், டிஜிட்டல் டெலிவரி.",
+    "meta.og.description": "இந்தியா முழுவதும் கேண்டிட் புகைப்படம்: திருமணங்கள், நிகழ்வுகள், இசை நிகழ்ச்சிகள் மற்றும் திரைக்குப் பின்னால். இயல்பான தருணங்கள், உண்மையான உணர்வுகள், விரைவான டெலிவரி.",
   },
 };
 
-const STORAGE_KEY = "rms-locale";
+export const STORAGE_KEY = "rms-locale";
+
+export type TFn = (key: string, vars?: Record<string, string | number>) => string;
+
+/** Non-hook translator, for head() functions and server code. */
+export function translate(
+  locale: Locale,
+  key: string,
+  vars?: Record<string, string | number>,
+): string {
+  const raw = TRANSLATIONS[locale][key] ?? TRANSLATIONS.en[key] ?? key;
+  if (!vars) return raw;
+  return raw.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+}
 
 type Ctx = {
   locale: Locale;
+  /** Switches language by navigating to the other locale's URL. */
   setLocale: (l: Locale) => void;
-  t: (key: keyof typeof TRANSLATIONS.en) => string;
+  t: TFn;
 };
 
 const I18nContext = createContext<Ctx>({
   locale: "en",
   setLocale: () => {},
-  t: (k) => TRANSLATIONS.en[k] ?? String(k),
+  t: (k, v) => translate("en", k, v),
 });
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
+  const router = useRouter();
+  // The URL is the source of truth: /ta/... is Tamil, everything else English.
+  const locale = useRouterState({ select: (s) => localeFromHref(s.location.publicHref) });
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === "ta" || saved === "en") setLocaleState(saved);
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const setLocale = useCallback((l: Locale) => {
-    setLocaleState(l);
-    try {
-      localStorage.setItem(STORAGE_KEY, l);
-      document.documentElement.lang = l === "ta" ? "ta" : "en";
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const t = useCallback(
-    (key: keyof typeof TRANSLATIONS.en) =>
-      TRANSLATIONS[locale][key] ?? TRANSLATIONS.en[key] ?? String(key),
-    [locale],
+  const setLocale = useCallback(
+    (l: Locale) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, l);
+      } catch {
+        // ignore
+      }
+      const { location } = router.state;
+      if (localeFromHref(location.publicHref) === l) return;
+      try {
+        window.dispatchEvent(new CustomEvent("moments:language", { detail: { locale: l } }));
+      } catch {
+        // ignore
+      }
+      const hash = location.hash ? `#${location.hash.replace(/^#/, "")}` : "";
+      router.history.push(localizedPath(l, location.pathname) + location.searchStr + hash);
+    },
+    [router],
   );
+
+  const t = useCallback<TFn>((key, vars) => translate(locale, key, vars), [locale]);
 
   const value = useMemo(() => ({ locale, setLocale, t }), [locale, setLocale, t]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
