@@ -25,7 +25,7 @@ export type City = {
   /** Service slugs offered (all six). */
   services: string[];
   /** schema.org areaServed type. */
-  areaType: "City" | "Country";
+  areaType: "City" | "State" | "Country";
   /** Tamil versions of the text fields; merged over English by localize(). */
   ta?: Partial<CityText>;
 };
@@ -323,8 +323,7 @@ export const CITIES: City[] = [
     slug: "kerala",
     name: "Kerala",
     state: "Kerala",
-    // Closest supported value: seo.ts and the city route type areaType as City | Country only.
-    areaType: "City",
+    areaType: "State",
     intro: [
       "Kerala is already part of this site: two weddings and a Theyyam night in Kannur, all photographed candidly. I travel from Chennai across the state for weddings, church ceremonies, temple festivals and family functions. Travel and stay are quoted separately and shared upfront.",
       "Weddings here follow three distinct rhythms. Kerala Hindu weddings are often short, early-morning muhurtham ceremonies in a temple or hall, followed by a sadya. Christian weddings centre on the church service and a lively reception. Muslim nikah ceremonies are intimate family occasions. In the north, Theyyam season brings fire, drums and all-night rituals, and temple festivals across the state call for a quiet, respectful approach. I ask about each family's customs and the venue's photography rules beforehand.",

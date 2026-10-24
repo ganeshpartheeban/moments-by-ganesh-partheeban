@@ -73,8 +73,8 @@ export function buildOrganizationLD(): StructuredData {
     areaServed: [
       { "@type": "Country", name: "India" },
       { "@type": "State", name: "Tamil Nadu" },
-      ...CITIES.filter((c) => c.areaType === "City").map((c) => ({
-        "@type": "City",
+      ...CITIES.filter((c) => c.areaType !== "Country").map((c) => ({
+        "@type": c.areaType,
         name: c.name,
       })),
     ],
@@ -274,8 +274,8 @@ export function buildServiceLD(sv: ServiceLine): StructuredData {
     provider: { "@id": `${SITE_URL}#org` },
     areaServed: [
       { "@type": "Country", name: "India" },
-      ...CITIES.filter((c) => c.areaType === "City").map((c) => ({
-        "@type": "City",
+      ...CITIES.filter((c) => c.areaType !== "Country").map((c) => ({
+        "@type": c.areaType,
         name: c.name,
       })),
     ],
@@ -301,7 +301,7 @@ export function buildCityLD(city: {
   slug: string;
   name: string;
   state: string;
-  areaType: "City" | "Country";
+  areaType: "City" | "State" | "Country";
 }): StructuredData {
   return {
     "@context": "https://schema.org",
@@ -321,7 +321,9 @@ export function buildCityLD(city: {
     areaServed:
       city.areaType === "Country"
         ? { "@type": "Country", name: "India" }
-        : { "@type": "City", name: city.name, containedInPlace: { "@type": "AdministrativeArea", name: city.state } },
+        : city.areaType === "State"
+          ? { "@type": "State", name: city.name, containedInPlace: { "@type": "Country", name: "India" } }
+          : { "@type": "City", name: city.name, containedInPlace: { "@type": "AdministrativeArea", name: city.state } },
     priceRange: "₹₹",
   };
 }
