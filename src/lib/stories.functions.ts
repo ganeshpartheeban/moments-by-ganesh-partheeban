@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { notFound } from "@tanstack/react-router";
-import { toPublic, type PublicStory, type StoryItem } from "@/lib/stories-core";
+import { jpegSize, MAX_ROTATED_BYTES, toPublic, type PublicStory, type StoryItem } from "@/lib/stories-core";
 import { adminKeyOk, getEnv, getStore, readIndex, writeIndex } from "@/server/stories-store";
 import { runCollector, type CollectResult } from "@/server/stories-collector";
 
@@ -66,4 +66,40 @@ export const runCollectorNow = createServerFn({ method: "POST" })
     const result = await runCollector(env);
     const store = await getStore(env);
     return { ...result, items: await readIndex(store), storage: store?.kind ?? "none" };
+  });
+
+/**
+ * Overwrite media/<id>.jpg with a frame the admin's browser already rotated.
+ * Payload is FormData: key, id, dir ("left" | "right", informational), file (JPEG blob).
+ */
+export const rotateStory = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => {
+    if (!(d instanceof FormData)) throw new Error("Expected FormData");
+    const key = d.get("key");
+    const file = d.get("file");
+    if (!(file instanceof Blob)) throw new Error("Missing file");
+    return {
+      key: typeof key === "string" ? key.slice(0, 200) : undefined,
+      id: String(d.get("id") ?? "").slice(0, 120),
+      dir: d.get("dir") === "left" ? ("left" as const) : ("right" as const),
+      file,
+    };
+  })
+  .handler(async ({ data }): Promise<AdminData> => {
+    await requireAdmin(data.key);
+    const store = await getStore();
+    if (!store) throw new Error("No storage available");
+    const items = await readIndex(store);
+    const item = items.find((x) => x.id === data.id);
+    if (!item) throw new Error("Unknown story");
+    if (data.file.size > MAX_ROTATED_BYTES) throw new Error("Image is over 8 MB");
+    const buf = await data.file.arrayBuffer();
+    const dims = jpegSize(new Uint8Array(buf));
+    if (!dims) throw new Error("Not a JPEG");
+    await store.put(`media/${item.id}.jpg`, buf, "image/jpeg");
+    const next = items.map((x) =>
+      x.id === item.id ? { ...x, w: dims.w, h: dims.h, v: (x.v ?? 0) + 1 } : x,
+    );
+    await writeIndex(store, next);
+    return { items: next, storage: store.kind };
   });

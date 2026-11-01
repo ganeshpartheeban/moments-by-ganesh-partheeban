@@ -13,10 +13,15 @@ export type StoryItem = {
   hidden: boolean;
   src: "ig" | "archive";
   caption?: string;
+  /** Bumped on every rotation; appended to media URLs to bypass the immutable cache. */
+  v?: number;
 };
 
+/** Max accepted size of a re-encoded frame uploaded from the admin. */
+export const MAX_ROTATED_BYTES = 8 * 1024 * 1024;
+
 /** Public shape sent to the page (no hidden items, no src). */
-export type PublicStory = Pick<StoryItem, "id" | "ts" | "kind" | "w" | "h" | "caption">;
+export type PublicStory = Pick<StoryItem, "id" | "ts" | "kind" | "w" | "h" | "caption" | "v">;
 
 /**
  * Read width/height from a JPEG by walking marker segments to the first SOF.
@@ -85,6 +90,7 @@ export function parseIndex(text: string | null): StoryItem[] {
     return data.filter(validItem).map((x) => ({
       ...x,
       hidden: x.hidden === true,
+      v: typeof x.v === "number" && x.v > 0 ? x.v : undefined,
       src: x.src === "archive" ? "archive" : "ig",
     }));
   } catch {
@@ -110,12 +116,20 @@ export function mergeIndex(existing: StoryItem[], incoming: StoryItem[]): StoryI
 export function toPublic(items: StoryItem[]): PublicStory[] {
   return items
     .filter((x) => !x.hidden)
-    .map(({ id, ts, kind, w, h, caption }) => ({ id, ts, kind, w, h, ...(caption ? { caption } : {}) }));
+    .map(({ id, ts, kind, w, h, caption, v }) => ({
+      id,
+      ts,
+      kind,
+      w,
+      h,
+      ...(caption ? { caption } : {}),
+      ...(v ? { v } : {}),
+    }));
 }
 
 /** URL of the still shown in the wall (poster for videos). */
-export const storyThumbUrl = (s: Pick<StoryItem, "id" | "kind">) =>
-  `/stories/media/${s.id}${s.kind === "video" ? "-poster" : ""}.jpg`;
+export const storyThumbUrl = (s: Pick<StoryItem, "id" | "kind" | "v">) =>
+  `/stories/media/${s.id}${s.kind === "video" ? "-poster" : ""}.jpg${s.v ? `?v=${s.v}` : ""}`;
 export const storyVideoUrl = (s: Pick<StoryItem, "id">) => `/stories/media/${s.id}.mp4`;
 
 export const MEDIA_FILE_RE = /^[A-Za-z0-9_-]+?(-poster)?\.(jpg|mp4)$/;

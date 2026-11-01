@@ -120,17 +120,21 @@ function StoriesPage() {
         {stories.length === 0 ? (
           <p className="px-3 py-16 text-center text-muted-foreground">{t("stories.empty")}</p>
         ) : (
-          <ul className="grid grid-cols-3 gap-0.5 sm:grid-cols-4 sm:gap-1 lg:grid-cols-5 xl:grid-cols-6">
+          <ul className="grid grid-flow-dense grid-cols-3 gap-0.5 sm:grid-cols-4 sm:gap-1 lg:grid-cols-5 xl:grid-cols-6">
             {stories.map((s, i) => (
               <li
                 key={s.id}
+                className={s.w > s.h ? "col-span-2" : undefined}
                 style={{ contentVisibility: "auto", containIntrinsicSize: "auto 200px 356px" }}
               >
                 <button
                   type="button"
                   onClick={() => openAt(i)}
                   aria-label={t("stories.open")}
-                  className="group relative block aspect-[9/16] w-full overflow-hidden bg-secondary"
+                  className={
+                    "group relative block w-full overflow-hidden bg-secondary " +
+                    (s.w > s.h ? "aspect-[9/8]" : "aspect-[9/16]")
+                  }
                 >
                   <img
                     src={storyThumbUrl(s)}

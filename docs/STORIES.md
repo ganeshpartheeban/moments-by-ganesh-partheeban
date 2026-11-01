@@ -76,6 +76,10 @@ The script reads `stories.json` (it looks in `your_instagram_activity/content/`,
 
 `https://<site>/stories/admin?key=<STORIES_ADMIN_KEY>` lists every item with Hide/Show and a **Run collector now** button. Wrong or missing key returns 404. Hidden items disappear from the page, JSON-LD and sitemap immediately (the page loader is not cached on the server; the browser may hold the older list for about a minute). A hide racing with the hourly cron in the same second could be overwritten; just hide again.
 
+## Rotating a frame
+
+Instagram sometimes delivers a story whose pixels are turned a quarter turn with no EXIF tag. In the admin, use **⟲ 90°** / **⟳ 90°** under the card. The browser fetches the image, rotates it on a canvas, re-encodes JPEG (quality 0.92) and uploads it (FormData: `key`, `id`, `dir`, `file`) to the `rotateStory` server function, which overwrites `media/<id>.jpg`, updates `w`/`h` and bumps the item's `v`. Media URLs carry `?v=<v>` so the immutable cache is bypassed. Re-encoding is lossy; rotate as few times as possible. Videos cannot be rotated (the control is disabled). Landscape results span two columns on the wall.
+
 ## Limits (Workers free plan)
 
 - 50 subrequests and 10 ms CPU per invocation. The collector budgets 44 fetches (stories list, optional token refresh, 1 per image, 2 per video) and takes at most 20 new stories per run; the rest are picked up next hour while still live. R2 reads and writes are binding calls, not counted as external subrequests.
