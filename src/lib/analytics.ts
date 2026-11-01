@@ -231,6 +231,12 @@ function onClick(e: MouseEvent) {
     return;
   }
   if (!/^https?:$/.test(url.protocol)) return;
+  if (host === "search.google.com" && /writereview/i.test(url.pathname)) {
+    return track("google_review_click", { page_path: where });
+  }
+  if ((host === "google.com" && url.pathname.startsWith("/maps")) || host === "local.google.com" || host === "g.page") {
+    return track("google_profile_click", { page_path: where });
+  }
   if (host.endsWith("instagram.com")) {
     return track("instagram_click", { destination: host, page_path: where });
   }

@@ -22,16 +22,8 @@ const EngagementModal = lazy(() => import("@/components/EngagementModal"));
 const CookieNotice = lazy(() => import("@/components/CookieNotice"));
 const FloatingContact = lazy(() => import("@/components/FloatingContact"));
 const BottomTabBar = lazy(() => import("@/components/BottomTabBar"));
-import { Aperture, Instagram, Mail, MapPin, Film } from "@/components/icons";
-import {
-  SITE_URL,
-  SITE_NAME,
-  KEYWORDS,
-  absoluteUrl,
-  buildOrganizationLD,
-  buildPersonLD,
-  ldScriptBody,
-} from "@/lib/seo";
+import { Aperture, Instagram, Mail, MapPin, Film, Lens, Sparkle } from "@/components/icons";
+import { SITE_URL, SITE_NAME, KEYWORDS, absoluteUrl, buildOrganizationLD, buildPersonLD, ldScriptBody, GOOGLE_PROFILE_URL, GOOGLE_REVIEW_URL } from "@/lib/seo";
 import { I18nProvider, useI18n, translate, type Locale } from "@/lib/i18n";
 import { localeFromHref, localizedPath, normalizePath } from "@/lib/locale-path";
 import LanguageToggle from "@/components/LanguageToggle";
@@ -584,6 +576,32 @@ function SiteFooter() {
                   <Aperture className="h-4 w-4 text-accent" />
                   <span className="border-b border-transparent group-hover:border-accent">
                     Unsplash
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href={GOOGLE_PROFILE_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group inline-flex items-center gap-2.5 transition-colors hover:text-accent"
+                >
+                  <Lens className="h-4 w-4 text-accent" />
+                  <span className="border-b border-transparent group-hover:border-accent">
+                    {t("footer.google")}
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href={GOOGLE_REVIEW_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group inline-flex items-center gap-2.5 transition-colors hover:text-accent"
+                >
+                  <Sparkle className="h-4 w-4 text-accent" />
+                  <span className="border-b border-transparent group-hover:border-accent">
+                    {t("footer.googleReview")}
                   </span>
                 </a>
               </li>

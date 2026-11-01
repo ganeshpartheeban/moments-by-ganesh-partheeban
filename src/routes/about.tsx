@@ -2,12 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import portrait from "@/assets/portrait.jpg";
 import { Aperture, Camera, Lens, Sparkle, ArrowUpRight } from "@/components/icons";
-import {
-  absoluteUrl,
-  buildBreadcrumbLD,
-  buildReviewsLD,
-  ldScriptBody,
-} from "@/lib/seo";
+import { absoluteUrl, buildBreadcrumbLD, buildReviewsLD, ldScriptBody, GOOGLE_REVIEW_URL } from "@/lib/seo";
 import { FORM_ENDPOINT, FORM_TOKEN } from "@/lib/form-config";
 import { getAttribution, track } from "@/lib/analytics";
 import { useI18n, translate, type Locale } from "@/lib/i18n";
@@ -155,6 +150,15 @@ function AboutPage() {
                 {t("about.testimonials.shareYours")}
               </p>
               <TestimonialForm />
+              <a
+                href={GOOGLE_REVIEW_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-6 inline-flex items-center gap-2 font-mono-label text-xs text-muted-foreground transition-colors hover:text-accent"
+              >
+                {t("about.testimonials.googleReview")}
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </a>
             </div>
           </div>
         </div>

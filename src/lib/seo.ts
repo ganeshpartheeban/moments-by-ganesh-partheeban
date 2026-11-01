@@ -15,6 +15,11 @@ export const SITE_URL =
 
 export const SITE_NAME = "Moments by Ganesh Partheeban";
 
+/** Google Business Profile (place id from the owner's Google QR). */
+export const GOOGLE_PLACE_ID = "ChIJZfAnU9M6Ig0RC9PAFzFUOxE";
+export const GOOGLE_PROFILE_URL = `https://www.google.com/maps/place/?q=place_id:${GOOGLE_PLACE_ID}`;
+export const GOOGLE_REVIEW_URL = `https://search.google.com/local/writereview?placeid=${GOOGLE_PLACE_ID}`;
+
 export const PHOTOGRAPHER = {
   name: "Ganesh Partheeban",
   role: "Candid Photographer",
@@ -67,7 +72,7 @@ export function buildOrganizationLD(): StructuredData {
       "@id": `${SITE_URL}#person`,
       name: PHOTOGRAPHER.name,
       jobTitle: PHOTOGRAPHER.role,
-      sameAs: [PHOTOGRAPHER.instagram, PHOTOGRAPHER.unsplash],
+      sameAs: [PHOTOGRAPHER.instagram, PHOTOGRAPHER.unsplash, GOOGLE_PROFILE_URL],
     },
     telephone: "+91 98844 26838",
     areaServed: [
