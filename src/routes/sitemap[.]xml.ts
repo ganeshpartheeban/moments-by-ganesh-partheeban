@@ -5,6 +5,8 @@ import { CITIES } from "@/lib/cities";
 import { CASE_STUDIES } from "@/lib/case-studies";
 import { GALLERY } from "@/lib/gallery";
 import { localizedPath } from "@/lib/locale-path";
+import { getStories } from "@/lib/stories.functions";
+import { storyThumbUrl, type PublicStory } from "@/lib/stories-core";
 
 type Entry = {
   path: string;
@@ -18,7 +20,7 @@ const esc = (s: string) =>
 
 const abs = (p: string) => `${SITE_URL}${p}`;
 
-function entries(): Entry[] {
+function entries(stories: PublicStory[]): Entry[] {
   const list: Entry[] = [
     {
       path: "/",
@@ -30,6 +32,15 @@ function entries(): Entry[] {
     { path: "/services", changefreq: "monthly", priority: "0.8" },
     { path: "/contact", changefreq: "yearly", priority: "0.9" },
     { path: "/press", changefreq: "monthly", priority: "0.6" },
+    {
+      path: "/stories",
+      changefreq: "daily",
+      priority: "0.6",
+      images: stories.slice(0, 200).map((s) => ({
+        loc: abs(storyThumbUrl(s)),
+        title: s.caption || "Story by Ganesh Partheeban",
+      })),
+    },
   ];
   for (const s of SERVICES) {
     list.push({ path: `/services/${s.slug}`, changefreq: "monthly", priority: "0.8" });
@@ -51,9 +62,9 @@ function entries(): Entry[] {
   return list;
 }
 
-export function buildSitemap(): string {
+export function buildSitemap(stories: PublicStory[] = []): string {
   const urls: string[] = [];
-  for (const e of entries()) {
+  for (const e of entries(stories)) {
     const en = abs(localizedPath("en", e.path));
     const ta = abs(localizedPath("ta", e.path));
     const alternates = [
@@ -97,8 +108,8 @@ ${urls.join("\n")}
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
-      GET: () =>
-        new Response(buildSitemap(), {
+      GET: async () =>
+        new Response(buildSitemap(await getStories().catch(() => [])), {
           headers: {
             "Content-Type": "application/xml; charset=utf-8",
             "Cache-Control": "public, max-age=3600",

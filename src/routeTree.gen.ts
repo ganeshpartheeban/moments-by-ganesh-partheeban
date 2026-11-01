@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StoriesRouteImport } from './routes/stories'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as PressRouteImport } from './routes/press'
@@ -16,9 +17,16 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorkSlugRouteImport } from './routes/work.$slug'
+import { Route as StoriesAdminRouteImport } from './routes/stories_.admin'
 import { Route as ServicesSlugRouteImport } from './routes/services_.$slug'
 import { Route as PhotographerInCityRouteImport } from './routes/photographer-in.$city'
+import { Route as StoriesMediaFileRouteImport } from './routes/stories_.media.$file'
 
+const StoriesRoute = StoriesRouteImport.update({
+  id: '/stories',
+  path: '/stories',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -54,6 +62,11 @@ const WorkSlugRoute = WorkSlugRouteImport.update({
   path: '/work/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoriesAdminRoute = StoriesAdminRouteImport.update({
+  id: '/stories_/admin',
+  path: '/stories/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ServicesSlugRoute = ServicesSlugRouteImport.update({
   id: '/services_/$slug',
   path: '/services/$slug',
@@ -64,6 +77,11 @@ const PhotographerInCityRoute = PhotographerInCityRouteImport.update({
   path: '/photographer-in/$city',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoriesMediaFileRoute = StoriesMediaFileRouteImport.update({
+  id: '/stories_/media/$file',
+  path: '/stories/media/$file',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -72,9 +90,12 @@ export interface FileRoutesByFullPath {
   '/press': typeof PressRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stories': typeof StoriesRoute
   '/photographer-in/$city': typeof PhotographerInCityRoute
   '/services/$slug': typeof ServicesSlugRoute
+  '/stories/admin': typeof StoriesAdminRoute
   '/work/$slug': typeof WorkSlugRoute
+  '/stories/media/$file': typeof StoriesMediaFileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,9 +104,12 @@ export interface FileRoutesByTo {
   '/press': typeof PressRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stories': typeof StoriesRoute
   '/photographer-in/$city': typeof PhotographerInCityRoute
   '/services/$slug': typeof ServicesSlugRoute
+  '/stories/admin': typeof StoriesAdminRoute
   '/work/$slug': typeof WorkSlugRoute
+  '/stories/media/$file': typeof StoriesMediaFileRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,9 +119,12 @@ export interface FileRoutesById {
   '/press': typeof PressRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stories': typeof StoriesRoute
   '/photographer-in/$city': typeof PhotographerInCityRoute
   '/services_/$slug': typeof ServicesSlugRoute
+  '/stories_/admin': typeof StoriesAdminRoute
   '/work/$slug': typeof WorkSlugRoute
+  '/stories_/media/$file': typeof StoriesMediaFileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -108,9 +135,12 @@ export interface FileRouteTypes {
     | '/press'
     | '/services'
     | '/sitemap.xml'
+    | '/stories'
     | '/photographer-in/$city'
     | '/services/$slug'
+    | '/stories/admin'
     | '/work/$slug'
+    | '/stories/media/$file'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -119,9 +149,12 @@ export interface FileRouteTypes {
     | '/press'
     | '/services'
     | '/sitemap.xml'
+    | '/stories'
     | '/photographer-in/$city'
     | '/services/$slug'
+    | '/stories/admin'
     | '/work/$slug'
+    | '/stories/media/$file'
   id:
     | '__root__'
     | '/'
@@ -130,9 +163,12 @@ export interface FileRouteTypes {
     | '/press'
     | '/services'
     | '/sitemap.xml'
+    | '/stories'
     | '/photographer-in/$city'
     | '/services_/$slug'
+    | '/stories_/admin'
     | '/work/$slug'
+    | '/stories_/media/$file'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -142,13 +178,23 @@ export interface RootRouteChildren {
   PressRoute: typeof PressRoute
   ServicesRoute: typeof ServicesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StoriesRoute: typeof StoriesRoute
   PhotographerInCityRoute: typeof PhotographerInCityRoute
   ServicesSlugRoute: typeof ServicesSlugRoute
+  StoriesAdminRoute: typeof StoriesAdminRoute
   WorkSlugRoute: typeof WorkSlugRoute
+  StoriesMediaFileRoute: typeof StoriesMediaFileRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/stories': {
+      id: '/stories'
+      path: '/stories'
+      fullPath: '/stories'
+      preLoaderRoute: typeof StoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -198,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stories_/admin': {
+      id: '/stories_/admin'
+      path: '/stories/admin'
+      fullPath: '/stories/admin'
+      preLoaderRoute: typeof StoriesAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/services_/$slug': {
       id: '/services_/$slug'
       path: '/services/$slug'
@@ -212,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PhotographerInCityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stories_/media/$file': {
+      id: '/stories_/media/$file'
+      path: '/stories/media/$file'
+      fullPath: '/stories/media/$file'
+      preLoaderRoute: typeof StoriesMediaFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -222,9 +282,12 @@ const rootRouteChildren: RootRouteChildren = {
   PressRoute: PressRoute,
   ServicesRoute: ServicesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StoriesRoute: StoriesRoute,
   PhotographerInCityRoute: PhotographerInCityRoute,
   ServicesSlugRoute: ServicesSlugRoute,
+  StoriesAdminRoute: StoriesAdminRoute,
   WorkSlugRoute: WorkSlugRoute,
+  StoriesMediaFileRoute: StoriesMediaFileRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { scheduled as storiesScheduled } from "./server/stories-collector";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -96,5 +97,13 @@ export default {
       console.error(error);
       return brandedErrorResponse();
     }
+  },
+  // Hourly cron (wrangler.jsonc triggers.crons): collect new Instagram stories.
+  scheduled(
+    event: unknown,
+    env: Parameters<typeof storiesScheduled>[1],
+    ctx: Parameters<typeof storiesScheduled>[2],
+  ) {
+    return storiesScheduled(event, env, ctx);
   },
 };

@@ -6,11 +6,22 @@ import { track } from "@/lib/analytics";
 const thumbUrl = (i: number) => `/gallery-thumbs/g${i + 1}-1000.jpg`;
 const fullBase = (i: number) => `/gallery-full/g${i + 1}`;
 
+/** Arbitrary (non-GALLERY) media, e.g. the Stories wall. */
+export type LightboxItem = {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  /** When set, `src` is a video and this is its still. */
+  poster?: string;
+};
+
 export default function Lightbox({
   index,
   onClose,
   onChange,
   photoIndices,
+  items,
 }: {
   /** Gallery index of the open photo (0-based into GALLERY). */
   index: number | null;
@@ -22,6 +33,8 @@ export default function Lightbox({
    * GALLERY (legacy behavior).
    */
   photoIndices?: number[];
+  /** When provided, `index` addresses this list instead of GALLERY. */
+  items?: LightboxItem[];
 }) {
   const open = index !== null;
   const touchStartX = useRef<number | null>(null);
@@ -41,8 +54,8 @@ export default function Lightbox({
   }, [open]);
 
   const scope = useMemo(
-    () => photoIndices ?? GALLERY.map((_, i) => i),
-    [photoIndices],
+    () => photoIndices ?? (items ?? GALLERY).map((_, i) => i),
+    [photoIndices, items],
   );
 
   const position = index === null ? -1 : scope.indexOf(index);
@@ -68,9 +81,9 @@ export default function Lightbox({
     ];
     ids.forEach((i) => {
       const img = new window.Image();
-      img.src = `${fullBase(i)}.jpg`;
+      img.src = items ? (items[i]?.poster ?? items[i]?.src ?? "") : `${fullBase(i)}.jpg`;
     });
-  }, [position, scope]);
+  }, [position, scope, items]);
 
   useEffect(() => {
     if (!open) return;
@@ -99,9 +112,10 @@ export default function Lightbox({
   };
 
   if (!open || index === null) return null;
-  const p: Photo = GALLERY[index];
-  const exif = formatExif(p);
-  const meta = PHOTO_META[index + 1];
+  const ext = items?.[index];
+  const p: Photo = ext ? ({ alt: ext.alt } as Photo) : GALLERY[index];
+  const exif = ext ? "" : formatExif(p);
+  const meta = ext ? undefined : PHOTO_META[index + 1];
   const metaLine = meta
     ? [
         meta.featuring && `featuring ${meta.featuring}`,
@@ -116,7 +130,7 @@ export default function Lightbox({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`Photograph ${Math.max(position, 0) + 1} of ${scope.length}`}
+      aria-label={`${ext ? "Story" : "Photograph"} ${Math.max(position, 0) + 1} of ${scope.length}`}
       className="fixed inset-0 z-50 flex flex-col bg-black/95 text-white backdrop-blur-sm"
       onClick={onClose}
       style={{
@@ -158,6 +172,31 @@ export default function Lightbox({
           </button>
         )}
 
+        {ext ? (
+          ext.poster ? (
+            <video
+              key={index}
+              src={ext.src}
+              poster={ext.poster}
+              controls
+              autoPlay
+              playsInline
+              loop
+              className="block h-auto max-h-full w-auto max-w-full"
+            />
+          ) : (
+            <img
+              key={index}
+              src={ext.src}
+              alt={ext.alt}
+              width={ext.width}
+              height={ext.height}
+              draggable={false}
+              decoding="async"
+              className="block h-auto max-h-full w-auto max-w-full select-none object-contain"
+            />
+          )
+        ) : (
         <picture key={index} style={{ display: "contents" }}>
           <source type="image/avif" srcSet={`${fullBase(index)}.avif`} />
           <source type="image/webp" srcSet={`${fullBase(index)}.webp`} />
@@ -180,6 +219,7 @@ export default function Lightbox({
             className="block h-auto max-h-full w-auto max-w-full select-none object-contain"
           />
         </picture>
+        )}
 
         {scope.length > 1 && (
           <button

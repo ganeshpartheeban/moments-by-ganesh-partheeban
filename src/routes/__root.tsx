@@ -46,12 +46,14 @@ type TKey =
   | "nav.about"
   | "nav.services"
   | "nav.press"
+  | "nav.igstories"
   | "nav.enquire";
 
 const NAV_ITEMS: readonly NavItem[] = [
   { to: "/", label: "Work", tKey: "nav.work", hash: "work" },
   { to: "/about", label: "About", tKey: "nav.about" },
   { to: "/services", label: "Services", tKey: "nav.services" },
+  { to: "/stories", label: "Stories", tKey: "nav.igstories" },
   { to: "/press", label: "Press", tKey: "nav.press" },
 ];
 
@@ -490,6 +492,7 @@ const FOOTER_INDEX_BY_PATH: Record<string, { num: string; key: string }> = {
   "/services": { num: "03", key: "footer.idx.services" },
   "/contact": { num: "04", key: "footer.idx.contact" },
   "/press": { num: "05", key: "footer.idx.press" },
+  "/stories": { num: "07", key: "footer.idx.stories" },
 };
 
 function footerIndexFor(

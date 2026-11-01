@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Aperture, Camera, Lens, Sparkle } from "@/components/icons";
+import { Aperture, Camera, Film, Lens, Sparkle } from "@/components/icons";
 import { useI18n } from "@/lib/i18n";
 import LanguageToggle from "@/components/LanguageToggle";
 
@@ -16,6 +16,7 @@ const TABS: Tab[] = [
   { to: "/", exact: true, labelKey: "tabs.work", Icon: Aperture },
   { to: "/about", labelKey: "tabs.about", Icon: Lens },
   { to: "/services", labelKey: "tabs.services", Icon: Camera },
+  { to: "/stories", labelKey: "tabs.stories", Icon: Film },
   { to: "/press", labelKey: "tabs.features", Icon: Sparkle },
 ];
 

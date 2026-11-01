@@ -4,4 +4,9 @@
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
+  // Stories wall: media + index.json + token.json live in this bucket.
+  // Create once with: npx wrangler r2 bucket create moments-stories
+  "r2_buckets": [{ "binding": "STORIES", "bucket_name": "moments-stories" }],
+  // Hourly collector (see src/server/stories-collector.ts).
+  "triggers": { "crons": ["0 * * * *"] }
 }
