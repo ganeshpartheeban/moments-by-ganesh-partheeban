@@ -79,10 +79,11 @@ function StoriesPage() {
         src: s.kind === "video" ? storyVideoUrl(s) : storyThumbUrl(s),
         poster: s.kind === "video" ? storyThumbUrl(s) : undefined,
         alt: alt(s),
+        caption: [fmt.format(new Date(s.ts)), s.caption].filter(Boolean).join(" · "),
         width: s.w,
         height: s.h,
       })),
-    [stories, alt],
+    [stories, alt, fmt],
   );
 
   const openAt = (i: number) => {
@@ -140,6 +141,17 @@ function StoriesPage() {
                     decoding="async"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none"
                   />
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 via-black/25 to-transparent px-2 pb-1.5 pt-7 text-left"
+                  >
+                    <time
+                      dateTime={s.ts}
+                      className="font-mono-label text-[9px] leading-none tracking-wider text-white/85 sm:text-[10px]"
+                    >
+                      {fmt.format(new Date(s.ts))}
+                    </time>
+                  </span>
                   {s.kind === "video" && (
                     <span
                       aria-hidden

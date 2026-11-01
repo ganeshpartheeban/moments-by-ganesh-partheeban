@@ -14,6 +14,8 @@ export type LightboxItem = {
   height: number;
   /** When set, `src` is a video and this is its still. */
   poster?: string;
+  /** Optional caption line shown under the frame (e.g. a story date). */
+  caption?: string;
 };
 
 export default function Lightbox({
@@ -246,6 +248,7 @@ export default function Lightbox({
           </p>
         )}
         {metaLine && <span className="text-white/70">{metaLine}</span>}
+        {ext?.caption && <span className="text-white/80">{ext.caption}</span>}
         {(exif || p.camera) && (
           <span className="text-white/50">
             {exif}
