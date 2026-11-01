@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   getAdminStories,
   rotateStory,
   runCollectorNow,
-  setStoryHidden,
+  setVisibility,
   type AdminData,
 } from "@/lib/stories.functions";
-import { storyThumbUrl } from "@/lib/stories-core";
+import { storyThumbUrl, type AdminItem } from "@/lib/stories-core";
 
 export const Route = createFileRoute("/stories_/admin")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -20,6 +20,15 @@ export const Route = createFileRoute("/stories_/admin")({
   component: AdminPage,
 });
 
+const PAGE = 120;
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+type View = "hidden" | "visible" | "all";
+const fmt = (n: number) => n.toLocaleString("en-US");
+const monthKey = (x: AdminItem) => x.ts.slice(0, 7);
+
+const btn =
+  "border border-foreground/30 px-2 py-1 font-mono-label text-xs hover:border-accent hover:text-accent disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent";
+
 function AdminPage() {
   const { key } = Route.useSearch();
   const initial = Route.useLoaderData() as AdminData;
@@ -27,15 +36,102 @@ function AdminPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
 
-  const toggle = async (id: string, hidden: boolean) => {
-    setBusy(id);
+  // Default view: hidden items of the newest month that has any (else everything of the newest month).
+  const [view, setView] = useState<View>(() => (initial.items.some((x) => x.hidden) ? "hidden" : "all"));
+  const [month, setMonth] = useState<string>(() => {
+    const hasHidden = initial.items.some((x) => x.hidden);
+    const pool = hasHidden ? initial.items.filter((x) => x.hidden) : initial.items;
+    return pool.reduce((m, x) => (monthKey(x) > m ? monthKey(x) : m), "") || "all";
+  });
+  const [q, setQ] = useState("");
+  const [limit, setLimit] = useState(PAGE);
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const anchor = useRef<string | null>(null);
+
+  const resetView = () => {
+    setLimit(PAGE);
+    setSel(new Set());
+    anchor.current = null;
+  };
+
+  const months = useMemo(() => {
+    const m = new Map<string, { v: number; h: number }>();
+    for (const x of data.items) {
+      const c = m.get(monthKey(x)) ?? { v: 0, h: 0 };
+      if (x.hidden) c.h++;
+      else c.v++;
+      m.set(monthKey(x), c);
+    }
+    return [...m.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [data.items]);
+  const years = useMemo(() => {
+    const y = new Map<string, [string, { v: number; h: number }][]>();
+    for (const e of months) y.set(e[0].slice(0, 4), [...(y.get(e[0].slice(0, 4)) ?? []), e]);
+    return [...y.entries()];
+  }, [months]);
+
+  const needle = q.trim().toLowerCase();
+  const filtered = useMemo(
+    () =>
+      data.items.filter(
+        (x) =>
+          (month === "all" || monthKey(x) === month) &&
+          (view === "all" || (view === "hidden") === x.hidden) &&
+          (!needle || x.id.toLowerCase().includes(needle)),
+      ),
+    [data.items, month, view, needle],
+  );
+  const rendered = filtered.slice(0, limit);
+  const inMonth = useMemo(() => (month === "all" ? data.items : data.items.filter((x) => monthKey(x) === month)), [data.items, month]);
+  const totalVisible = data.items.reduce((n, x) => n + (x.hidden ? 0 : 1), 0);
+
+  const applyLocal = (ids: string[], hidden: boolean) => {
+    const set = new Set(ids);
+    setData((d) => ({ ...d, items: d.items.map((x) => (set.has(x.id) ? { ...x, hidden } : x)) }));
+  };
+  const setHidden = async (ids: string[], hidden: boolean, label: string) => {
+    if (!ids.length) return;
+    setBusy(label);
+    setMsg("");
     try {
-      setData(await setStoryHidden({ data: { key, id, hidden } }));
+      const r = await setVisibility({ data: { key, ids, hidden } });
+      applyLocal(ids, hidden);
+      setSel(new Set());
+      setMsg(`${hidden ? "Hid" : "Showed"} ${fmt(r.changed)} ${r.changed === 1 ? "story" : "stories"}.`);
     } catch (e) {
       setMsg(String((e as Error).message));
     }
     setBusy(null);
   };
+  const bulkMonth = (hidden: boolean) => {
+    const ids = inMonth.filter((x) => x.hidden !== hidden).map((x) => x.id);
+    if (!ids.length) return setMsg(`Everything in ${monthLabel(month)} is already ${hidden ? "hidden" : "visible"}.`);
+    if (!window.confirm(`${hidden ? "Hide" : "Show"} ${fmt(ids.length)} stories in ${monthLabel(month)}?`)) return;
+    void setHidden(ids, hidden, "bulk");
+  };
+
+  const pick = (id: string, shift: boolean) => {
+    const next = new Set(sel);
+    if (shift && anchor.current && anchor.current !== id) {
+      const a = rendered.findIndex((x) => x.id === anchor.current);
+      const b = rendered.findIndex((x) => x.id === id);
+      if (a >= 0 && b >= 0) {
+        const want = sel.has(anchor.current);
+        for (let i = Math.min(a, b); i <= Math.max(a, b); i++) {
+          if (want) next.add(rendered[i].id);
+          else next.delete(rendered[i].id);
+        }
+        setSel(next);
+        anchor.current = id;
+        return;
+      }
+    }
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    anchor.current = id;
+    setSel(next);
+  };
+
   const rotate = async (id: string, dir: "left" | "right") => {
     setBusy("rot:" + id);
     setMsg("");
@@ -79,66 +175,180 @@ function AdminPage() {
     setBusy(null);
   };
 
-  const shown = data.items.filter((x) => !x.hidden).length;
+  const chip = (on: boolean) =>
+    "border px-2 py-1 font-mono-label text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent " +
+    (on ? "border-accent bg-accent text-background" : "border-foreground/30 hover:border-accent hover:text-accent");
+  const anyBusy = busy !== null;
+
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-10">
       <p className="font-mono-label text-muted-foreground">Stories admin · storage: {data.storage}</p>
       <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
-        <h1 className="font-display text-3xl tracking-tight sm:text-4xl">
-          <span className="text-accent">{shown}</span> visible of {data.items.length}
+        <h1 className="font-display text-3xl tracking-tight sm:text-4xl" aria-live="polite">
+          <span className="text-accent">{fmt(totalVisible)}</span> visible of {fmt(data.items.length)}
         </h1>
         <button
           type="button"
           onClick={run}
-          disabled={busy !== null}
-          className="rounded-full bg-accent px-4 py-2 font-mono-label text-xs text-background disabled:opacity-50"
+          disabled={anyBusy}
+          className="rounded-full bg-accent px-4 py-2 font-mono-label text-xs text-background disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
         >
           {busy === "run" ? "Running..." : "Run collector now"}
         </button>
       </div>
-      {msg && <p className="mt-4 font-mono-label text-xs text-muted-foreground">{msg}</p>}
-      <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-        {data.items.map((s) => (
-          <li key={s.id} className="flex flex-col gap-2 border border-border p-2">
-            <img
-              src={storyThumbUrl(s)}
-              alt=""
-              width={s.w}
-              height={s.h}
-              loading="lazy"
-              className={"aspect-[9/16] w-full object-cover " + (s.hidden ? "opacity-30" : "")}
-            />
-            <p className="font-mono-label text-[10px] text-muted-foreground">
-              {s.ts.slice(0, 10)} · {s.src}
-              {s.kind === "video" ? " · video" : ""}
-            </p>
-            <button
-              type="button"
-              disabled={busy !== null}
-              onClick={() => toggle(s.id, !s.hidden)}
-              className="border border-foreground/30 px-2 py-1 font-mono-label text-xs hover:border-accent hover:text-accent disabled:opacity-50"
-            >
-              {s.hidden ? "Show" : "Hide"}
-            </button>
-            <div className="flex gap-2">
-              {(["left", "right"] as const).map((dir) => (
-                <button
-                  key={dir}
-                  type="button"
-                  disabled={busy !== null || s.kind === "video"}
-                  title={s.kind === "video" ? "Videos can't be rotated here" : undefined}
-                  aria-label={dir === "left" ? "Rotate left" : "Rotate right"}
-                  onClick={() => rotate(s.id, dir)}
-                  className="flex-1 border border-foreground/30 px-2 py-1 font-mono-label text-xs hover:border-accent hover:text-accent disabled:opacity-50"
-                >
-                  {dir === "left" ? "⟲ 90°" : "⟳ 90°"}
-                </button>
-              ))}
-            </div>
-            {busy === "rot:" + s.id && <p className="font-mono-label text-[10px] text-muted-foreground">Rotating…</p>}
-          </li>
+
+      <nav aria-label="Month" className="mt-6 flex flex-col gap-3">
+        <button type="button" onClick={() => { setMonth("all"); resetView(); }} className={chip(month === "all") + " self-start"}>
+          All months · {fmt(data.items.length)}
+        </button>
+        {years.map(([year, list]) => (
+          <div key={year} className="flex flex-wrap items-center gap-2">
+            <span className="w-10 font-mono-label text-xs text-muted-foreground">{year}</span>
+            {list.map(([mk, c]) => (
+              <button
+                key={mk}
+                type="button"
+                aria-pressed={month === mk}
+                title={`${c.v} visible, ${c.h} hidden`}
+                onClick={() => { setMonth(mk); resetView(); }}
+                className={chip(month === mk)}
+              >
+                {MONTHS[Number(mk.slice(5)) - 1]} · {fmt(c.v + c.h)}
+                <span className="ml-1 opacity-70">
+                  ({c.v}/{c.h})
+                </span>
+              </button>
+            ))}
+          </div>
         ))}
+        <p className="font-mono-label text-[10px] text-muted-foreground">Chip counts: total (visible/hidden)</p>
+      </nav>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div role="group" aria-label="Status" className="flex gap-1">
+          {(["hidden", "visible", "all"] as const).map((v) => (
+            <button key={v} type="button" aria-pressed={view === v} onClick={() => { setView(v); resetView(); }} className={chip(view === v)}>
+              {v === "hidden" ? "Hidden only" : v === "visible" ? "Visible only" : "All"}
+            </button>
+          ))}
+        </div>
+        <input
+          type="search"
+          value={q}
+          onChange={(e) => { setQ(e.target.value); resetView(); }}
+          placeholder="Filter by id"
+          aria-label="Filter by id"
+          className="w-full min-w-0 border border-foreground/30 bg-transparent px-2 py-1 font-mono-label text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent sm:w-64"
+        />
+      </div>
+
+      <div className="mt-4 sm:sticky sm:top-0 sm:z-10 flex flex-wrap items-center gap-2 border-b border-border bg-background py-3">
+        <span className="mr-2 font-mono-label text-xs text-muted-foreground" aria-live="polite">
+          {fmt(filtered.length)} in view · {fmt(sel.size)} selected
+        </span>
+        <button type="button" className={btn} disabled={anyBusy || !filtered.length} onClick={() => setSel(new Set(filtered.map((x) => x.id)))}>
+          Select all {fmt(filtered.length)} in view
+        </button>
+        <button type="button" className={btn} disabled={anyBusy || !sel.size} onClick={() => setSel(new Set())}>
+          Clear
+        </button>
+        <button type="button" className={btn} disabled={anyBusy || !sel.size} onClick={() => setHidden([...sel], false, "bulk")}>
+          Show selected
+        </button>
+        <button type="button" className={btn} disabled={anyBusy || !sel.size} onClick={() => setHidden([...sel], true, "bulk")}>
+          Hide selected
+        </button>
+        {month !== "all" && (
+          <>
+            <button type="button" className={btn} disabled={anyBusy} onClick={() => bulkMonth(false)}>
+              Show all in {monthLabel(month)}
+            </button>
+            <button type="button" className={btn} disabled={anyBusy} onClick={() => bulkMonth(true)}>
+              Hide all in {monthLabel(month)}
+            </button>
+          </>
+        )}
+      </div>
+      {msg && <p className="mt-4 font-mono-label text-xs text-muted-foreground" role="status">{msg}</p>}
+
+      {!filtered.length && <p className="mt-8 font-mono-label text-xs text-muted-foreground">Nothing matches this filter.</p>}
+      <ul className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2">
+        {rendered.map((s) => {
+          const on = sel.has(s.id);
+          return (
+            <li key={s.id} className={"flex min-w-0 flex-col gap-1 border p-1 " + (on ? "border-accent" : "border-border")}>
+              <button
+                type="button"
+                aria-pressed={on}
+                aria-label={`Select ${s.id}`}
+                onClick={(e) => pick(s.id, e.shiftKey)}
+                className="relative block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
+              >
+                <img
+                  src={storyThumbUrl(s)}
+                  alt=""
+                  width={s.w}
+                  height={s.h}
+                  loading="lazy"
+                  decoding="async"
+                  draggable={false}
+                  className={"aspect-[9/16] w-full object-cover " + (s.hidden ? "opacity-30" : "")}
+                />
+                <span
+                  aria-hidden
+                  className={
+                    "absolute left-1 top-1 flex h-5 w-5 items-center justify-center border text-xs " +
+                    (on ? "border-accent bg-accent text-background" : "border-foreground/60 bg-background/70")
+                  }
+                >
+                  {on ? "✓" : ""}
+                </span>
+                {s.kind === "video" && (
+                  <span className="absolute bottom-1 right-1 bg-background/80 px-1 font-mono-label text-[9px]">video</span>
+                )}
+              </button>
+              <p className="truncate font-mono-label text-[10px] text-muted-foreground" title={s.id}>
+                {s.ts.slice(0, 10)} · {s.hidden ? "hidden" : "visible"}
+              </p>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  disabled={anyBusy}
+                  onClick={() => setHidden([s.id], !s.hidden, "one:" + s.id)}
+                  className={btn + " min-w-0 flex-[2] px-1"}
+                >
+                  {s.hidden ? "Show" : "Hide"}
+                </button>
+                {(["left", "right"] as const).map((dir) => (
+                  <button
+                    key={dir}
+                    type="button"
+                    disabled={anyBusy || s.kind === "video"}
+                    title={s.kind === "video" ? "Videos can't be rotated here" : undefined}
+                    aria-label={dir === "left" ? "Rotate left" : "Rotate right"}
+                    onClick={() => rotate(s.id, dir)}
+                    className={btn + " min-w-0 flex-1 px-0"}
+                  >
+                    {dir === "left" ? "⟲" : "⟳"}
+                  </button>
+                ))}
+              </div>
+              {busy === "rot:" + s.id && <p className="font-mono-label text-[10px] text-muted-foreground">Rotating…</p>}
+            </li>
+          );
+        })}
       </ul>
+      {filtered.length > rendered.length && (
+        <div className="mt-6 flex justify-center">
+          <button type="button" className={btn + " px-4 py-2"} onClick={() => setLimit((l) => l + PAGE)}>
+            Show {Math.min(PAGE, filtered.length - rendered.length)} more ({fmt(filtered.length - rendered.length)} left)
+          </button>
+        </div>
+      )}
     </div>
   );
+}
+
+function monthLabel(mk: string) {
+  return mk === "all" ? "all months" : `${MONTHS[Number(mk.slice(5)) - 1]} ${mk.slice(0, 4)}`;
 }

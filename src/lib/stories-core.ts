@@ -127,6 +127,21 @@ export function toPublic(items: StoryItem[]): PublicStory[] {
     }));
 }
 
+/** Compact shape the admin page works with (~100 bytes each, so ~3,000 items stay near 300 KB). */
+export type AdminItem = Pick<StoryItem, "id" | "ts" | "kind" | "w" | "h" | "hidden" | "v">;
+
+export function toAdmin(items: StoryItem[]): AdminItem[] {
+  return items.map(({ id, ts, kind, w, h, hidden, v }) => ({
+    id,
+    ts,
+    kind,
+    w,
+    h,
+    hidden,
+    ...(v ? { v } : {}),
+  }));
+}
+
 /** URL of the still shown in the wall (poster for videos). */
 export const storyThumbUrl = (s: Pick<StoryItem, "id" | "kind" | "v">) =>
   `/stories/media/${s.id}${s.kind === "video" ? "-poster" : ""}.jpg${s.v ? `?v=${s.v}` : ""}`;

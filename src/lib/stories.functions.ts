@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { notFound } from "@tanstack/react-router";
-import { jpegSize, MAX_ROTATED_BYTES, toPublic, type PublicStory, type StoryItem } from "@/lib/stories-core";
+import { jpegSize, MAX_ROTATED_BYTES, toAdmin, toPublic, type AdminItem, type PublicStory } from "@/lib/stories-core";
 import { adminKeyOk, getEnv, getStore, readIndex, writeIndex } from "@/server/stories-store";
 import { runCollector, type CollectResult } from "@/server/stories-collector";
 
@@ -30,14 +30,14 @@ async function requireAdmin(key: string | undefined) {
   return env;
 }
 
-export type AdminData = { items: StoryItem[]; storage: "r2" | "mock" | "none" };
+export type AdminData = { items: AdminItem[]; storage: "r2" | "mock" | "none" };
 
 export const getAdminStories = createServerFn({ method: "GET" })
   .inputValidator(keyValidator)
   .handler(async ({ data }): Promise<AdminData> => {
     await requireAdmin(data.key);
     const store = await getStore();
-    return { items: await readIndex(store), storage: store?.kind ?? "none" };
+    return { items: toAdmin(await readIndex(store)), storage: store?.kind ?? "none" };
   });
 
 export const setStoryHidden = createServerFn({ method: "POST" })
@@ -56,7 +56,31 @@ export const setStoryHidden = createServerFn({ method: "POST" })
     const items = await readIndex(store);
     const next = items.map((x) => (x.id === data.id ? { ...x, hidden: data.hidden } : x));
     await writeIndex(store, next);
-    return { items: next, storage: store.kind };
+    return { items: toAdmin(next), storage: store.kind };
+  });
+
+/** Show or hide many stories with a single index write. Returns how many changed. */
+export const setVisibility = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => {
+    const o = d as { ids?: unknown; hidden?: boolean };
+    const ids = Array.isArray(o?.ids)
+      ? [...new Set(o.ids.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 120)))].slice(0, 5000)
+      : [];
+    return { ...keyValidator(d), ids, hidden: o?.hidden === true };
+  })
+  .handler(async ({ data }): Promise<{ changed: number; storage: AdminData["storage"] }> => {
+    await requireAdmin(data.key);
+    const store = await getStore();
+    if (!store) throw new Error("No storage available");
+    const ids = new Set(data.ids);
+    let changed = 0;
+    const next = (await readIndex(store)).map((x) => {
+      if (!ids.has(x.id) || x.hidden === data.hidden) return x;
+      changed++;
+      return { ...x, hidden: data.hidden };
+    });
+    if (changed) await writeIndex(store, next);
+    return { changed, storage: store.kind };
   });
 
 export const runCollectorNow = createServerFn({ method: "POST" })
@@ -65,7 +89,7 @@ export const runCollectorNow = createServerFn({ method: "POST" })
     const env = await requireAdmin(data.key);
     const result = await runCollector(env);
     const store = await getStore(env);
-    return { ...result, items: await readIndex(store), storage: store?.kind ?? "none" };
+    return { ...result, items: toAdmin(await readIndex(store)), storage: store?.kind ?? "none" };
   });
 
 /**
@@ -101,5 +125,5 @@ export const rotateStory = createServerFn({ method: "POST" })
       x.id === item.id ? { ...x, w: dims.w, h: dims.h, v: (x.v ?? 0) + 1 } : x,
     );
     await writeIndex(store, next);
-    return { items: next, storage: store.kind };
+    return { items: toAdmin(next), storage: store.kind };
   });

@@ -68,13 +68,15 @@ Instagram only exposes live stories (24 h) through the API. Older ones come from
 4. Try it first: `node scripts/import-ig-archive.mjs /path/to/unzipped --dry-run`
 5. Test against the local mock: `node scripts/import-ig-archive.mjs /path/to/unzipped --local`
 6. Real import (logged in with wrangler): `node scripts/import-ig-archive.mjs /path/to/unzipped`
+
+Extra flags: `--hidden` (import as hidden, approve later in the admin), `--since YYYYMM` / `--until YYYYMM` (month range), `--videos` (also import mp4 with a poster from macOS `qlmanage`; off by default). HEIC/HEIF is converted with macOS `sips`. Uploads run 6 at a time, progress prints every 50 items, Ctrl-C saves the index with what was done, and re-running skips items already in the index.
    Options: `--limit N` (newest N), `--dry-run`, `--local`.
 
 The script reads `stories.json` (it looks in `your_instagram_activity/content/`, `content/`, `media/` and then searches), uploads images as `media/archive-<timestamp>.jpg`, and merges them into `index.json` without touching existing entries. Videos are skipped and counted (a poster frame needs ffmpeg; not implemented). Needs Node 22.18+.
 
 ## Curation
 
-`https://<site>/stories/admin?key=<STORIES_ADMIN_KEY>` lists every item with Hide/Show and a **Run collector now** button. Wrong or missing key returns 404. Hidden items disappear from the page, JSON-LD and sitemap immediately (the page loader is not cached on the server; the browser may hold the older list for about a minute). A hide racing with the hourly cron in the same second could be overwritten; just hide again.
+`https://<site>/stories/admin?key=<STORIES_ADMIN_KEY>` lists every item (compact index, filtered in the browser) with a month navigator, Hidden/Visible/All toggle, id filter, 120-tile windowing, click and shift-click selection, bulk Show/Hide (selected or a whole month, one index write via `setVisibility`), per-card Hide/Show and rotate, and a **Run collector now** button. Wrong or missing key returns 404. Hidden items disappear from the page, JSON-LD and sitemap immediately (the page loader is not cached on the server; the browser may hold the older list for about a minute). A hide racing with the hourly cron in the same second could be overwritten; just hide again.
 
 ## Rotating a frame
 
