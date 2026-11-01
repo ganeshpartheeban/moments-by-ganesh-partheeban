@@ -111,31 +111,69 @@ const execFileP = promisify(execFile);
 const mockRoot = path.resolve(".stories-mock");
 const wr = (a) => spawnSync("npx", ["wrangler", ...a], { encoding: "utf8" });
 
-function loadIndex() {
+// Optional fast path: R2's S3-compatible API. Set R2_ACCESS_KEY_ID,
+// R2_SECRET_ACCESS_KEY and R2_ENDPOINT (https://<account>.r2.cloudflarestorage.com)
+// to upload directly instead of spawning wrangler per object.
+const S3_ON = !local && !!(process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && process.env.R2_ENDPOINT);
+let s3 = null, S3Cmd = null;
+if (S3_ON) {
+  S3Cmd = await import("@aws-sdk/client-s3");
+  s3 = new S3Cmd.S3Client({
+    region: "auto",
+    endpoint: process.env.R2_ENDPOINT,
+    credentials: { accessKeyId: process.env.R2_ACCESS_KEY_ID, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY },
+  });
+  console.log("storage: R2 via S3 API");
+}
+async function s3GetText(key) {
+  try {
+    const r = await s3.send(new S3Cmd.GetObjectCommand({ Bucket: BUCKET, Key: key }));
+    return await r.Body.transformToString();
+  } catch (e) {
+    if (e?.name === "NoSuchKey" || e?.$metadata?.httpStatusCode === 404) return null;
+    throw e;
+  }
+}
+async function s3PutFile(key, file, type) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await s3.send(new S3Cmd.PutObjectCommand({ Bucket: BUCKET, Key: key, Body: fs.readFileSync(file), ContentType: type }));
+      return true;
+    } catch (e) {
+      if (attempt === 3) { console.error(`[s3] put ${key} failed: ${e?.message || e}`); return false; }
+      await new Promise((r) => setTimeout(r, 500 * attempt));
+    }
+  }
+  return false;
+}
+
+async function loadIndex() {
   if (local) {
     const p = path.join(mockRoot, "index.json");
     return parseIndex(fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null);
   }
+  if (S3_ON) return parseIndex(await s3GetText("index.json"));
   const tmp = path.join(os.tmpdir(), `stories-index-${process.pid}.json`);
   const r = wr(["r2", "object", "get", `${BUCKET}/index.json`, "--file", tmp, "--remote"]);
   return r.status === 0 && fs.existsSync(tmp) ? parseIndex(fs.readFileSync(tmp, "utf8")) : [];
 }
-function putFile(key, file, type) {
+async function putFile(key, file, type) {
   if (local) {
     const dest = path.join(mockRoot, key);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(file, dest);
     return true;
   }
+  if (S3_ON) return s3PutFile(key, file, type);
   const r = wr(["r2", "object", "put", `${BUCKET}/${key}`, "--file", file, "--content-type", type, "--remote"]);
   if (r.status !== 0) console.error(r.stderr);
   return r.status === 0;
 }
 
 // ---- run -------------------------------------------------------------------
-const CONCURRENCY = 6;
+const CONCURRENCY = S3_ON ? 16 : 6;
 const t0 = Date.now();
-const existing = dryRun && !local ? [] : loadIndex();
+const existing = dryRun && !local ? [] : await loadIndex();
 const have = new Set(existing.map((x) => x.id));
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "stories-import-"));
 const added = [];
@@ -229,7 +267,7 @@ async function posterFor(src, id) {
 const upload = async (key, buf, type, id) => {
   const f = path.join(tmpDir, `${id}-${path.basename(key)}`);
   fs.writeFileSync(f, buf);
-  const ok = putFile(key, f, type);
+  const ok = await putFile(key, f, type);
   fs.rmSync(f, { force: true });
   if (!ok) throw new Error("upload failed");
 };
@@ -248,7 +286,7 @@ async function work(e) {
         await upload(`media/${e.id}-poster.jpg`, p.buf, "image/jpeg", e.id);
         const f = path.join(tmpDir, `${e.id}.mp4`);
         fs.copyFileSync(src, f);
-        const ok = putFile(`media/${e.id}.mp4`, f, "video/mp4");
+        const ok = await putFile(`media/${e.id}.mp4`, f, "video/mp4");
         fs.rmSync(f, { force: true });
         if (!ok) throw new Error("upload failed");
       }
@@ -272,12 +310,12 @@ async function work(e) {
   }
 }
 
-function writeMerged() {
+async function writeMerged() {
   if (dryRun || !added.length) return true;
-  const merged = mergeIndex(loadIndex(), added);
+  const merged = mergeIndex(await loadIndex(), added);
   const tmpIdx = path.join(tmpDir, "index.json");
   fs.writeFileSync(tmpIdx, JSON.stringify(merged));
-  if (!putFile("index.json", tmpIdx, "application/json")) {
+  if (!(await putFile("index.json", tmpIdx, "application/json"))) {
     console.error("FAILED to upload index.json; media is uploaded but not listed. Re-run to retry.");
     return false;
   }
@@ -298,9 +336,7 @@ process.on("SIGINT", () => {
   if (interrupted) process.exit(130);
   interrupted = true;
   console.log("\nInterrupted: saving progress...");
-  writeMerged();
-  summary();
-  process.exit(130);
+  writeMerged().then(() => { summary(); process.exit(130); }, () => process.exit(130));
 });
 
 console.log(`${todo.length} to import`);
@@ -311,7 +347,7 @@ await Promise.all(
   }),
 );
 
-const ok = writeMerged();
+const ok = await writeMerged();
 fs.rmSync(tmpDir, { recursive: true, force: true });
 summary();
 if (!ok) process.exit(1);

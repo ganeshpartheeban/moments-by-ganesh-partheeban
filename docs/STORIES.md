@@ -91,3 +91,7 @@ Instagram sometimes delivers a story whose pixels are turned a quarter turn with
 ## Privacy
 
 Stories show clients and guests. Get consent before publishing faces, hide anything that was not cleared in the admin view, and remember that hiding does not delete the file from R2 (delete `media/<id>.*` and the index entry for a hard removal).
+
+### Fast uploads via the S3 API
+
+Set `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` and `R2_ENDPOINT` (`https://<account-id>.r2.cloudflarestorage.com`) in the environment and the importer uploads directly to R2 with 16 parallel PUTs instead of spawning wrangler per object (about 80 items/s on the dry run versus 0.3/s through wrangler). Create the token in the dashboard under R2 → Manage R2 API Tokens, as an Account API token with Object Read & Write scoped to `moments-stories`.
