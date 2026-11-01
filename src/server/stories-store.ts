@@ -11,6 +11,8 @@ export type StoriesEnv = {
   STORIES?: R2BucketLike;
   IG_USER_ID?: string;
   IG_ACCESS_TOKEN?: string;
+  /** Optional override, e.g. https://graph.facebook.com (default chosen from the token type). */
+  IG_GRAPH_HOST?: string;
   STORIES_ADMIN_KEY?: string;
 };
 

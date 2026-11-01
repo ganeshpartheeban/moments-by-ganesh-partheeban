@@ -16,7 +16,16 @@ import {
 } from "@/lib/stories-core";
 import { getStore, readIndex, writeIndex, type Store, type StoriesEnv } from "./stories-store";
 
-const GRAPH = "https://graph.instagram.com";
+// Graph host. System-user / Facebook-login tokens ("EAA...") only work on
+// graph.facebook.com and never expire; Instagram-login tokens ("IG...") use
+// graph.instagram.com and must be refreshed every ~60 days.
+function graphHost(env: StoriesEnv): string {
+  if (env.IG_GRAPH_HOST) return env.IG_GRAPH_HOST.replace(/\/$/, "");
+  return isInstagramLoginToken(env.IG_ACCESS_TOKEN) ? "https://graph.instagram.com" : "https://graph.facebook.com";
+}
+function isInstagramLoginToken(token?: string): boolean {
+  return typeof token === "string" && token.startsWith("IG");
+}
 const MAX_NEW_PER_RUN = 20;
 const SUBREQUEST_BUDGET = 44; // leave headroom under 50
 const DAY = 86_400_000;
@@ -88,11 +97,13 @@ async function ensureToken(
     token = { access_token: env.IG_ACCESS_TOKEN, expires_at: now + TOKEN_LIFE_DAYS * DAY };
     await store.put("token.json", JSON.stringify(token), "application/json");
   }
+  // Non-Instagram-login tokens (system user) never expire: nothing to refresh.
+  if (!isInstagramLoginToken(token.access_token)) return token.access_token;
   const ageDays = TOKEN_LIFE_DAYS - (token.expires_at - now) / DAY;
   if (ageDays >= REFRESH_AFTER_DAYS) {
     sub.n++;
     const { status, data } = await graphJson(
-      `${GRAPH}/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(token.access_token)}`,
+      `${graphHost(env)}/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(token.access_token)}`,
     );
     if (status === 200 && data?.access_token) {
       const expiresIn = Number(data.expires_in) || TOKEN_LIFE_DAYS * 86_400;
@@ -128,7 +139,7 @@ export async function runCollector(envIn?: StoriesEnv): Promise<CollectResult> {
   sub.n++;
   const fields = "id,media_type,media_url,thumbnail_url,timestamp,permalink";
   const { status, data } = await graphJson(
-    `${GRAPH}/v21.0/${encodeURIComponent(env.IG_USER_ID)}/stories?fields=${fields}&access_token=${encodeURIComponent(accessToken)}`,
+    `${graphHost(env)}/v21.0/${encodeURIComponent(env.IG_USER_ID)}/stories?fields=${fields}&access_token=${encodeURIComponent(accessToken)}`,
   );
   if (status !== 200 || !Array.isArray(data?.data)) {
     const message = graphError("stories fetch", status, data);

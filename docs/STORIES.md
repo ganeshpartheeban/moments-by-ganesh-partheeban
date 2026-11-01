@@ -2,6 +2,8 @@
 
 `/stories` (and `/ta/stories`) is a photo wall of Instagram stories that fills itself.
 
+> **Token type.** The token generated from the app dashboard's "API setup with Unified login" is a *system-user* token (starts with `EAA`). It never expires and works only on `graph.facebook.com`; the collector detects this and skips refresh. Tokens from the Instagram-login flow start with `IG`, use `graph.instagram.com` and are refreshed automatically. `IG_GRAPH_HOST` overrides the host if ever needed.
+
 ## How it works
 
 ```
