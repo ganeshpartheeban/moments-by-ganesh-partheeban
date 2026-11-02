@@ -28,7 +28,7 @@ R2: index.json | token.json | media/<id>.jpg | media/<id>.mp4 + media/<id>-poste
 - Code: `src/lib/stories-core.ts` (pure helpers, JPEG size parser, merge), `src/server/stories-store.ts` (R2 or dev mock), `src/server/stories-collector.ts`, `src/lib/stories.functions.ts` (server functions), routes `stories.tsx`, `stories_.admin.tsx`, `stories_.media.$file.tsx`.
 - The `STORIES` binding is read with `import("cloudflare:workers")`. `npm run dev` runs in Node, where that import fails, so the store falls back to `.stories-mock/` (gitignored). Create it with `node scripts/make-stories-mock.mjs`. In dev the admin key is `dev-key`.
 
-The wall groups stories by week (Monday to Sunday, Indian time; `weekKey`/`weekRange`), newest first, with the current week labelled "This week". Each tile shows the post date and, when known, the place; the viewer adds a dimmer line with the capture date, phone, editing app, place and a Google Maps link when GPS exists. `PublicStory` carries `rot` and `meta` for this; `AdminItem` only `rot` and `place` to stay compact.
+The wall groups stories by week (Monday to Sunday, Indian time; `weekKey`/`weekRange`), newest first, with the current week labelled "This week". Each tile shows the post date and, when known, the place; the viewer shows the note under the date and a dimmer line with the capture date, phone, place and a Google Maps link when GPS exists (the editing app is stored but not shown). `PublicStory` carries `rot` and `meta` for this; `AdminItem` only `rot` and `place` to stay compact.
 
 ## One-time setup
 
@@ -79,7 +79,7 @@ The script reads `stories.json` (it looks in `your_instagram_activity/content/`,
 
 ## Curation
 
-`https://<site>/stories/admin?key=<STORIES_ADMIN_KEY>` lists every item (compact index, filtered in the browser) with a month navigator, Hidden/Visible/All toggle, id filter, 120-tile windowing, click and shift-click selection, bulk Show/Hide (selected or a whole month, one index write via `setVisibility`), per-card Hide/Show and rotate, **Set location…** for the selection (or the `+ location` line under a card; empty clears it, stored as `meta.place`), and a **Run collector now** button. Wrong or missing key returns 404. Hidden items disappear from the page, JSON-LD and sitemap immediately (the page loader is not cached on the server; the browser may hold the older list for about a minute). A hide racing with the hourly cron in the same second could be overwritten; just hide again.
+`https://<site>/stories/admin?key=<STORIES_ADMIN_KEY>` lists every item (compact index, filtered in the browser) with a month navigator, Hidden/Visible/All toggle, id filter, 120-tile windowing, click and shift-click selection, bulk Show/Hide (selected or a whole month, one index write via `setVisibility`), per-card Hide/Show and rotate, a **location + note editor** (bottom sheet opened from the line under a card or from **Location / note for selected…**; location applies to every selected story, note to one, stored as `meta.place` and `caption` via `setStoryDetails`; empty clears), and a **Run collector now** button. Wrong or missing key returns 404. Hidden items disappear from the page, JSON-LD and sitemap immediately (the page loader is not cached on the server; the browser may hold the older list for about a minute). A hide racing with the hourly cron in the same second could be overwritten; just hide again.
 
 ## Rotating a frame
 

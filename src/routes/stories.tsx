@@ -118,7 +118,6 @@ function StoriesPage() {
       const parts: string[] = [];
       if (m.shot && istDay(m.shot) !== istDay(s.ts)) parts.push(t("stories.shot", { date: fmt.format(new Date(m.shot)) }));
       if (m.cam) parts.push(m.cam);
-      if (m.app) parts.push(m.app);
       if (m.place) parts.push(m.place);
       return parts.length ? parts.join(" · ") : undefined;
     },
@@ -131,7 +130,8 @@ function StoriesPage() {
         src: s.kind === "video" ? storyVideoUrl(s) : storyThumbUrl(s),
         poster: s.kind === "video" ? storyThumbUrl(s) : undefined,
         alt: alt(s),
-        caption: [fmt.format(new Date(s.ts)), s.caption].filter(Boolean).join(" · "),
+        caption: fmt.format(new Date(s.ts)),
+        note: s.caption,
         details: details(s),
         link:
           s.meta?.lat !== undefined && s.meta?.lng !== undefined

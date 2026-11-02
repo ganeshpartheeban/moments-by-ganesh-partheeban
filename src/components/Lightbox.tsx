@@ -16,6 +16,8 @@ export type LightboxItem = {
   poster?: string;
   /** Optional caption line shown under the frame (e.g. a story date). */
   caption?: string;
+  /** Free-text note about the frame, shown in the display face under the caption. */
+  note?: string;
   /** Dimmer line under the caption (capture date, device, place). */
   details?: string;
   /** Optional link rendered after the details, e.g. a map pin. */
@@ -297,6 +299,7 @@ export default function Lightbox({
         )}
         {metaLine && <span className="text-white/70">{metaLine}</span>}
         {ext?.caption && <span className="text-white/80">{ext.caption}</span>}
+        {ext?.note && <p className="font-display text-base normal-case tracking-normal text-white sm:text-lg">{ext.note}</p>}
         {ext && (ext.details || ext.link) && (
           <span className="text-white/50">
             {ext.details}

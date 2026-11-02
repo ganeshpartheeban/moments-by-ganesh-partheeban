@@ -1,15 +1,15 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   getAdminStories,
   rotateStory,
   runCollectorNow,
-  setPlace,
   setRotation,
+  setStoryDetails,
   setVisibility,
   type AdminData,
 } from "@/lib/stories.functions";
-import { rotatedFillStyle, storyThumbUrl, type AdminItem, type Rotation } from "@/lib/stories-core";
+import { MAX_NOTE_LEN, MAX_PLACE_LEN, rotatedFillStyle, storyThumbUrl, type AdminItem, type Rotation } from "@/lib/stories-core";
 
 export const Route = createFileRoute("/stories_/admin")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -25,6 +25,8 @@ export const Route = createFileRoute("/stories_/admin")({
 const PAGE = 120;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 type View = "hidden" | "visible" | "all";
+/** The bottom sheet for place + note. `ids` may hold many stories (place applies to all). */
+type Editor = { ids: string[]; place: string; note: string };
 const fmt = (n: number) => n.toLocaleString("en-US");
 const monthKey = (x: AdminItem) => x.ts.slice(0, 7);
 
@@ -171,26 +173,48 @@ function AdminPage() {
     }
     setBusy(null);
   };
-  const editPlace = async (ids: string[]) => {
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const placeRef = useRef<HTMLInputElement>(null);
+  const openEditor = (ids: string[]) => {
     if (!ids.length) return;
-    const current = [...new Set(ids.map((id) => data.items.find((x) => x.id === id)?.place ?? ""))];
-    const place = window.prompt(
-      `Location for ${fmt(ids.length)} ${ids.length === 1 ? "story" : "stories"} (empty clears it):`,
-      current.length === 1 ? current[0] : "",
-    );
-    if (place === null) return;
-    setBusy("place");
+    const picked = ids.map((id) => data.items.find((x) => x.id === id)).filter((x): x is AdminItem => !!x);
+    const same = (f: (x: AdminItem) => string) => {
+      const vals = new Set(picked.map(f));
+      return vals.size === 1 ? [...vals][0] : "";
+    };
+    setEditor({ ids, place: same((x) => x.place ?? ""), note: same((x) => x.caption ?? "") });
+    setTimeout(() => placeRef.current?.focus(), 50);
+  };
+  const saveEditor = async () => {
+    if (!editor) return;
+    setBusy("details");
     setMsg("");
     try {
-      const r = await setPlace({ data: { key, ids, place } });
+      const many = editor.ids.length > 1;
+      // With many stories an empty note keeps each story's own note; a single story is always written as shown.
+      const r = await setStoryDetails({
+        data: { key, ids: editor.ids, place: editor.place, note: many && !editor.note.trim() ? undefined : editor.note },
+      });
       setData({ items: r.items, storage: r.storage });
+      setEditor(null);
       setSel(new Set());
-      setMsg(place ? `Set "${place}" on ${fmt(r.changed)} ${r.changed === 1 ? "story" : "stories"}.` : `Cleared the location on ${fmt(r.changed)}.`);
+      setMsg(`Saved ${fmt(r.changed)} ${r.changed === 1 ? "story" : "stories"}.`);
     } catch (e) {
       setMsg(String((e as Error).message));
     }
     setBusy(null);
   };
+  useEffect(() => {
+    if (!editor) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setEditor(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [editor]);
+  const places = useMemo(() => [...new Set(data.items.map((x) => x.place).filter((p): p is string => !!p))].sort(), [data.items]);
+  const editing = editor ? editor.ids.map((id) => data.items.find((x) => x.id === id)).filter((x): x is AdminItem => !!x) : [];
+
   const run = async () => {
     setBusy("run");
     setMsg("");
@@ -210,7 +234,7 @@ function AdminPage() {
   const anyBusy = busy !== null;
 
   return (
-    <div className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-10">
+    <div className={"mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-10 " + (editor ? "pb-72 sm:pb-56" : "")}>
       <p className="font-mono-label text-muted-foreground">Stories admin · storage: {data.storage}</p>
       <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
         <h1 className="font-display text-3xl tracking-tight sm:text-4xl" aria-live="polite">
@@ -287,8 +311,8 @@ function AdminPage() {
         <button type="button" className={btn} disabled={anyBusy || !sel.size} onClick={() => setHidden([...sel], true, "bulk")}>
           Hide selected
         </button>
-        <button type="button" className={btn} disabled={anyBusy || !sel.size} onClick={() => editPlace([...sel])}>
-          Set location…
+        <button type="button" className={btn} disabled={anyBusy || !sel.size} onClick={() => openEditor([...sel])}>
+          Location / note for selected…
         </button>
         {month !== "all" && (
           <>
@@ -350,11 +374,14 @@ function AdminPage() {
               <button
                 type="button"
                 disabled={anyBusy}
-                onClick={() => editPlace([s.id])}
-                title={s.place ? `Location: ${s.place}` : "Set location"}
-                className="truncate text-left font-mono-label text-[10px] text-muted-foreground hover:text-accent disabled:opacity-50"
+                onClick={() => openEditor([s.id])}
+                title={[s.place && `Location: ${s.place}`, s.caption && `Note: ${s.caption}`].filter(Boolean).join("\n") || "Add a location and a note"}
+                className={
+                  "truncate text-left font-mono-label text-[10px] hover:text-accent disabled:opacity-50 " +
+                  (s.place || s.caption ? "text-foreground" : "text-muted-foreground")
+                }
               >
-                {s.place ? `📍 ${s.place}` : "+ location"}
+                {s.place || s.caption ? `${s.place ? `📍 ${s.place}` : ""}${s.place && s.caption ? " · " : ""}${s.caption ? `✎ ${s.caption}` : ""}` : "+ location · note"}
               </button>
               <div className="flex gap-1">
                 <button
@@ -390,6 +417,94 @@ function AdminPage() {
             Show {Math.min(PAGE, filtered.length - rendered.length)} more ({fmt(filtered.length - rendered.length)} left)
           </button>
         </div>
+      )}
+
+      {editor && (
+        <section
+          role="dialog"
+          aria-label="Location and note"
+          className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background shadow-[0_-12px_40px_rgba(0,0,0,0.15)]"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void saveEditor();
+            }}
+            className="mx-auto flex max-w-[1100px] flex-wrap items-start gap-4 px-4 py-4 sm:px-6 md:px-10"
+          >
+            <div className="flex shrink-0 gap-1">
+              {editing.slice(0, 3).map((x) => (
+                <span key={x.id} className="relative block h-24 w-[54px] overflow-hidden bg-secondary">
+                  <img
+                    src={storyThumbUrl(x)}
+                    alt=""
+                    style={rotatedFillStyle(x.rot, 9 / 16)}
+                    className={x.rot ? undefined : "h-full w-full object-cover"}
+                  />
+                </span>
+              ))}
+              {editing.length > 3 && (
+                <span className="flex h-24 w-[54px] items-center justify-center bg-secondary font-mono-label text-xs text-muted-foreground">
+                  +{fmt(editing.length - 3)}
+                </span>
+              )}
+            </div>
+            <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="font-mono-label text-[10px] text-muted-foreground">
+                  Location{editing.length > 1 ? ` · applies to all ${fmt(editing.length)}` : ""}
+                </span>
+                <input
+                  ref={placeRef}
+                  type="text"
+                  list="story-places"
+                  value={editor.place}
+                  maxLength={MAX_PLACE_LEN}
+                  placeholder="e.g. Mahabalipuram, Tamil Nadu"
+                  onChange={(e) => setEditor({ ...editor, place: e.target.value })}
+                  className="border border-foreground/30 bg-transparent px-2 py-1.5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
+                />
+                <datalist id="story-places">
+                  {places.map((p) => (
+                    <option key={p} value={p} />
+                  ))}
+                </datalist>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="font-mono-label text-[10px] text-muted-foreground">
+                  Note{editing.length > 1 ? " · leave empty to keep each story's own" : ""} · {editor.note.length}/{MAX_NOTE_LEN}
+                </span>
+                <textarea
+                  value={editor.note}
+                  maxLength={MAX_NOTE_LEN}
+                  rows={2}
+                  placeholder="A line about this frame, shown under it in the viewer"
+                  onChange={(e) => setEditor({ ...editor, note: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void saveEditor();
+                  }}
+                  className="resize-none border border-foreground/30 bg-transparent px-2 py-1.5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
+                />
+              </label>
+            </div>
+            <div className="flex w-full gap-2 sm:w-auto sm:flex-col">
+              <button
+                type="submit"
+                disabled={anyBusy}
+                className="rounded-full bg-accent px-4 py-2 font-mono-label text-xs text-background disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+              >
+                {busy === "details" ? "Saving…" : "Save"}
+              </button>
+              <button type="button" onClick={() => setEditor(null)} disabled={anyBusy} className={btn + " rounded-full px-4 py-2"}>
+                Cancel · Esc
+              </button>
+            </div>
+            <p className="w-full font-mono-label text-[10px] text-muted-foreground">
+              {editing.length === 1 ? `${editing[0].id} · ${editing[0].ts.slice(0, 10)}` : `${fmt(editing.length)} stories selected`} · Empty location clears it
+            </p>
+          </form>
+        </section>
       )}
     </div>
   );

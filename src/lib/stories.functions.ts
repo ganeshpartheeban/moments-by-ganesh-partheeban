@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { notFound } from "@tanstack/react-router";
 import {
   jpegSize,
+  MAX_NOTE_LEN,
+  MAX_PLACE_LEN,
   MAX_ROTATED_BYTES,
   toAdmin,
   toPublic,
@@ -117,14 +119,18 @@ export const setRotation = createServerFn({ method: "POST" })
     return { items: toAdmin(next), storage: store.kind };
   });
 
-/** Set (or clear, with an empty string) the place name of many stories at once. */
-export const setPlace = createServerFn({ method: "POST" })
+/**
+ * Set the place and/or the note (caption) of one or many stories. A field that is
+ * omitted is left alone; an empty string clears it.
+ */
+export const setStoryDetails = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => {
-    const o = d as { ids?: unknown; place?: unknown };
+    const o = d as { ids?: unknown; place?: unknown; note?: unknown };
     const ids = Array.isArray(o?.ids)
       ? [...new Set(o.ids.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 120)))].slice(0, 5000)
       : [];
-    return { ...keyValidator(d), ids, place: String(o?.place ?? "").trim().slice(0, 100) };
+    const text = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : undefined);
+    return { ...keyValidator(d), ids, place: text(o?.place, MAX_PLACE_LEN), note: text(o?.note, MAX_NOTE_LEN) };
   })
   .handler(async ({ data }): Promise<AdminData & { changed: number }> => {
     await requireAdmin(data.key);
@@ -133,12 +139,24 @@ export const setPlace = createServerFn({ method: "POST" })
     const ids = new Set(data.ids);
     let changed = 0;
     const next = (await readIndex(store)).map((x) => {
-      if (!ids.has(x.id) || (x.meta?.place ?? "") === data.place) return x;
+      if (!ids.has(x.id)) return x;
+      const placeChanged = data.place !== undefined && (x.meta?.place ?? "") !== data.place;
+      const noteChanged = data.note !== undefined && (x.caption ?? "") !== data.note;
+      if (!placeChanged && !noteChanged) return x;
       changed++;
-      const meta: StoryMeta = { ...x.meta };
-      if (data.place) meta.place = data.place;
-      else delete meta.place;
-      return { ...x, meta: Object.keys(meta).length ? meta : undefined };
+      const y = { ...x };
+      if (placeChanged) {
+        const meta: StoryMeta = { ...x.meta };
+        if (data.place) meta.place = data.place;
+        else delete meta.place;
+        if (Object.keys(meta).length) y.meta = meta;
+        else delete y.meta;
+      }
+      if (noteChanged) {
+        if (data.note) y.caption = data.note;
+        else delete y.caption;
+      }
+      return y;
     });
     if (changed) await writeIndex(store, next);
     return { changed, items: toAdmin(next), storage: store.kind };

@@ -179,10 +179,10 @@ export function toPublic(items: StoryItem[]): PublicStory[] {
 }
 
 /** Compact shape the admin page works with (~100 bytes each, so ~3,000 items stay near 300 KB). */
-export type AdminItem = Pick<StoryItem, "id" | "ts" | "kind" | "w" | "h" | "hidden" | "v" | "rot"> & { place?: string };
+export type AdminItem = Pick<StoryItem, "id" | "ts" | "kind" | "w" | "h" | "hidden" | "v" | "rot" | "caption"> & { place?: string };
 
 export function toAdmin(items: StoryItem[]): AdminItem[] {
-  return items.map(({ id, ts, kind, w, h, hidden, v, rot, meta }) => ({
+  return items.map(({ id, ts, kind, w, h, hidden, v, rot, meta, caption }) => ({
     id,
     ts,
     kind,
@@ -191,9 +191,13 @@ export function toAdmin(items: StoryItem[]): AdminItem[] {
     hidden,
     ...(v ? { v } : {}),
     ...(rot ? { rot } : {}),
+    ...(caption ? { caption } : {}),
     ...(meta?.place ? { place: meta.place } : {}),
   }));
 }
+
+export const MAX_PLACE_LEN = 100;
+export const MAX_NOTE_LEN = 200;
 
 /** Width and height as displayed, i.e. after the visual rotation. */
 export const displaySize = (s: Pick<StoryItem, "w" | "h" | "rot">) =>
