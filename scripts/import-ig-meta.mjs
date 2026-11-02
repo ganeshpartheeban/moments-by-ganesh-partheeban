@@ -80,6 +80,8 @@ const DEVICES = [
   [/S928B/, "Galaxy S24 Ultra"],
   [/G781B/, "Galaxy S20 FE 5G"],
   [/J730GM/, "Galaxy J7 Pro"],
+  // Nikon writes its firmware version as the software string; the owner labelled these frames Nikon D3400.
+  [/^Ver\.1\.1\d\s*$/, "Nikon D3400"],
 ];
 const APPS = [
   [/lightroom/i, "Lightroom"],
@@ -101,11 +103,18 @@ function fromSoftware(sw) {
   unknownSoftware.set(k, (unknownSoftware.get(k) ?? 0) + 1);
   return {};
 }
-/** "2026:10:19 17:28:21" (local, IST) -> ISO. */
+/**
+ * Photos: "2026:10:19 17:28:21" (local time, IST).
+ * Videos: mostly "20260822T015712.000Z" (UTC) — Instagram keeps the two in different formats.
+ */
 function exifDate(v) {
-  const m = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(v ?? "");
-  if (!m) return undefined;
-  const d = new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}+05:30`);
+  let m = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(v ?? "");
+  let iso;
+  if (m) iso = `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}+05:30`;
+  else if ((m = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(?:\.\d+)?Z$/.exec(v ?? "")))
+    iso = `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
+  else return undefined;
+  const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
 }
 function deriveMeta(e) {
@@ -116,8 +125,9 @@ function deriveMeta(e) {
       const lat = Number(x.latitude), lng = Number(x.longitude);
       if (Number.isFinite(lat) && Number.isFinite(lng) && (lat || lng)) Object.assign(meta, { lat, lng });
     }
+    // Keep the capture time only when it is clearly before posting; a few clocks were wrong and point after it.
     const shot = exifDate(x.date_time_original);
-    if (shot && Math.abs(Date.parse(shot) - e.ts * 1000) > 3_600_000) meta.shot = shot;
+    if (shot && e.ts * 1000 - Date.parse(shot) > 3_600_000) meta.shot = shot;
   }
   return meta;
 }
@@ -225,9 +235,9 @@ for (const x of items) {
   }
   stats.matched++;
   const derived = deriveMeta(e);
-  const merged = { ...x.meta, ...derived };
-  if (x.meta?.place) merged.place = x.meta.place;
-  else if (geocode && derived.lat !== undefined) {
+  // Fill blanks only: anything already in the index (including edits made in the admin) wins.
+  const merged = { ...derived, ...x.meta };
+  if (!x.meta?.place && geocode && derived.lat !== undefined) {
     const p = await placeFor(derived.lat, derived.lng);
     if (p) merged.place = p;
     else if (p === null) {
