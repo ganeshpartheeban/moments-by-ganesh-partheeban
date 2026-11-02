@@ -145,6 +145,9 @@ function captionFrom(title) {
   return bare ? text.slice(0, 200) : undefined;
 }
 
+/** Rough bounding box of India (Lakshadweep to Arunachal). */
+const inIndia = (lat, lng) => lat > 6 && lat < 38 && lng > 68 && lng < 98;
+
 // ---- geocoding ---------------------------------------------------------------
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const geoCache = new Map();
@@ -237,8 +240,13 @@ for (const x of items) {
   const derived = deriveMeta(e);
   // Fill blanks only: anything already in the index (including edits made in the admin) wins.
   const merged = { ...derived, ...x.meta };
-  if (!x.meta?.place && geocode && derived.lat !== undefined) {
-    const p = await placeFor(derived.lat, derived.lng);
+  // Coordinates outside India are sticker artefacts in this export (a Mumbai bakery resolving to Brazil); drop them.
+  if (merged.lat !== undefined && !inIndia(merged.lat, merged.lng)) {
+    delete merged.lat;
+    delete merged.lng;
+  }
+  if (!x.meta?.place && geocode && merged.lat !== undefined) {
+    const p = await placeFor(merged.lat, merged.lng);
     if (p) merged.place = p;
     else if (p === null) {
       delete merged.lat;
