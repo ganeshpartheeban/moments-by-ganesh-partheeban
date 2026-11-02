@@ -6,7 +6,16 @@ import { absoluteUrl, buildBreadcrumbLD, ldScriptBody, SITE_NAME } from "@/lib/s
 import { useI18n, translate, type Locale } from "@/lib/i18n";
 import { track } from "@/lib/analytics";
 import { getStories } from "@/lib/stories.functions";
-import { storyThumbUrl, storyVideoUrl, type PublicStory } from "@/lib/stories-core";
+import {
+  displaySize,
+  istDay,
+  rotatedFillStyle,
+  storyThumbUrl,
+  storyVideoUrl,
+  weekKey,
+  weekRange,
+  type PublicStory,
+} from "@/lib/stories-core";
 
 export const Route = createFileRoute("/stories")({
   loader: () => getStories(),
@@ -29,6 +38,7 @@ export const Route = createFileRoute("/stories")({
         width: s.w,
         height: s.h,
         ...(s.caption ? { caption: s.caption } : {}),
+        ...(s.meta?.place ? { contentLocation: { "@type": "Place", name: s.meta.place } } : {}),
       })),
     };
     const ogImage = stories[0] ? absoluteUrl(storyThumbUrl(stories[0])) : absoluteUrl("/og-hero.jpg");
@@ -64,12 +74,54 @@ function StoriesPage() {
   const stories = Route.useLoaderData() as PublicStory[];
   const [open, setOpen] = useState<number | null>(null);
 
-  const fmt = useMemo(
-    () => new Intl.DateTimeFormat(locale === "ta" ? "ta-IN" : "en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }),
-    [locale],
-  );
+  const intl = locale === "ta" ? "ta-IN" : "en-IN";
+  const fmt = useMemo(() => new Intl.DateTimeFormat(intl, { dateStyle: "medium", timeZone: "Asia/Kolkata" }), [intl]);
   const alt = useCallback(
     (s: PublicStory) => s.caption || t("stories.alt", { date: fmt.format(new Date(s.ts)) }),
+    [t, fmt],
+  );
+
+  // Newest week first (stories arrive sorted newest first). Values are indices into `stories`
+  // so the lightbox keeps a single flat list.
+  const weeks = useMemo(() => {
+    const m = new Map<string, number[]>();
+    stories.forEach((s, i) => {
+      const k = weekKey(s.ts);
+      const list = m.get(k);
+      if (list) list.push(i);
+      else m.set(k, [i]);
+    });
+    const thisWeek = weekKey(new Date().toISOString());
+    // Built by hand (not formatRange) so server and browser ICU agree on the exact string.
+    const tz = { timeZone: "Asia/Kolkata" } as const;
+    const day = new Intl.DateTimeFormat(intl, { day: "numeric", ...tz });
+    const mon = new Intl.DateTimeFormat(intl, { month: "short", ...tz });
+    const year = new Intl.DateTimeFormat(intl, { year: "numeric", ...tz });
+    const range = (key: string) => {
+      const { start, end } = weekRange(key);
+      if (year.format(start) !== year.format(end)) return `${day.format(start)} ${mon.format(start)} ${year.format(start)} – ${day.format(end)} ${mon.format(end)} ${year.format(end)}`;
+      if (mon.format(start) === mon.format(end)) return `${day.format(start)}–${day.format(end)} ${mon.format(end)} ${year.format(end)}`;
+      return `${day.format(start)} ${mon.format(start)} – ${day.format(end)} ${mon.format(end)} ${year.format(end)}`;
+    };
+    return [...m.entries()].map(([key, idx]) => ({
+      key,
+      idx,
+      label: key === thisWeek ? t("stories.thisWeek") : range(key),
+      sub: key === thisWeek ? range(key) : undefined,
+    }));
+  }, [stories, intl, t]);
+
+  const details = useCallback(
+    (s: PublicStory) => {
+      const m = s.meta;
+      if (!m) return undefined;
+      const parts: string[] = [];
+      if (m.shot && istDay(m.shot) !== istDay(s.ts)) parts.push(t("stories.shot", { date: fmt.format(new Date(m.shot)) }));
+      if (m.cam) parts.push(m.cam);
+      if (m.app) parts.push(m.app);
+      if (m.place) parts.push(m.place);
+      return parts.length ? parts.join(" · ") : undefined;
+    },
     [t, fmt],
   );
 
@@ -80,10 +132,16 @@ function StoriesPage() {
         poster: s.kind === "video" ? storyThumbUrl(s) : undefined,
         alt: alt(s),
         caption: [fmt.format(new Date(s.ts)), s.caption].filter(Boolean).join(" · "),
+        details: details(s),
+        link:
+          s.meta?.lat !== undefined && s.meta?.lng !== undefined
+            ? { href: `https://www.google.com/maps?q=${s.meta.lat},${s.meta.lng}`, label: t("stories.map") }
+            : undefined,
         width: s.w,
         height: s.h,
+        rot: s.rot,
       })),
-    [stories, alt, fmt],
+    [stories, alt, fmt, details, t],
   );
 
   const openAt = (i: number) => {
@@ -120,54 +178,81 @@ function StoriesPage() {
         {stories.length === 0 ? (
           <p className="px-3 py-16 text-center text-muted-foreground">{t("stories.empty")}</p>
         ) : (
-          <ul className="grid grid-flow-dense grid-cols-3 gap-0.5 sm:grid-cols-4 sm:gap-1 lg:grid-cols-5 xl:grid-cols-6">
-            {stories.map((s, i) => (
-              <li
-                key={s.id}
-                className={s.w > s.h ? "col-span-2" : undefined}
-                style={{ contentVisibility: "auto", containIntrinsicSize: "auto 200px 356px" }}
-              >
-                <button
-                  type="button"
-                  onClick={() => openAt(i)}
-                  aria-label={t("stories.open")}
-                  className={
-                    "group relative block w-full overflow-hidden bg-secondary " +
-                    (s.w > s.h ? "aspect-[9/8]" : "aspect-[9/16]")
-                  }
-                >
-                  <img
-                    src={storyThumbUrl(s)}
-                    alt={alt(s)}
-                    width={s.w}
-                    height={s.h}
-                    loading={i < 6 ? "eager" : "lazy"}
-                    decoding="async"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none"
-                  />
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 via-black/25 to-transparent px-2 pb-1.5 pt-7 text-left"
-                  >
-                    <time
-                      dateTime={s.ts}
-                      className="font-mono-label text-[9px] leading-none tracking-wider text-white/85 sm:text-[10px]"
+          weeks.map((w) => (
+            <section key={w.key} aria-labelledby={`week-${w.key}`} className="mb-8 sm:mb-10">
+              <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-2 pb-2 pt-2 sm:px-3">
+                <h2 id={`week-${w.key}`} className="font-display text-lg text-foreground sm:text-xl">
+                  {w.label}
+                  {w.sub && <span className="ml-2 font-mono-label text-muted-foreground">{w.sub}</span>}
+                </h2>
+                <span className="font-mono-label text-muted-foreground">
+                  {w.idx.length} {t("stories.count")}
+                </span>
+              </header>
+              <ul className="grid grid-flow-dense grid-cols-3 gap-0.5 sm:grid-cols-4 sm:gap-1 lg:grid-cols-5 xl:grid-cols-6">
+                {w.idx.map((i) => {
+                  const s = stories[i];
+                  const d = displaySize(s);
+                  const wide = d.w > d.h;
+                  const rotStyle = rotatedFillStyle(s.rot, wide ? 9 / 8 : 9 / 16);
+                  return (
+                    <li
+                      key={s.id}
+                      className={wide ? "col-span-2" : undefined}
+                      style={{ contentVisibility: "auto", containIntrinsicSize: "auto 200px 356px" }}
                     >
-                      {fmt.format(new Date(s.ts))}
-                    </time>
-                  </span>
-                  {s.kind === "video" && (
-                    <span
-                      aria-hidden
-                      className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-[10px] text-white"
-                    >
-                      ▶
-                    </span>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
+                      <button
+                        type="button"
+                        onClick={() => openAt(i)}
+                        aria-label={t("stories.open")}
+                        className={
+                          "group relative block w-full overflow-hidden bg-secondary " + (wide ? "aspect-[9/8]" : "aspect-[9/16]")
+                        }
+                      >
+                        <img
+                          src={storyThumbUrl(s)}
+                          alt={alt(s)}
+                          width={s.w}
+                          height={s.h}
+                          loading={i < 6 ? "eager" : "lazy"}
+                          decoding="async"
+                          style={rotStyle}
+                          className={
+                            (rotStyle ? "" : "h-full w-full object-cover ") +
+                            "transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none"
+                          }
+                        />
+                        <span
+                          aria-hidden
+                          className="pointer-events-none absolute inset-x-0 bottom-0 flex items-baseline gap-1.5 bg-gradient-to-t from-black/60 via-black/25 to-transparent px-2 pb-1.5 pt-7 text-left"
+                        >
+                          <time
+                            dateTime={s.ts}
+                            className="shrink-0 font-mono-label text-[9px] leading-none tracking-wider text-white/85 sm:text-[10px]"
+                          >
+                            {fmt.format(new Date(s.ts))}
+                          </time>
+                          {s.meta?.place && (
+                            <span className="truncate font-mono-label text-[9px] leading-none tracking-wider text-white/60 sm:text-[10px]">
+                              · {s.meta.place}
+                            </span>
+                          )}
+                        </span>
+                        {s.kind === "video" && (
+                          <span
+                            aria-hidden
+                            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-[10px] text-white"
+                          >
+                            ▶
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))
         )}
       </section>
 

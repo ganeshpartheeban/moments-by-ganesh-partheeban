@@ -28,6 +28,8 @@ R2: index.json | token.json | media/<id>.jpg | media/<id>.mp4 + media/<id>-poste
 - Code: `src/lib/stories-core.ts` (pure helpers, JPEG size parser, merge), `src/server/stories-store.ts` (R2 or dev mock), `src/server/stories-collector.ts`, `src/lib/stories.functions.ts` (server functions), routes `stories.tsx`, `stories_.admin.tsx`, `stories_.media.$file.tsx`.
 - The `STORIES` binding is read with `import("cloudflare:workers")`. `npm run dev` runs in Node, where that import fails, so the store falls back to `.stories-mock/` (gitignored). Create it with `node scripts/make-stories-mock.mjs`. In dev the admin key is `dev-key`.
 
+The wall groups stories by week (Monday to Sunday, Indian time; `weekKey`/`weekRange`), newest first, with the current week labelled "This week". Each tile shows the post date and, when known, the place; the viewer adds a dimmer line with the capture date, phone, editing app, place and a Google Maps link when GPS exists. `PublicStory` carries `rot` and `meta` for this; `AdminItem` only `rot` and `place` to stay compact.
+
 ## One-time setup
 
 1. Create the bucket (needs `npx wrangler login`):
@@ -68,6 +70,7 @@ Instagram only exposes live stories (24 h) through the API. Older ones come from
 4. Try it first: `node scripts/import-ig-archive.mjs /path/to/unzipped --dry-run`
 5. Test against the local mock: `node scripts/import-ig-archive.mjs /path/to/unzipped --local`
 6. Real import (logged in with wrangler): `node scripts/import-ig-archive.mjs /path/to/unzipped`
+7. Then add metadata: `node scripts/import-ig-meta.mjs /path/to/unzipped --geocode --captions` (same storage rules). Instagram strips camera EXIF from the files, so this reads what the export JSON still has: capture time (`meta.shot`, shown as "Shot …" when it differs from the post day), the phone derived from the firmware string (`meta.cam`), the editing app (`meta.app`), GPS on the few stories that carry it (`meta.lat/lng`, reverse-geocoded to "City, State" via Nominatim into `meta.place`; non-Indian hits are sticker artefacts and dropped) and, with `--captions`, the story's text sticker as the caption. Re-running is idempotent and never overwrites a place set in the admin.
 
 Extra flags: `--hidden` (import as hidden, approve later in the admin), `--since YYYYMM` / `--until YYYYMM` (month range), `--videos` (also import mp4 with a poster from macOS `qlmanage`; off by default). HEIC/HEIF is converted with macOS `sips`. Uploads run 6 at a time, progress prints every 50 items, Ctrl-C saves the index with what was done, and re-running skips items already in the index.
    Options: `--limit N` (newest N), `--dry-run`, `--local`.
@@ -76,11 +79,13 @@ The script reads `stories.json` (it looks in `your_instagram_activity/content/`,
 
 ## Curation
 
-`https://<site>/stories/admin?key=<STORIES_ADMIN_KEY>` lists every item (compact index, filtered in the browser) with a month navigator, Hidden/Visible/All toggle, id filter, 120-tile windowing, click and shift-click selection, bulk Show/Hide (selected or a whole month, one index write via `setVisibility`), per-card Hide/Show and rotate, and a **Run collector now** button. Wrong or missing key returns 404. Hidden items disappear from the page, JSON-LD and sitemap immediately (the page loader is not cached on the server; the browser may hold the older list for about a minute). A hide racing with the hourly cron in the same second could be overwritten; just hide again.
+`https://<site>/stories/admin?key=<STORIES_ADMIN_KEY>` lists every item (compact index, filtered in the browser) with a month navigator, Hidden/Visible/All toggle, id filter, 120-tile windowing, click and shift-click selection, bulk Show/Hide (selected or a whole month, one index write via `setVisibility`), per-card Hide/Show and rotate, **Set location…** for the selection (or the `+ location` line under a card; empty clears it, stored as `meta.place`), and a **Run collector now** button. Wrong or missing key returns 404. Hidden items disappear from the page, JSON-LD and sitemap immediately (the page loader is not cached on the server; the browser may hold the older list for about a minute). A hide racing with the hourly cron in the same second could be overwritten; just hide again.
 
 ## Rotating a frame
 
-Instagram sometimes delivers a story whose pixels are turned a quarter turn with no EXIF tag. In the admin, use **⟲ 90°** / **⟳ 90°** under the card. The browser fetches the image, rotates it on a canvas, re-encodes JPEG (quality 0.92) and uploads it (FormData: `key`, `id`, `dir`, `file`) to the `rotateStory` server function, which overwrites `media/<id>.jpg`, updates `w`/`h` and bumps the item's `v`. Media URLs carry `?v=<v>` so the immutable cache is bypassed. Re-encoding is lossy; rotate as few times as possible. Videos cannot be rotated (the control is disabled). Landscape results span two columns on the wall.
+Instagram sometimes delivers a story whose pixels are turned a quarter turn with no EXIF tag. In the admin, use **⟲ 90°** / **⟳ 90°** under the card. The browser fetches the image, rotates it on a canvas, re-encodes JPEG (quality 0.92) and uploads it (FormData: `key`, `id`, `dir`, `file`) to the `rotateStory` server function, which overwrites `media/<id>.jpg`, updates `w`/`h` and bumps the item's `v`. Media URLs carry `?v=<v>` so the immutable cache is bypassed. Re-encoding is lossy; rotate as few times as possible. Landscape results span two columns on the wall.
+
+Videos cannot be re-encoded in the browser, so the same buttons on a video card store a **visual rotation** (`rot`: 90/180/270) in the index instead, via `setRotation`. The wall, the admin card and the viewer apply it with CSS (`rotatedFillStyle` / `RotatedMedia`), swapping width and height for the layout; the mp4 and its poster are untouched. Press the button until the clip is upright (four presses come back to 0).
 
 ## Limits (Workers free plan)
 

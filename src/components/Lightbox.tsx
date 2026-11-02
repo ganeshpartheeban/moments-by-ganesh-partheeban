@@ -16,7 +16,52 @@ export type LightboxItem = {
   poster?: string;
   /** Optional caption line shown under the frame (e.g. a story date). */
   caption?: string;
+  /** Dimmer line under the caption (capture date, device, place). */
+  details?: string;
+  /** Optional link rendered after the details, e.g. a map pin. */
+  link?: { href: string; label: string };
+  /** Visual rotation in degrees (90/180/270); width/height stay those of the stored file. */
+  rot?: 0 | 90 | 180 | 270;
 };
+
+/** Media that fills a box of the given aspect once rotated; see stories-core's rotatedFillStyle. */
+function rotatedStyle(rot: number, boxAspect: number) {
+  const quarter = rot === 90 || rot === 270;
+  return {
+    position: "absolute" as const,
+    inset: 0,
+    margin: "auto",
+    width: quarter ? `${(100 / boxAspect).toFixed(4)}%` : "100%",
+    height: quarter ? `${(100 * boxAspect).toFixed(4)}%` : "100%",
+    maxWidth: "none",
+    maxHeight: "none",
+    transform: `rotate(${rot}deg)`,
+  };
+}
+
+/**
+ * A story whose pixels are stored sideways: a box with the *displayed* aspect,
+ * sized to fit the viewer, holding the media laid out swapped and turned by CSS.
+ */
+function RotatedMedia({ item }: { item: LightboxItem }) {
+  const rot = item.rot ?? 0;
+  const quarter = rot === 90 || rot === 270;
+  const dw = quarter ? item.height : item.width;
+  const dh = quarter ? item.width : item.height;
+  const aspect = dw / dh;
+  return (
+    <div
+      className="relative overflow-hidden"
+      style={{ aspectRatio: `${dw} / ${dh}`, width: `min(100cqw, calc(100cqh * ${aspect.toFixed(5)}))` }}
+    >
+      {item.poster ? (
+        <video src={item.src} poster={item.poster} controls autoPlay playsInline loop className="block" style={rotatedStyle(rot, aspect)} />
+      ) : (
+        <img src={item.src} alt={item.alt} draggable={false} decoding="async" className="block select-none" style={rotatedStyle(rot, aspect)} />
+      )}
+    </div>
+  );
+}
 
 export default function Lightbox({
   index,
@@ -159,6 +204,7 @@ export default function Lightbox({
 
       <div
         className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 pb-4 sm:px-8 md:px-16"
+        style={{ containerType: "size" }}
         onClick={(e) => e.stopPropagation()}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
@@ -174,7 +220,9 @@ export default function Lightbox({
           </button>
         )}
 
-        {ext ? (
+        {ext && ext.rot ? (
+          <RotatedMedia key={index} item={ext} />
+        ) : ext ? (
           ext.poster ? (
             <video
               key={index}
@@ -249,6 +297,17 @@ export default function Lightbox({
         )}
         {metaLine && <span className="text-white/70">{metaLine}</span>}
         {ext?.caption && <span className="text-white/80">{ext.caption}</span>}
+        {ext && (ext.details || ext.link) && (
+          <span className="text-white/50">
+            {ext.details}
+            {ext.details && ext.link ? " · " : ""}
+            {ext.link && (
+              <a href={ext.link.href} target="_blank" rel="noopener noreferrer" className="underline decoration-white/30 underline-offset-2 hover:text-white/80">
+                {ext.link.label}
+              </a>
+            )}
+          </span>
+        )}
         {(exif || p.camera) && (
           <span className="text-white/50">
             {exif}

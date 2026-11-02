@@ -4,10 +4,12 @@ import {
   getAdminStories,
   rotateStory,
   runCollectorNow,
+  setPlace,
+  setRotation,
   setVisibility,
   type AdminData,
 } from "@/lib/stories.functions";
-import { storyThumbUrl, type AdminItem } from "@/lib/stories-core";
+import { rotatedFillStyle, storyThumbUrl, type AdminItem, type Rotation } from "@/lib/stories-core";
 
 export const Route = createFileRoute("/stories_/admin")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -137,6 +139,13 @@ function AdminPage() {
     setMsg("");
     try {
       const item = data.items.find((x) => x.id === id);
+      if (item?.kind === "video") {
+        // Videos can't be re-encoded in the browser: store a visual rotation instead.
+        const rot = (((item.rot ?? 0) + (dir === "left" ? 270 : 90)) % 360) as Rotation;
+        setData(await setRotation({ data: { key, id, rot } }));
+        setBusy(null);
+        return;
+      }
       const res = await fetch(`/stories/media/${id}.jpg?v=${item?.v ?? 0}`, { cache: "reload" });
       if (!res.ok) throw new Error("Could not load the image");
       const bmp = await createImageBitmap(await res.blob());
@@ -157,6 +166,26 @@ function AdminPage() {
       fd.set("dir", dir);
       fd.set("file", blob, `${id}.jpg`);
       setData(await rotateStory({ data: fd }));
+    } catch (e) {
+      setMsg(String((e as Error).message));
+    }
+    setBusy(null);
+  };
+  const editPlace = async (ids: string[]) => {
+    if (!ids.length) return;
+    const current = [...new Set(ids.map((id) => data.items.find((x) => x.id === id)?.place ?? ""))];
+    const place = window.prompt(
+      `Location for ${fmt(ids.length)} ${ids.length === 1 ? "story" : "stories"} (empty clears it):`,
+      current.length === 1 ? current[0] : "",
+    );
+    if (place === null) return;
+    setBusy("place");
+    setMsg("");
+    try {
+      const r = await setPlace({ data: { key, ids, place } });
+      setData({ items: r.items, storage: r.storage });
+      setSel(new Set());
+      setMsg(place ? `Set "${place}" on ${fmt(r.changed)} ${r.changed === 1 ? "story" : "stories"}.` : `Cleared the location on ${fmt(r.changed)}.`);
     } catch (e) {
       setMsg(String((e as Error).message));
     }
@@ -258,6 +287,9 @@ function AdminPage() {
         <button type="button" className={btn} disabled={anyBusy || !sel.size} onClick={() => setHidden([...sel], true, "bulk")}>
           Hide selected
         </button>
+        <button type="button" className={btn} disabled={anyBusy || !sel.size} onClick={() => editPlace([...sel])}>
+          Set location…
+        </button>
         {month !== "all" && (
           <>
             <button type="button" className={btn} disabled={anyBusy} onClick={() => bulkMonth(false)}>
@@ -284,16 +316,19 @@ function AdminPage() {
                 onClick={(e) => pick(s.id, e.shiftKey)}
                 className="relative block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
               >
-                <img
-                  src={storyThumbUrl(s)}
-                  alt=""
-                  width={s.w}
-                  height={s.h}
-                  loading="lazy"
-                  decoding="async"
-                  draggable={false}
-                  className={"aspect-[9/16] w-full object-cover " + (s.hidden ? "opacity-30" : "")}
-                />
+                <span className={"relative block aspect-[9/16] w-full overflow-hidden " + (s.hidden ? "opacity-30" : "")}>
+                  <img
+                    src={storyThumbUrl(s)}
+                    alt=""
+                    width={s.w}
+                    height={s.h}
+                    loading="lazy"
+                    decoding="async"
+                    draggable={false}
+                    style={rotatedFillStyle(s.rot, 9 / 16)}
+                    className={s.rot ? undefined : "h-full w-full object-cover"}
+                  />
+                </span>
                 <span
                   aria-hidden
                   className={
@@ -304,18 +339,29 @@ function AdminPage() {
                   {on ? "✓" : ""}
                 </span>
                 {s.kind === "video" && (
-                  <span className="absolute bottom-1 right-1 bg-background/80 px-1 font-mono-label text-[9px]">video</span>
+                  <span className="absolute bottom-1 right-1 bg-background/80 px-1 font-mono-label text-[9px]">
+                    video{s.rot ? ` · ${s.rot}°` : ""}
+                  </span>
                 )}
               </button>
               <p className="truncate font-mono-label text-[10px] text-muted-foreground" title={s.id}>
                 {s.ts.slice(0, 10)} · {s.hidden ? "hidden" : "visible"}
               </p>
+              <button
+                type="button"
+                disabled={anyBusy}
+                onClick={() => editPlace([s.id])}
+                title={s.place ? `Location: ${s.place}` : "Set location"}
+                className="truncate text-left font-mono-label text-[10px] text-muted-foreground hover:text-accent disabled:opacity-50"
+              >
+                {s.place ? `📍 ${s.place}` : "+ location"}
+              </button>
               <div className="flex gap-1">
                 <button
                   type="button"
                   disabled={anyBusy}
                   onClick={() => setHidden([s.id], !s.hidden, "one:" + s.id)}
-                  className={btn + " min-w-0 flex-[2] px-1"}
+                  className={btn + " min-w-0 flex-[2] whitespace-nowrap px-1"}
                 >
                   {s.hidden ? "Show" : "Hide"}
                 </button>
@@ -323,8 +369,8 @@ function AdminPage() {
                   <button
                     key={dir}
                     type="button"
-                    disabled={anyBusy || s.kind === "video"}
-                    title={s.kind === "video" ? "Videos can't be rotated here" : undefined}
+                    disabled={anyBusy}
+                    title={s.kind === "video" ? "Turns the video on the wall (the file is left as is)" : undefined}
                     aria-label={dir === "left" ? "Rotate left" : "Rotate right"}
                     onClick={() => rotate(s.id, dir)}
                     className={btn + " min-w-0 flex-1 px-0"}

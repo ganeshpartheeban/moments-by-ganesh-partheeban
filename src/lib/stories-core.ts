@@ -15,13 +15,35 @@ export type StoryItem = {
   caption?: string;
   /** Bumped on every rotation; appended to media URLs to bypass the immutable cache. */
   v?: number;
+  /**
+   * Visual rotation applied at display time (CSS), used for videos whose pixels
+   * are stored sideways. Images are rotated in place instead (see rotateStory).
+   */
+  rot?: Rotation;
+  meta?: StoryMeta;
+};
+
+export type Rotation = 0 | 90 | 180 | 270;
+
+/** Optional facts shown with a story. All fields are optional and may be absent for live stories. */
+export type StoryMeta = {
+  /** Capture time (ISO) when it differs from the posting time. */
+  shot?: string;
+  /** Device the frame was made on, e.g. "Galaxy S24 Ultra". */
+  cam?: string;
+  /** Editing app, e.g. "Lightroom". */
+  app?: string;
+  /** Place name shown on the wall, e.g. "Chennai, Tamil Nadu". Set by the import or in the admin. */
+  place?: string;
+  lat?: number;
+  lng?: number;
 };
 
 /** Max accepted size of a re-encoded frame uploaded from the admin. */
 export const MAX_ROTATED_BYTES = 8 * 1024 * 1024;
 
 /** Public shape sent to the page (no hidden items, no src). */
-export type PublicStory = Pick<StoryItem, "id" | "ts" | "kind" | "w" | "h" | "caption" | "v">;
+export type PublicStory = Pick<StoryItem, "id" | "ts" | "kind" | "w" | "h" | "caption" | "v" | "rot" | "meta">;
 
 /**
  * Read width/height from a JPEG by walking marker segments to the first SOF.
@@ -81,6 +103,31 @@ function validItem(x: unknown): x is StoryItem {
   );
 }
 
+export function cleanRotation(x: unknown): Rotation | undefined {
+  return x === 90 || x === 180 || x === 270 ? x : undefined;
+}
+
+/** Keep only well-typed, trimmed meta fields; returns undefined when nothing is left. */
+export function cleanMeta(x: unknown): StoryMeta | undefined {
+  if (!x || typeof x !== "object") return undefined;
+  const o = x as Record<string, unknown>;
+  const str = (v: unknown, max: number) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined);
+  const m: StoryMeta = {};
+  const shot = str(o.shot, 30);
+  const cam = str(o.cam, 60);
+  const app = str(o.app, 60);
+  const place = str(o.place, 100);
+  if (shot) m.shot = shot;
+  if (cam) m.cam = cam;
+  if (app) m.app = app;
+  if (place) m.place = place;
+  if (typeof o.lat === "number" && typeof o.lng === "number" && Math.abs(o.lat) <= 90 && Math.abs(o.lng) <= 180) {
+    m.lat = o.lat;
+    m.lng = o.lng;
+  }
+  return Object.keys(m).length ? m : undefined;
+}
+
 /** Parse index.json text defensively. Bad input yields an empty list. */
 export function parseIndex(text: string | null): StoryItem[] {
   if (!text) return [];
@@ -91,6 +138,8 @@ export function parseIndex(text: string | null): StoryItem[] {
       ...x,
       hidden: x.hidden === true,
       v: typeof x.v === "number" && x.v > 0 ? x.v : undefined,
+      rot: cleanRotation(x.rot),
+      meta: cleanMeta(x.meta),
       src: x.src === "archive" ? "archive" : "ig",
     }));
   } catch {
@@ -116,7 +165,7 @@ export function mergeIndex(existing: StoryItem[], incoming: StoryItem[]): StoryI
 export function toPublic(items: StoryItem[]): PublicStory[] {
   return items
     .filter((x) => !x.hidden)
-    .map(({ id, ts, kind, w, h, caption, v }) => ({
+    .map(({ id, ts, kind, w, h, caption, v, rot, meta }) => ({
       id,
       ts,
       kind,
@@ -124,14 +173,16 @@ export function toPublic(items: StoryItem[]): PublicStory[] {
       h,
       ...(caption ? { caption } : {}),
       ...(v ? { v } : {}),
+      ...(rot ? { rot } : {}),
+      ...(meta ? { meta } : {}),
     }));
 }
 
 /** Compact shape the admin page works with (~100 bytes each, so ~3,000 items stay near 300 KB). */
-export type AdminItem = Pick<StoryItem, "id" | "ts" | "kind" | "w" | "h" | "hidden" | "v">;
+export type AdminItem = Pick<StoryItem, "id" | "ts" | "kind" | "w" | "h" | "hidden" | "v" | "rot"> & { place?: string };
 
 export function toAdmin(items: StoryItem[]): AdminItem[] {
-  return items.map(({ id, ts, kind, w, h, hidden, v }) => ({
+  return items.map(({ id, ts, kind, w, h, hidden, v, rot, meta }) => ({
     id,
     ts,
     kind,
@@ -139,8 +190,53 @@ export function toAdmin(items: StoryItem[]): AdminItem[] {
     h,
     hidden,
     ...(v ? { v } : {}),
+    ...(rot ? { rot } : {}),
+    ...(meta?.place ? { place: meta.place } : {}),
   }));
 }
+
+/** Width and height as displayed, i.e. after the visual rotation. */
+export const displaySize = (s: Pick<StoryItem, "w" | "h" | "rot">) =>
+  s.rot === 90 || s.rot === 270 ? { w: s.h, h: s.w } : { w: s.w, h: s.h };
+
+/**
+ * Inline style that makes media fill a box of aspect `boxAspect` (width / height)
+ * once rotated by `rot`. For 90/270 the element is laid out with width and height
+ * swapped (as percentages of the box), then turned. Undefined when no rotation.
+ */
+export function rotatedFillStyle(rot: Rotation | undefined, boxAspect: number) {
+  if (!rot) return undefined;
+  const quarter = rot === 90 || rot === 270;
+  return {
+    position: "absolute" as const,
+    inset: 0,
+    margin: "auto",
+    width: quarter ? `${(100 / boxAspect).toFixed(4)}%` : "100%",
+    height: quarter ? `${(100 * boxAspect).toFixed(4)}%` : "100%",
+    maxWidth: "none",
+    maxHeight: "none",
+    objectFit: "cover" as const,
+    transform: `rotate(${rot}deg)`,
+  };
+}
+
+const IST_OFFSET_MS = 330 * 60 * 1000;
+
+/** "YYYY-MM-DD" of the Monday that starts the Indian-time week containing `ts`. */
+export function weekKey(ts: string): string {
+  const d = new Date(Date.parse(ts) + IST_OFFSET_MS);
+  const dow = (d.getUTCDay() + 6) % 7; // Monday = 0
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - dow)).toISOString().slice(0, 10);
+}
+
+/** Start and end instants (IST midnight Monday, and the following Sunday) of a week key. */
+export function weekRange(key: string): { start: Date; end: Date } {
+  const start = new Date(`${key}T00:00:00+05:30`);
+  return { start, end: new Date(start.getTime() + 6 * 86_400_000) };
+}
+
+/** Calendar day in IST, for "was this shot on a different day than it was posted" checks. */
+export const istDay = (iso: string) => new Date(Date.parse(iso) + IST_OFFSET_MS).toISOString().slice(0, 10);
 
 /** URL of the still shown in the wall (poster for videos). */
 export const storyThumbUrl = (s: Pick<StoryItem, "id" | "kind" | "v">) =>

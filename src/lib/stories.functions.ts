@@ -1,6 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { notFound } from "@tanstack/react-router";
-import { jpegSize, MAX_ROTATED_BYTES, toAdmin, toPublic, type AdminItem, type PublicStory } from "@/lib/stories-core";
+import {
+  jpegSize,
+  MAX_ROTATED_BYTES,
+  toAdmin,
+  toPublic,
+  type AdminItem,
+  type PublicStory,
+  type Rotation,
+  type StoryMeta,
+} from "@/lib/stories-core";
 import { adminKeyOk, getEnv, getStore, readIndex, writeIndex } from "@/server/stories-store";
 import { runCollector, type CollectResult } from "@/server/stories-collector";
 
@@ -81,6 +90,58 @@ export const setVisibility = createServerFn({ method: "POST" })
     });
     if (changed) await writeIndex(store, next);
     return { changed, storage: store.kind };
+  });
+
+/**
+ * Set the visual rotation of a story (used for videos, whose pixels can't be
+ * re-encoded in the browser). 0 clears it. Media files are untouched.
+ */
+export const setRotation = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => {
+    const o = d as { id?: string; rot?: unknown };
+    const r = Number(o?.rot);
+    return {
+      ...keyValidator(d),
+      id: String(o?.id ?? "").slice(0, 120),
+      rot: (r === 90 || r === 180 || r === 270 ? r : 0) as Rotation,
+    };
+  })
+  .handler(async ({ data }): Promise<AdminData> => {
+    await requireAdmin(data.key);
+    const store = await getStore();
+    if (!store) throw new Error("No storage available");
+    const items = await readIndex(store);
+    if (!items.some((x) => x.id === data.id)) throw new Error("Unknown story");
+    const next = items.map((x) => (x.id === data.id ? { ...x, rot: data.rot || undefined } : x));
+    await writeIndex(store, next);
+    return { items: toAdmin(next), storage: store.kind };
+  });
+
+/** Set (or clear, with an empty string) the place name of many stories at once. */
+export const setPlace = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => {
+    const o = d as { ids?: unknown; place?: unknown };
+    const ids = Array.isArray(o?.ids)
+      ? [...new Set(o.ids.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 120)))].slice(0, 5000)
+      : [];
+    return { ...keyValidator(d), ids, place: String(o?.place ?? "").trim().slice(0, 100) };
+  })
+  .handler(async ({ data }): Promise<AdminData & { changed: number }> => {
+    await requireAdmin(data.key);
+    const store = await getStore();
+    if (!store) throw new Error("No storage available");
+    const ids = new Set(data.ids);
+    let changed = 0;
+    const next = (await readIndex(store)).map((x) => {
+      if (!ids.has(x.id) || (x.meta?.place ?? "") === data.place) return x;
+      changed++;
+      const meta: StoryMeta = { ...x.meta };
+      if (data.place) meta.place = data.place;
+      else delete meta.place;
+      return { ...x, meta: Object.keys(meta).length ? meta : undefined };
+    });
+    if (changed) await writeIndex(store, next);
+    return { changed, items: toAdmin(next), storage: store.kind };
   });
 
 export const runCollectorNow = createServerFn({ method: "POST" })
