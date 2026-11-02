@@ -79,13 +79,19 @@ The script reads `stories.json` (it looks in `your_instagram_activity/content/`,
 
 ## Curation
 
-`https://<site>/stories/admin?key=<STORIES_ADMIN_KEY>` lists every item (compact index, filtered in the browser) with a month navigator, Hidden/Visible/All toggle, id filter, 120-tile windowing, click and shift-click selection, bulk Show/Hide (selected or a whole month, one index write via `setVisibility`), per-card Hide/Show and rotate, a **location + note editor** (bottom sheet opened from the line under a card or from **Location / note for selected…**; location applies to every selected story, note to one, stored as `meta.place` and `caption` via `setStoryDetails`; empty clears), and a **Run collector now** button. Wrong or missing key returns 404. Hidden items disappear from the page, JSON-LD and sitemap immediately (the page loader is not cached on the server; the browser may hold the older list for about a minute). A hide racing with the hourly cron in the same second could be overwritten; just hide again.
+`https://<site>/stories/admin?key=<STORIES_ADMIN_KEY>` shows the same week-grouped wall as the public page, but with every story: hidden ones are faded and badged, videos carry their rotation, notes show a ✎. Weeks load progressively as you scroll. Filters: month chips (with visible/hidden counts), All / Visible only / Hidden only.
+
+**Click a story to open the editor** (full screen: media on the left, fields on the right; ← → move along the wall, Esc closes). It offers Show on wall / Hide from wall, ⟲ ⟳ rotation, Location (suggestions from places already used), Note, Device, Posted date-time (IST; changes the week on the wall and re-sorts the index) and an optional Shot date-time. Save writes only the changed fields through `updateStories` (one index write). The wrong or missing key returns 404.
+
+**Select many** switches tiles to checkboxes for bulk Show / Hide / Location (one index write via `updateStories`). With a month chosen, **Show all / Hide all in <month>** act on that month.
+
+Hidden items disappear from the page, JSON-LD and sitemap immediately (the page loader is not cached on the server; the browser may hold the older list for about a minute). A change racing with the hourly cron in the same second could be overwritten; just redo it.
 
 ## Rotating a frame
 
-Instagram sometimes delivers a story whose pixels are turned a quarter turn with no EXIF tag. In the admin, use **⟲ 90°** / **⟳ 90°** under the card. The browser fetches the image, rotates it on a canvas, re-encodes JPEG (quality 0.92) and uploads it (FormData: `key`, `id`, `dir`, `file`) to the `rotateStory` server function, which overwrites `media/<id>.jpg`, updates `w`/`h` and bumps the item's `v`. Media URLs carry `?v=<v>` so the immutable cache is bypassed. Re-encoding is lossy; rotate as few times as possible. Landscape results span two columns on the wall.
+Instagram sometimes delivers a story whose pixels are turned a quarter turn with no EXIF tag. In the admin, open the story and use **⟲** / **⟳**. The browser fetches the image, rotates it on a canvas, re-encodes JPEG (quality 0.92) and uploads it (FormData: `key`, `id`, `dir`, `file`) to the `rotateStory` server function, which overwrites `media/<id>.jpg`, updates `w`/`h` and bumps the item's `v`. Media URLs carry `?v=<v>` so the immutable cache is bypassed. Re-encoding is lossy; rotate as few times as possible. Landscape results span two columns on the wall.
 
-Videos cannot be re-encoded in the browser, so the same buttons on a video card store a **visual rotation** (`rot`: 90/180/270) in the index instead, via `setRotation`. The wall, the admin card and the viewer apply it with CSS (`rotatedFillStyle` / `RotatedMedia`), swapping width and height for the layout; the mp4 and its poster are untouched. Press the button until the clip is upright (four presses come back to 0).
+Videos cannot be re-encoded in the browser, so the same buttons on a video store a **visual rotation** (`rot`: 90/180/270) in the index instead (`updateStories` with `rot`). The wall, the admin card and the viewer apply it with CSS (`rotatedFillStyle` / `RotatedMedia`), swapping width and height for the layout; the mp4 and its poster are untouched. Press the button until the clip is upright (four presses come back to 0).
 
 ## Limits (Workers free plan)
 

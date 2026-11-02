@@ -1,16 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { notFound } from "@tanstack/react-router";
 import {
+  applyPatch,
   jpegSize,
   MAX_NOTE_LEN,
   MAX_PLACE_LEN,
   MAX_ROTATED_BYTES,
+  sortIndex,
   toAdmin,
   toPublic,
   type AdminItem,
   type PublicStory,
   type Rotation,
-  type StoryMeta,
+  type StoryPatch,
 } from "@/lib/stories-core";
 import { adminKeyOk, getEnv, getStore, readIndex, writeIndex } from "@/server/stories-store";
 import { runCollector, type CollectResult } from "@/server/stories-collector";
@@ -51,86 +53,40 @@ export const getAdminStories = createServerFn({ method: "GET" })
     return { items: toAdmin(await readIndex(store)), storage: store?.kind ?? "none" };
   });
 
-export const setStoryHidden = createServerFn({ method: "POST" })
+/**
+ * Change one or many stories at once: visibility, posting time, capture time,
+ * device, place, note and visual rotation. Omitted fields are left alone; an
+ * empty string clears a text field. Media files are untouched.
+ */
+export const updateStories = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => {
-    const o = d as { key?: string; id?: string; hidden?: boolean };
-    return {
-      ...keyValidator(d),
-      id: String(o?.id ?? "").slice(0, 120),
-      hidden: o?.hidden === true,
-    };
-  })
-  .handler(async ({ data }): Promise<AdminData> => {
-    await requireAdmin(data.key);
-    const store = await getStore();
-    if (!store) throw new Error("No storage available");
-    const items = await readIndex(store);
-    const next = items.map((x) => (x.id === data.id ? { ...x, hidden: data.hidden } : x));
-    await writeIndex(store, next);
-    return { items: toAdmin(next), storage: store.kind };
-  });
-
-/** Show or hide many stories with a single index write. Returns how many changed. */
-export const setVisibility = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => {
-    const o = d as { ids?: unknown; hidden?: boolean };
+    const o = d as { ids?: unknown; patch?: Record<string, unknown> };
     const ids = Array.isArray(o?.ids)
       ? [...new Set(o.ids.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 120)))].slice(0, 5000)
       : [];
-    return { ...keyValidator(d), ids, hidden: o?.hidden === true };
-  })
-  .handler(async ({ data }): Promise<{ changed: number; storage: AdminData["storage"] }> => {
-    await requireAdmin(data.key);
-    const store = await getStore();
-    if (!store) throw new Error("No storage available");
-    const ids = new Set(data.ids);
-    let changed = 0;
-    const next = (await readIndex(store)).map((x) => {
-      if (!ids.has(x.id) || x.hidden === data.hidden) return x;
-      changed++;
-      return { ...x, hidden: data.hidden };
-    });
-    if (changed) await writeIndex(store, next);
-    return { changed, storage: store.kind };
-  });
-
-/**
- * Set the visual rotation of a story (used for videos, whose pixels can't be
- * re-encoded in the browser). 0 clears it. Media files are untouched.
- */
-export const setRotation = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => {
-    const o = d as { id?: string; rot?: unknown };
-    const r = Number(o?.rot);
-    return {
-      ...keyValidator(d),
-      id: String(o?.id ?? "").slice(0, 120),
-      rot: (r === 90 || r === 180 || r === 270 ? r : 0) as Rotation,
-    };
-  })
-  .handler(async ({ data }): Promise<AdminData> => {
-    await requireAdmin(data.key);
-    const store = await getStore();
-    if (!store) throw new Error("No storage available");
-    const items = await readIndex(store);
-    if (!items.some((x) => x.id === data.id)) throw new Error("Unknown story");
-    const next = items.map((x) => (x.id === data.id ? { ...x, rot: data.rot || undefined } : x));
-    await writeIndex(store, next);
-    return { items: toAdmin(next), storage: store.kind };
-  });
-
-/**
- * Set the place and/or the note (caption) of one or many stories. A field that is
- * omitted is left alone; an empty string clears it.
- */
-export const setStoryDetails = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => {
-    const o = d as { ids?: unknown; place?: unknown; note?: unknown };
-    const ids = Array.isArray(o?.ids)
-      ? [...new Set(o.ids.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 120)))].slice(0, 5000)
-      : [];
+    const p = o?.patch ?? {};
     const text = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : undefined);
-    return { ...keyValidator(d), ids, place: text(o?.place, MAX_PLACE_LEN), note: text(o?.note, MAX_NOTE_LEN) };
+    const iso = (v: unknown) => {
+      if (typeof v !== "string") return undefined;
+      if (v === "") return "";
+      const t = Date.parse(v);
+      return Number.isNaN(t) ? undefined : new Date(t).toISOString();
+    };
+    const patch: StoryPatch = {};
+    if (typeof p.hidden === "boolean") patch.hidden = p.hidden;
+    const ts = iso(p.ts);
+    if (ts) patch.ts = ts;
+    const shot = iso(p.shot);
+    if (shot !== undefined) patch.shot = shot;
+    const cam = text(p.cam, 60);
+    if (cam !== undefined) patch.cam = cam;
+    const place = text(p.place, MAX_PLACE_LEN);
+    if (place !== undefined) patch.place = place;
+    const note = text(p.note, MAX_NOTE_LEN);
+    if (note !== undefined) patch.note = note;
+    const r = Number(p.rot);
+    if (p.rot !== undefined && (r === 0 || r === 90 || r === 180 || r === 270)) patch.rot = r as Rotation;
+    return { ...keyValidator(d), ids, patch };
   })
   .handler(async ({ data }): Promise<AdminData & { changed: number }> => {
     await requireAdmin(data.key);
@@ -138,27 +94,16 @@ export const setStoryDetails = createServerFn({ method: "POST" })
     if (!store) throw new Error("No storage available");
     const ids = new Set(data.ids);
     let changed = 0;
-    const next = (await readIndex(store)).map((x) => {
+    let next = (await readIndex(store)).map((x) => {
       if (!ids.has(x.id)) return x;
-      const placeChanged = data.place !== undefined && (x.meta?.place ?? "") !== data.place;
-      const noteChanged = data.note !== undefined && (x.caption ?? "") !== data.note;
-      if (!placeChanged && !noteChanged) return x;
-      changed++;
-      const y = { ...x };
-      if (placeChanged) {
-        const meta: StoryMeta = { ...x.meta };
-        if (data.place) meta.place = data.place;
-        else delete meta.place;
-        if (Object.keys(meta).length) y.meta = meta;
-        else delete y.meta;
-      }
-      if (noteChanged) {
-        if (data.note) y.caption = data.note;
-        else delete y.caption;
-      }
+      const y = applyPatch(x, data.patch);
+      if (y !== x) changed++;
       return y;
     });
-    if (changed) await writeIndex(store, next);
+    if (changed) {
+      if (data.patch.ts) next = sortIndex(next);
+      await writeIndex(store, next);
+    }
     return { changed, items: toAdmin(next), storage: store.kind };
   });
 

@@ -57,7 +57,21 @@ function RotatedMedia({ item }: { item: LightboxItem }) {
       style={{ aspectRatio: `${dw} / ${dh}`, width: `min(100cqw, calc(100cqh * ${aspect.toFixed(5)}))` }}
     >
       {item.poster ? (
-        <video src={item.src} poster={item.poster} controls autoPlay playsInline loop className="block" style={rotatedStyle(rot, aspect)} />
+        // Native controls would turn with the element: autoplay, tap to pause.
+        <video
+          src={item.src}
+          poster={item.poster}
+          autoPlay
+          playsInline
+          loop
+          onClick={(e) => {
+            const v = e.currentTarget;
+            if (v.paused) void v.play();
+            else v.pause();
+          }}
+          className="block cursor-pointer"
+          style={rotatedStyle(rot, aspect)}
+        />
       ) : (
         <img src={item.src} alt={item.alt} draggable={false} decoding="async" className="block select-none" style={rotatedStyle(rot, aspect)} />
       )}

@@ -159,7 +159,7 @@ export function mergeIndex(existing: StoryItem[], incoming: StoryItem[]): StoryI
     seen.add(it.id);
     out.push(it);
   }
-  return out.sort((a, b) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : a.id < b.id ? 1 : -1));
+  return sortIndex(out);
 }
 
 export function toPublic(items: StoryItem[]): PublicStory[] {
@@ -179,7 +179,11 @@ export function toPublic(items: StoryItem[]): PublicStory[] {
 }
 
 /** Compact shape the admin page works with (~100 bytes each, so ~3,000 items stay near 300 KB). */
-export type AdminItem = Pick<StoryItem, "id" | "ts" | "kind" | "w" | "h" | "hidden" | "v" | "rot" | "caption"> & { place?: string };
+export type AdminItem = Pick<StoryItem, "id" | "ts" | "kind" | "w" | "h" | "hidden" | "v" | "rot" | "caption"> & {
+  place?: string;
+  shot?: string;
+  cam?: string;
+};
 
 export function toAdmin(items: StoryItem[]): AdminItem[] {
   return items.map(({ id, ts, kind, w, h, hidden, v, rot, meta, caption }) => ({
@@ -193,7 +197,54 @@ export function toAdmin(items: StoryItem[]): AdminItem[] {
     ...(rot ? { rot } : {}),
     ...(caption ? { caption } : {}),
     ...(meta?.place ? { place: meta.place } : {}),
+    ...(meta?.shot ? { shot: meta.shot } : {}),
+    ...(meta?.cam ? { cam: meta.cam } : {}),
   }));
+}
+
+/** Fields the admin may change on one or many stories. Empty strings clear a text field. */
+export type StoryPatch = {
+  hidden?: boolean;
+  ts?: string;
+  shot?: string;
+  cam?: string;
+  place?: string;
+  note?: string;
+  rot?: Rotation;
+};
+
+/** Apply a patch to one item; returns the same object when nothing changes. */
+export function applyPatch(x: StoryItem, p: StoryPatch): StoryItem {
+  let y: StoryItem | null = null;
+  const w = () => (y ??= { ...x });
+  if (p.hidden !== undefined && p.hidden !== x.hidden) w().hidden = p.hidden;
+  if (p.ts !== undefined && p.ts !== x.ts) w().ts = p.ts;
+  if (p.rot !== undefined && (p.rot || undefined) !== x.rot) {
+    if (p.rot) w().rot = p.rot;
+    else delete w().rot;
+  }
+  if (p.note !== undefined && p.note !== (x.caption ?? "")) {
+    if (p.note) w().caption = p.note;
+    else delete w().caption;
+  }
+  const metaKeys = ["shot", "cam", "place"] as const;
+  if (metaKeys.some((k) => p[k] !== undefined && p[k] !== (x.meta?.[k] ?? ""))) {
+    const meta: StoryMeta = { ...x.meta };
+    for (const k of metaKeys) {
+      const v = p[k];
+      if (v === undefined) continue;
+      if (v) meta[k] = v;
+      else delete meta[k];
+    }
+    if (Object.keys(meta).length) w().meta = meta;
+    else delete w().meta;
+  }
+  return y ?? x;
+}
+
+/** Newest-first sort used by the index (ts desc, then id desc). */
+export function sortIndex(items: StoryItem[]): StoryItem[] {
+  return [...items].sort((a, b) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : a.id < b.id ? 1 : -1));
 }
 
 export const MAX_PLACE_LEN = 100;
@@ -237,6 +288,43 @@ export function weekKey(ts: string): string {
 export function weekRange(key: string): { start: Date; end: Date } {
   const start = new Date(`${key}T00:00:00+05:30`);
   return { start, end: new Date(start.getTime() + 6 * 86_400_000) };
+}
+
+/** Group indices by IST week, in the order items appear (pass a newest-first list for newest-first weeks). */
+export function groupByWeek(items: { ts: string }[]): { key: string; idx: number[] }[] {
+  const m = new Map<string, number[]>();
+  items.forEach((s, i) => {
+    const k = weekKey(s.ts);
+    const list = m.get(k);
+    if (list) list.push(i);
+    else m.set(k, [i]);
+  });
+  return [...m.entries()].map(([key, idx]) => ({ key, idx }));
+}
+
+/**
+ * "26 Oct – 1 Nov 2026" for a week key. Built by hand rather than with formatRange
+ * so the server and the browser produce the identical string (hydration).
+ */
+export function formatWeekLabel(key: string, locale: string): string {
+  const tz = { timeZone: "Asia/Kolkata" } as const;
+  const day = new Intl.DateTimeFormat(locale, { day: "numeric", ...tz });
+  const mon = new Intl.DateTimeFormat(locale, { month: "short", ...tz });
+  const year = new Intl.DateTimeFormat(locale, { year: "numeric", ...tz });
+  const { start, end } = weekRange(key);
+  if (year.format(start) !== year.format(end))
+    return `${day.format(start)} ${mon.format(start)} ${year.format(start)} – ${day.format(end)} ${mon.format(end)} ${year.format(end)}`;
+  if (mon.format(start) === mon.format(end)) return `${day.format(start)}–${day.format(end)} ${mon.format(end)} ${year.format(end)}`;
+  return `${day.format(start)} ${mon.format(start)} – ${day.format(end)} ${mon.format(end)} ${year.format(end)}`;
+}
+
+/** ISO instant -> value for an <input type="datetime-local"> showing Indian time. */
+export const toIstLocal = (iso: string) => new Date(Date.parse(iso) + IST_OFFSET_MS).toISOString().slice(0, 16);
+/** datetime-local value (Indian time) -> ISO instant, or undefined when invalid. */
+export function fromIstLocal(local: string): string | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(local)) return undefined;
+  const t = Date.parse(`${local.slice(0, 16)}:00+05:30`);
+  return Number.isNaN(t) ? undefined : new Date(t).toISOString();
 }
 
 /** Calendar day in IST, for "was this shot on a different day than it was posted" checks. */
