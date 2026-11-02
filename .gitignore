@@ -39,3 +39,4 @@ dist-ssr
 
 # Stories mock data (dev only)
 .stories-mock/
+.stories-notes/

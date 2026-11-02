@@ -87,6 +87,10 @@ The script reads `stories.json` (it looks in `your_instagram_activity/content/`,
 
 Hidden items disappear from the page, JSON-LD and sitemap immediately (the page loader is not cached on the server; the browser may hold the older list for about a minute). A change racing with the hourly cron in the same second could be overwritten; just redo it.
 
+## Bulk notes
+
+`node scripts/apply-notes.mjs <notes.json> [--dry-run] [--local] [--replace]` sets the note (caption) of many stories from a JSON object of `id → note`. By default it only fills stories that have no note; `--replace` also overwrites existing ones, and an empty string clears a note. Notes are trimmed and capped at `MAX_NOTE_LEN`. Storage access is the same as the importers (S3 env, else wrangler, else `--local` mock). On 2026-11-02 every story received a short poetic note written from its frame; the files used are kept outside git in `.stories-notes/`.
+
 ## Rotating a frame
 
 Instagram sometimes delivers a story whose pixels are turned a quarter turn with no EXIF tag. In the admin, open the story and use **⟲** / **⟳**. The browser fetches the image, rotates it on a canvas, re-encodes JPEG (quality 0.92) and uploads it (FormData: `key`, `id`, `dir`, `file`) to the `rotateStory` server function, which overwrites `media/<id>.jpg`, updates `w`/`h` and bumps the item's `v`. Media URLs carry `?v=<v>` so the immutable cache is bypassed. Re-encoding is lossy; rotate as few times as possible. Landscape results span two columns on the wall.
