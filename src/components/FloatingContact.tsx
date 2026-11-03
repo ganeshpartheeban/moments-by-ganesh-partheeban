@@ -29,7 +29,8 @@ export default function FloatingContact() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { locale, t } = useI18n();
   const waHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildWhatsAppMessage(pathname, locale))}`;
-  const showReview = !pathname.startsWith("/stories/admin");
+  // The stories admin has its own floating selection panel in this corner.
+  if (pathname.startsWith("/stories/admin")) return null;
 
   return (
     <div
@@ -40,7 +41,7 @@ export default function FloatingContact() {
       }}
       className="fixed z-30 flex flex-col items-end gap-2.5 md:!bottom-8 md:!right-8"
     >
-      {showReview && (
+      {
         <a
           href={GOOGLE_REVIEW_URL}
           target="_blank"
@@ -56,7 +57,7 @@ export default function FloatingContact() {
             <span aria-hidden className="font-display text-lg leading-none text-accent md:text-xl">★</span>
           </span>
         </a>
-      )}
+      }
       <a
         href={waHref}
         target="_blank"

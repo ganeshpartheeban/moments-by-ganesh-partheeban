@@ -43,6 +43,8 @@ function AdminPage() {
   const [view, setView] = useState<View>("all");
   const [month, setMonth] = useState("all");
   const [selectMode, setSelectMode] = useState(false);
+  /** The floating editing panel for the selection (select mode only). */
+  const [panelOpen, setPanelOpen] = useState(false);
   const [sel, setSel] = useState<Set<string>>(new Set());
   /** Last tile picked in select mode; shift-click selects the run from here to the next pick. */
   const lastPick = useRef<string | null>(null);
@@ -90,6 +92,12 @@ function AdminPage() {
   }, [weeksShown, weeks.length]);
   const resetView = () => {
     setWeeksShown(WEEKS_PAGE);
+    setSel(new Set());
+    lastPick.current = null;
+  };
+  const exitSelect = () => {
+    setSelectMode(false);
+    setPanelOpen(false);
     setSel(new Set());
     lastPick.current = null;
   };
@@ -166,26 +174,30 @@ function AdminPage() {
 
   const onTile = (x: AdminItem, e: MouseEvent) => {
     if (!selectMode) return setOpenId(x.id);
-    const next = new Set(sel);
-    const li = e.shiftKey && lastPick.current ? filtered.findIndex((y) => y.id === lastPick.current) : -1;
-    if (li >= 0) {
-      // Shift-click: pick the whole run between the previous pick and this tile.
-      const ci = filtered.findIndex((y) => y.id === x.id);
-      for (let i = Math.min(li, ci); i <= Math.max(li, ci); i++) next.add(filtered[i].id);
-    } else if (next.has(x.id)) next.delete(x.id);
-    else next.add(x.id);
+    const last = lastPick.current;
+    const li = e.shiftKey && last ? filtered.findIndex((y) => y.id === last) : -1;
     lastPick.current = x.id;
-    setSel(next);
+    setSel((prev) => {
+      const next = new Set(prev);
+      if (li >= 0) {
+        // Shift-click: pick the whole run between the previous pick and this tile.
+        const ci = filtered.findIndex((y) => y.id === x.id);
+        for (let i = Math.min(li, ci); i <= Math.max(li, ci); i++) next.add(filtered[i].id);
+      } else if (next.has(x.id)) next.delete(x.id);
+      else next.add(x.id);
+      return next;
+    });
   };
-  const toggleWeek = (ids: string[]) => {
-    const next = new Set(sel);
-    const all = ids.every((id) => next.has(id));
-    for (const id of ids) {
-      if (all) next.delete(id);
-      else next.add(id);
-    }
-    setSel(next);
-  };
+  const toggleWeek = (ids: string[]) =>
+    setSel((prev) => {
+      const next = new Set(prev);
+      const all = ids.every((id) => next.has(id));
+      for (const id of ids) {
+        if (all) next.delete(id);
+        else next.add(id);
+      }
+      return next;
+    });
   const bulkHidden = (ids: string[], hidden: boolean) =>
     update(ids, { hidden }, hidden ? "Hide" : "Show").then((r) => {
       if (r) {
@@ -305,7 +317,7 @@ function AdminPage() {
           <button
             type="button"
             aria-pressed={selectMode}
-            onClick={() => { setSelectMode(!selectMode); setSel(new Set()); lastPick.current = null; }}
+            onClick={() => (selectMode ? exitSelect() : setSelectMode(true))}
             className={chipCls(selectMode) + " ml-auto"}
           >
             {selectMode ? "Done selecting" : "Select many"}
@@ -321,72 +333,14 @@ function AdminPage() {
             </>
           )}
         </div>
-        {selectMode && (
-          <div className="sticky top-0 z-10 mt-3 flex flex-wrap items-center gap-2 border-b border-border bg-background py-3">
-            <span className="font-mono-label text-xs text-muted-foreground" aria-live="polite">
-              {fmt(sel.size)} selected · tap tiles to pick, shift-click for a run, or use Select week
-            </span>
-            <button type="button" className={btn} disabled={busy || !filtered.length} onClick={() => setSel(new Set(filtered.map((x) => x.id)))}>
-              Select all {fmt(filtered.length)}
-            </button>
-            <button type="button" className={btn} disabled={busy || !sel.size} onClick={() => setSel(new Set())}>
-              Clear
-            </button>
-            <button type="button" className={btn} disabled={busy || !sel.size} onClick={() => void bulkHidden([...sel], false)}>
-              Show selected
-            </button>
-            <button type="button" className={btn} disabled={busy || !sel.size} onClick={() => void bulkHidden([...sel], true)}>
-              Hide selected
-            </button>
-            {sel.size > 0 && (
-              <div className="flex w-full flex-wrap items-end gap-x-5 gap-y-2 pt-1">
-                <form
-                  className="flex min-w-[16rem] flex-1 flex-col gap-1"
-                  onSubmit={(e) => { e.preventDefault(); void bulkField("place", placeIn); }}
-                >
-                  <label htmlFor="bulk-place" className={lbl}>Location · {summary("place")}</label>
-                  <div className="flex gap-1">
-                    <input id="bulk-place" type="text" list="bulk-places" value={placeIn} maxLength={MAX_PLACE_LEN} onChange={(e) => setPlaceIn(e.target.value)} placeholder="e.g. Mahabalipuram, Tamil Nadu" className={field} />
-                    <datalist id="bulk-places">
-                      {places.map((p) => <option key={p} value={p} />)}
-                    </datalist>
-                    <button type="submit" className={btn} disabled={busy || !placeIn.trim()}>Set</button>
-                    <button type="button" className={btn} disabled={busy} onClick={() => void bulkField("place", "")}>Clear</button>
-                  </div>
-                </form>
-                <form
-                  className="flex min-w-[16rem] flex-1 flex-col gap-1"
-                  onSubmit={(e) => { e.preventDefault(); void bulkField("cam", camIn); }}
-                >
-                  <label htmlFor="bulk-cam" className={lbl}>Device · {summary("cam")}</label>
-                  <div className="flex gap-1">
-                    <input id="bulk-cam" type="text" list="bulk-cams" value={camIn} maxLength={60} onChange={(e) => setCamIn(e.target.value)} placeholder="e.g. Galaxy S24 Ultra" className={field} />
-                    <datalist id="bulk-cams">
-                      {cams.map((c) => <option key={c} value={c} />)}
-                    </datalist>
-                    <button type="submit" className={btn} disabled={busy || !camIn.trim()}>Set</button>
-                    <button type="button" className={btn} disabled={busy} onClick={() => void bulkField("cam", "")}>Clear</button>
-                  </div>
-                </form>
-                <div className="flex flex-col gap-1">
-                  <span className={lbl}>Rotation · images are re-encoded, videos turned on screen</span>
-                  <div className="flex gap-1">
-                    <button type="button" className={btn} disabled={busy} onClick={() => void bulkRotate("left")}>⟲ 90° left</button>
-                    <button type="button" className={btn} disabled={busy} onClick={() => void bulkRotate("right")}>⟳ 90° right</button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        {msg && (
+        {msg && !selectMode && (
           <p className="mt-3 font-mono-label text-xs text-muted-foreground" role="status">
             {msg}
           </p>
         )}
       </section>
 
-      <section className="mx-auto max-w-[1800px] px-1 pb-10 sm:px-2 md:px-4">
+      <section className={"mx-auto max-w-[1800px] px-1 sm:px-2 md:px-4 " + (selectMode ? "pb-40 md:pb-28" : "pb-10")}>
         {!filtered.length && <p className="px-3 py-16 text-center text-muted-foreground">Nothing matches this filter.</p>}
         {weeks.slice(0, weeksShown).map((w) => (
           <section key={w.key} aria-labelledby={`aweek-${w.key}`} className="mb-8 sm:mb-10">
@@ -438,6 +392,113 @@ function AdminPage() {
           </div>
         )}
       </section>
+
+      {selectMode && (
+        <div
+          role="region"
+          aria-label="Selection"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 64px + 0.5rem)" }}
+          className="fixed inset-x-2 z-20 sm:inset-x-auto sm:right-4 sm:w-[30rem] md:!bottom-4"
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && panelOpen) {
+              e.stopPropagation();
+              setPanelOpen(false);
+            }
+          }}
+        >
+          {panelOpen ? (
+            <div className="max-h-[70vh] overflow-y-auto border border-border bg-background p-3 shadow-2xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono-label text-xs text-muted-foreground" aria-live="polite">
+                  {fmt(sel.size)} selected
+                </span>
+                <button type="button" className={btn} disabled={busy || !filtered.length} onClick={() => setSel(new Set(filtered.map((x) => x.id)))}>
+                  Select all {fmt(filtered.length)}
+                </button>
+                <button type="button" className={btn} disabled={busy || !sel.size} onClick={() => setSel(new Set())}>
+                  Clear
+                </button>
+                <button type="button" className={btn + " ml-auto"} onClick={() => setPanelOpen(false)}>
+                  Close ×
+                </button>
+              </div>
+              <p className="mt-1 font-mono-label text-[10px] text-muted-foreground">Tap tiles to pick, shift-click for a run, or use Select week. Esc closes this panel.</p>
+              <div className="mt-3 flex gap-1">
+                <button type="button" className={btn} disabled={busy || !sel.size} onClick={() => void bulkHidden([...sel], false)}>
+                  Show selected
+                </button>
+                <button type="button" className={btn} disabled={busy || !sel.size} onClick={() => void bulkHidden([...sel], true)}>
+                  Hide selected
+                </button>
+              </div>
+              <div className="mt-3 flex flex-col gap-3">
+                <form
+                  className="flex flex-col gap-1"
+                  onSubmit={(e) => { e.preventDefault(); void bulkField("place", placeIn); }}
+                >
+                  <label htmlFor="bulk-place" className={lbl}>Location · {sel.size ? summary("place") : "pick stories first"}</label>
+                  <div className="flex gap-1">
+                    <input id="bulk-place" type="text" list="bulk-places" value={placeIn} maxLength={MAX_PLACE_LEN} onChange={(e) => setPlaceIn(e.target.value)} placeholder="e.g. Mahabalipuram, Tamil Nadu" disabled={!sel.size} className={field} />
+                    <datalist id="bulk-places">
+                      {places.map((p) => <option key={p} value={p} />)}
+                    </datalist>
+                    <button type="submit" className={btn} disabled={busy || !sel.size || !placeIn.trim()}>Set</button>
+                    <button type="button" className={btn} disabled={busy || !sel.size} onClick={() => void bulkField("place", "")}>Clear</button>
+                  </div>
+                </form>
+                <form
+                  className="flex flex-col gap-1"
+                  onSubmit={(e) => { e.preventDefault(); void bulkField("cam", camIn); }}
+                >
+                  <label htmlFor="bulk-cam" className={lbl}>Device · {sel.size ? summary("cam") : "pick stories first"}</label>
+                  <div className="flex gap-1">
+                    <input id="bulk-cam" type="text" list="bulk-cams" value={camIn} maxLength={60} onChange={(e) => setCamIn(e.target.value)} placeholder="e.g. Galaxy S24 Ultra" disabled={!sel.size} className={field} />
+                    <datalist id="bulk-cams">
+                      {cams.map((c) => <option key={c} value={c} />)}
+                    </datalist>
+                    <button type="submit" className={btn} disabled={busy || !sel.size || !camIn.trim()}>Set</button>
+                    <button type="button" className={btn} disabled={busy || !sel.size} onClick={() => void bulkField("cam", "")}>Clear</button>
+                  </div>
+                </form>
+                <div className="flex flex-col gap-1">
+                  <span className={lbl}>Rotation · images are re-encoded, videos turned on screen</span>
+                  <div className="flex gap-1">
+                    <button type="button" className={btn} disabled={busy || !sel.size} onClick={() => void bulkRotate("left")}>⟲ 90° left</button>
+                    <button type="button" className={btn} disabled={busy || !sel.size} onClick={() => void bulkRotate("right")}>⟳ 90° right</button>
+                  </div>
+                </div>
+              </div>
+              {msg && (
+                <p className="mt-3 font-mono-label text-xs text-muted-foreground" role="status">
+                  {msg}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 rounded-full border border-border bg-background py-1.5 pl-4 pr-1.5 shadow-2xl">
+              <span className="font-mono-label text-xs text-muted-foreground" aria-live="polite">
+                {fmt(sel.size)} selected
+              </span>
+              {sel.size ? (
+                <button
+                  type="button"
+                  onClick={() => setPanelOpen(true)}
+                  className="ml-auto rounded-full bg-accent px-4 py-1.5 font-mono-label text-xs text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                >
+                  Edit…
+                </button>
+              ) : (
+                <button type="button" className={btn + " ml-auto rounded-full px-3 py-1.5"} disabled={busy || !filtered.length} onClick={() => setSel(new Set(filtered.map((x) => x.id)))}>
+                  Select all {fmt(filtered.length)}
+                </button>
+              )}
+              <button type="button" className={btn + " rounded-full px-3 py-1.5"} onClick={exitSelect}>
+                Done
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {openItem && (
         <StoryEditor
