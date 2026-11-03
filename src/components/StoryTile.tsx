@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { displaySize, rotatedFillStyle, storyThumbUrl, type Rotation } from "@/lib/stories-core";
 
 export type TileStory = { id: string; ts: string; kind: "image" | "video"; w: number; h: number; v?: number; rot?: Rotation };
@@ -32,7 +33,7 @@ export default function StoryTile({
   badge?: string;
   /** When a boolean, a checkbox is drawn (admin select mode). */
   selected?: boolean;
-  onClick: () => void;
+  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
 }) {
   const d = displaySize(story);
   const wide = d.w > d.h;
