@@ -340,7 +340,7 @@ function AdminPage() {
         )}
       </section>
 
-      <section className={"mx-auto max-w-[1800px] px-1 sm:px-2 md:px-4 " + (selectMode ? "pb-40 md:pb-28" : "pb-10")}>
+      <section className={"mx-auto max-w-[1800px] px-1 sm:px-2 md:px-4 " + (selectMode ? "pb-40 md:pb-28" : "pb-32 md:pb-20")}>
         {!filtered.length && <p className="px-3 py-16 text-center text-muted-foreground">Nothing matches this filter.</p>}
         {weeks.slice(0, weeksShown).map((w) => (
           <section key={w.key} aria-labelledby={`aweek-${w.key}`} className="mb-8 sm:mb-10">
@@ -393,12 +393,12 @@ function AdminPage() {
         )}
       </section>
 
-      {selectMode && (
+      {!openItem && (
         <div
           role="region"
           aria-label="Selection"
           style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 64px + 0.5rem)" }}
-          className="fixed inset-x-2 z-20 sm:inset-x-auto sm:right-4 sm:w-[30rem] md:!bottom-4"
+          className="fixed inset-x-2 z-20 flex flex-col items-end sm:inset-x-auto sm:right-4 sm:w-[30rem] md:!bottom-4"
           onKeyDown={(e) => {
             if (e.key === "Escape" && panelOpen) {
               e.stopPropagation();
@@ -406,8 +406,16 @@ function AdminPage() {
             }
           }}
         >
-          {panelOpen ? (
-            <div className="max-h-[70vh] overflow-y-auto border border-border bg-background p-3 shadow-2xl">
+          {!selectMode ? (
+            <button
+              type="button"
+              onClick={() => setSelectMode(true)}
+              className="rounded-full border border-border bg-background px-4 py-2 font-mono-label text-xs shadow-2xl hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              ☐ Select many
+            </button>
+          ) : panelOpen ? (
+            <div className="max-h-[70vh] w-full overflow-y-auto border border-border bg-background p-3 shadow-2xl">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono-label text-xs text-muted-foreground" aria-live="polite">
                   {fmt(sel.size)} selected
@@ -475,7 +483,7 @@ function AdminPage() {
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-2 rounded-full border border-border bg-background py-1.5 pl-4 pr-1.5 shadow-2xl">
+            <div className="flex w-full items-center gap-2 rounded-full border border-border bg-background py-1.5 pl-4 pr-1.5 shadow-2xl">
               <span className="font-mono-label text-xs text-muted-foreground" aria-live="polite">
                 {fmt(sel.size)} selected
               </span>
